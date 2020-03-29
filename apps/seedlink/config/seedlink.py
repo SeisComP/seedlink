@@ -1,6 +1,6 @@
 from __future__ import print_function
 import os, string, time, re, glob, shutil, sys, imp, resource
-import seiscomp.kernel, seiscomp.config, seiscomp.client
+import seiscomp.kernel, seiscomp.config, seiscomp.system
 
 try:
     import seiscomp.system
@@ -38,7 +38,7 @@ def _loadDatabase(dbUrl):
         raise Exception("error in parsing SC3 DB URL")
     db = m.groupdict()
     try:
-        registry = seiscomp.client.PluginRegistry.Instance()
+        registry = seiscomp.system.PluginRegistry.Instance()
         registry.addPluginName("db" + db["dbDriverName"])
         registry.loadPlugins()
     except Exception as e:
@@ -54,7 +54,7 @@ def _loadDatabase(dbUrl):
     print(" Loading inventory from database ... ", file=sys.stderr)
     inventory = seiscomp.datamodel.Inventory()
     dbQuery.loadNetworks(inventory)
-    for ni in xrange(inventory.networkCount()):
+    for ni in range(inventory.networkCount()):
         dbQuery.loadStations(inventory.network(ni))
     print("Done.", file=sys.stderr)
     return inventory
@@ -68,13 +68,13 @@ def _loadStationDescriptions(inv):
     """
     d = dict()
 
-    for ni in xrange(inv.networkCount()):
+    for ni in range(inv.networkCount()):
         n = inv.network(ni)
         net = n.code()
         if net not in d:
             d[net] = {}
 
-            for si in xrange(n.stationCount()):
+            for si in range(n.stationCount()):
                 s = n.station(si)
                 sta = s.code()
                 d[net][sta] = s.description()
