@@ -1,5 +1,5 @@
 {
 	"contributors": "https://api.github.com/repos/GEOFON/CLA/contents/.contributors",
 	"label": "cla-signed",
-	"message": "We require contributors to sign our Contributor License Agreement, and we don't have {{usersWithoutCLA}} on file. In order for us to review and merge your code, please contact geofon@gfz-potsdam.de to get yourself added."
+	"message": "We require contributors to sign our Contributor License Agreement, and we don't have {{usersWithoutCLA}} on file. Please follow https://github.com/GEOFON/CLA/blob/master/README.md to get yourself added."
 }
