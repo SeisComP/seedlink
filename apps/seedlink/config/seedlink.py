@@ -299,15 +299,6 @@ class Module(TemplateModule):
         return ini
 
     def __process_station(self, profile):
-        try:
-            station_dict = self.seedlink_station[self.sta]
-            station_id = self.sta + str(len(station_dict))
-
-        except KeyError:
-            station_dict = {}
-            station_id = self.sta
-            self.seedlink_station[self.sta] = station_dict
-
         if profile:
             self.station_config_file = "profile_%s" % (profile,)
         else:
@@ -316,7 +307,6 @@ class Module(TemplateModule):
         self._read_station_config(self.station_config_file)
 
         # Generate plugin independent parameters
-        #self._set('seedlink.station.id', station_id)
         self._set('seedlink.station.id', self.net + '.' + self.sta)
         self._set('seedlink.station.code', self.sta)
         self._set('seedlink.station.network', self.net)
@@ -368,7 +358,7 @@ class Module(TemplateModule):
         # and force the usage of the mseedfifo_plugin
         if self.msrtsimul:
             self._set('seedlink.station.sproc', '')
-            station_dict[(self.net, self.sta)] = self._generateStationForIni()
+            self.seedlink_station[(self.net, self.sta)] = self._generateStationForIni()
             self._getPluginHandler('mseedfifo')
             return
 
@@ -489,7 +479,7 @@ class Module(TemplateModule):
             self.station_params = station_params
 
         # Create station section for seedlink.ini
-        station_dict[(self.net, self.sta)] = self._generateStationForIni()
+        self.seedlink_station[(self.net, self.sta)] = self._generateStationForIni()
 
     def __load_stations(self):
         self.seedlink_source = {}
@@ -690,9 +680,8 @@ class Module(TemplateModule):
 
         fd.write(self._process_template("seedlink_station_head.tpl", None, False))
 
-        for i in self.seedlink_station.values():
-            for j in i.values():
-                fd.write(j)
+        for k in sorted(self.seedlink_station.keys()):
+            fd.write(self.seedlink_station[k])
 
         fd.close()
 
