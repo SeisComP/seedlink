@@ -64,6 +64,35 @@ supports Linux/UNIX, Windows and MacOS X platforms, and comes with an exhaustive
 documentation in form of UNIX manual pages.
 
 
+Telnet interface
+----------------
+
+:program:`seedlink` provides a telnet interface accepting the commands set out in
+:ref:`seedlink_commands` through the seedlink :confval:`port` ::
+
+   telnet [host] [port]
+
+Example fetching the SeedLink version: ::
+
+   telnet localhost 18000
+
+   Trying 127.0.0.1...
+   Connected to localhost.gempa.de.
+   Escape character is '^]'.
+   hello
+   SeedLink v3.3 (2020.122)
+   ...
+
+Queries
+-------
+
+:program:`seedlink` provides a query interface. Use :ref:`slinktool` to send queries
+for fetching:
+
+* Station and stream information
+* Waveform data
+
+
 Protocol
 ========
 
@@ -71,9 +100,9 @@ A SeedLink session starts with opening the TCP/IP connection and ends with
 closing the TCP/IP connection. During the session the following steps are
 performed in order:
 
-    * opening the connection
-    * handshaking
-    * transferring SeedLink packets
+* Opening the connection
+* Handshaking
+* Transferring SeedLink packets
 
 We will take a closer look at the protocol. Note, the details are normally
 hidden from the clients by the libslink software library; therefore it is not
@@ -151,6 +180,8 @@ it is normally used in conjunction with dial-up lines to open the connection
 periodically for a short time and download all data available. A SeedLink
 packet can never start with "END" thus no ambiguity arises.
 
+.. _seedlink_commands:
+
 Commands
 --------
 
@@ -220,9 +251,9 @@ Number_of_samples
 
 Special cases:
 
-    * if timing_quality = -1, blockette 1001 is omitted.
-    * if number_of_samples = 0 & pt = NULL set new time without sending any data.
-    * if dataptr = NULL send a gap (advance time as if number of samples was sent without sending any actual data).
+* If timing_quality = -1, blockette 1001 is omitted.
+* If number_of_samples = 0 & pt = NULL set new time without sending any data.
+* If dataptr = NULL send a gap (advance time as if number of samples was sent without sending any actual data).
 
 .. c:function:: int send_raw_depoch(const char *station, const char *channel, double depoch, int usec_correction, int timing_quality, const int32_t dataptr, int number_of_samples)
 

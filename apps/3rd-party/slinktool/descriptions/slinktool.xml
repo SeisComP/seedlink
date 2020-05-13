@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<seiscomp>
+	<module name="slinktool" category="Acquisition" standalone="true">
+		<description>SeedLink query interface module</description>
+		<command-line>
+			<synopsis>
+				slinktool [OPTION]... [host][:][port]
+			</synopsis>
+			<description>
+				Address ([host][:][port]) is a required argument. It specifies the address
+				of the SeedLink server in host:port format. Either the host, port or both
+				can be omitted. If host is omitted then localhost is assumed,
+				i.e. ':18000' implies 'localhost:18000'. If the port is omitted,
+				then 18000 is assumed, i.e. 'localhost' implies 'localhost:18000'.
+				If only ':' is specified, 'localhost:18000' is assumed.
+			</description>
+			<group name="General program options">
+				<option flag="V">
+					<description>Print program version and exit.</description>
+				</option>
+				<option flag="h">
+					<description>Print program usage and exit.</description>
+				</option>
+				<option flag="v">
+					<description>
+						Be more verbose. This flag can be used multiple times (&quot;-v -v&quot; or &quot;-vv&quot;)
+						for more verbosity. One flag: report basic handshaking (link configuration) details and
+						briefly report each packet received. Two flags: report the details of the handshaking,
+						each packet received and detailed connection diagnostics.
+					</description>
+				</option>
+				<option flag="P">
+					<description>
+						Ping the server, report the server ID and exit.
+					</description>
+				</option>
+				<option flag="p">
+					<description>
+						Print details of received Mini-SEED data records. This flag can be used multiple times
+						(&quot;-p -p&quot; or &quot;-pp&quot;) for more detail. One flag: a single summary line
+						for each data packet received. Two flags: details of the Mini-SEED data records received,
+						including information from fixed header and 100/1000/1001 blockettes.
+					</description>
+				</option>
+				<option flag="u">
+					<description>
+						Print unpacked samples of data packets.
+					</description>
+				</option>
+				<option flag="nd" argument="delay" unit="s" default="30">
+					<description>
+						The network reconnect delay for the connection to the SeedLink server.
+						If the connection breaks for any reason this will govern how soon a reconnection should
+						be attempted.
+					</description>
+				</option>
+				<option flag="nt" argument="timeout">
+					<description>
+						The network timeout (in seconds) for the connection to the SeedLink server. If no data
+						[or keep alive packets?] are received in this time range the connection is closed and
+						re-established (after the reconnect delay has expired). The default value is 600 seconds.
+						A value of 0 disables the timeout.
+					</description>
+				</option>
+				<option flag="k" argument="interval" unit="s">
+					<description>
+						Interval at which keepalive (heartbeat) packets are sent to the server.
+						Keepalive packets are only sent if nothing is received within the interval.
+					</description>
+				</option>
+				<option flag="x" argument="sfile[:interval]">
+					<description>
+						Save/restore stream state information to this file.
+
+						During client shutdown the last received sequence numbers and time stamps (start times)
+						for each data stream will be saved in this file. If this file exists upon startup the information
+						will be used to resume the data streams from the point at which they were stopped. In this way the
+						client can be stopped and started without data loss, assuming the data are still available on the
+						server. If an interval is specified the state will be saved every interval in that packets are
+						received. Otherwise the state will be saved only on normal program termination.
+					</description>
+				</option>
+				<option flag="d">
+					<description>
+						Configure the connection in "dial-up" mode. The remote server will close the connection when
+						it has sent all of the data in its buffers for the selected data streams. This is opposed to
+						the normal behavior of waiting indefinitely for data.
+					</description>
+				</option>
+				<option flag="b">
+					<description>
+						Configure the connection in &quot;batch&quot; mode.
+					</description>
+				</option>
+			</group>
+			<group name="Data stream selection">
+				<option flag="s" argument="selector">
+					<description>
+						Selectors for uni-station or default for multi-station mode
+					</description>
+				</option>
+				<option flag="l" argument="listfile">
+					<description>
+						Read a stream list from this file for multi-station mode
+					</description>
+				</option>
+				<option flag="S" argument="streams">
+					<description>
+						Define a stream list for multi-station mode.
+
+						'streams' = 'stream1[:selectors1],stream2[:selectors2],...'
+
+						'stream' is in NET_STA format, for example:
+
+						-S "IU_KONO:BHE BHN,GE_WLF,MN_AQU:HH?.D"
+					</description>
+				</option>
+				<option flag="tw" argument="begin:[end]">
+					<description>
+						Specify a time window in year,month,day,hour,min,sec format.
+
+						Example: -tw 2002,08,05,14,00,00:2002,08,05,14,15,00
+
+						The end time is optional, but the colon must be present.
+					</description>
+				</option>
+			</group>
+			<group name="Data saving options">
+				<option flag="o" argument="dumpfile">
+					<description>
+						Write all received records to this file
+					</description>
+				</option>
+				<option flag="A" argument="format">
+					<description>
+						If specified, all received packets (Mini-SEED records) will be appended to a directory/file
+						structure defined by format. All directories implied in the format string will be created if
+						necessary.
+					</description>
+				</option>
+				<option flag="SDS" argument="SDSdir">
+					<description>
+						If specified, all received packets (Mini-SEED records) will be saved into a Simple Data
+						Structure (SDS) dir/file structure starting at the specified directory. This directory and
+						all subdirectories will be created if necessary. This option is a preset of the '-A' option.
+						The SDS dir/file structure is:
+
+						&lt;SDSdir&gt;/&lt;YEAR&gt;/&lt;NET&gt;/&lt;STA&gt;/&lt;CHAN.TYPE&gt;/NET.STA.LOC.CHAN.TYPE.YEAR.DAY
+					</description>
+				</option>
+				<option flag="BUD" argument="BUDdir">
+					<description>
+						If specified, all received waveform data packets (Mini-SEED data records) will be saved into
+						a Buffer of Uniform Data (BUD) dir/file structure starting at the specified directory.
+						This directory and all subdirectories will be created if necessary. This option is a preset
+						of the '-A' option. The BUD dir/file structure is:
+
+						&lt;BUDdir&gt;/&lt;NET&gt;/&lt;STA&gt;/STA.NET.LOC.CHAN.YEAR.DAY
+					</description>
+				</option>
+			</group>
+			<group name="Data server">
+				<option flag="i" argument="type">
+					<description>
+						Send info request, type is one of the following:
+
+						ID, CAPABILITIES, STATIONS, STREAMS, GAPS, CONNECTIONS, ALL
+
+						The returned raw XML is displayed when using this option.
+					</description>
+				</option>
+				<option flag="I">
+					<description>
+						Print formatted server id and version
+					</description>
+				</option>
+				<option flag="L">
+					<description>
+						Print formatted station list (if supported by server)
+					</description>
+				</option>
+				<option flag="Q">
+					<description>
+						Print formatted stream list (if supported by server)
+					</description>
+				</option>
+				<option flag="G">
+					<description>
+						Print formatted gap list (if supported by server)
+					</description>
+				</option>
+				<option flag="C">
+					<description>
+						Print formatted connection list (if supported by server)
+					</description>
+				</option>
+			</group>
+		</command-line>
+	</module>
+</seiscomp>
