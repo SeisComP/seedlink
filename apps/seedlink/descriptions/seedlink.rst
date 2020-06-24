@@ -21,31 +21,32 @@ raw integer samples with accompanying timing information. In the latter case,
 the SeedLink server uses an inegrated "Stream Processor" to create the desired
 data streams and assemble miniSEED packets.
 
-======================================================================== =====================================================================================================
-Digitizer/DAS                                                            Plugin Implementer
-======================================================================== =====================================================================================================
-SeedLink                                                                 GFZ
-LISS                                                                     Chad Trabant (IRIS)
-Quanterra Q330                                                           Jet Spring, Inc.; ISTI, Inc.; Chad Trabant (IRIS); GFZ
-Quanterra Q380/Q680, Q4120, Q720   (not supported by SeisComp 3.0)       GFZ (based on Comserv by Quanterra, Inc.)
-Earth Data PS2400/PS6-24                                                 GFZ
-:ref:`Earth Data PS2400/PS6 Ethernet<seedlink-sources-ps2400_eth-label>` GFZ; `gempa GmbH <https://gempa.de>`_
-Lennartz M24                                                             Lennartz Electronic GmbH
-Geotech DR24                                                             GFZ
-Nanometrics HRD24                                                        GFZ; Recai Yalgin
-Guralp DM24                                                              GFZ (based on libgcf2 from Guralp)
-SARA SADC10/18/20/30                                                     GFZ
-RefTek RTPD                                                              GFZ (based on software library provided by RefTek, Inc.)
-NRTS                                                                     GFZ (based on ISI toolkit from David E. Chavez)
-NAQS                                                                     Chad Trabant (IRIS; based on sample code from Nanometrics, Inc.); Matteo Quintiliani (INGV; nmxptool)
-SCREAM                                                                   Reinoud Sleeman (KNMI)
-Earthworm                                                                Chad Trabant (IRIS)
-Antelope                                                                 Chad Trabant (IRIS)
-WIN                                                                      GFZ (based on source code of WIN system)
-Lacrosse 2300 Weather Station                                            GFZ (based on open2300 library from Kenneth Lavrsen)
-Reinhardt MWS5/MWS9 Weather Station                                      GFZ
-Generic MODBUS/TCP devices                                               GFZ
-======================================================================== =====================================================================================================
+=========== ======================================================================== =====================================================================================================
+Name        Digitizer/DAS                                                            Plugin Implementer
+=========== ======================================================================== =====================================================================================================
+antelope    Antelope                                                                 Chad Trabant (IRIS)
+caps        CAPS server                                                              gempa GmbH
+chain       SeedLink                                                                 GFZ
+dm24        Guralp DM24                                                              GFZ (based on libgcf2 from Guralp)
+dr24        Geotech DR24                                                             GFZ
+edata       Earth Data PS2400/PS6-24                                                 GFZ
+ewexport    Earthworm                                                                Chad Trabant (IRIS)
+hrd24       Nanometrics HRD24                                                        GFZ; Recai Yalgin
+liss        LISS                                                                     Chad Trabant (IRIS)
+m24         Lennartz M24                                                             Lennartz Electronic GmbH
+mws         Reinhardt MWS5/MWS9 Weather Station                                      GFZ
+naqs        NAQS                                                                     Chad Trabant (IRIS; based on sample code from Nanometrics, Inc.); Matteo Quintiliani (INGV; nmxptool)
+.           NRTS                                                                     GFZ (based on ISI toolkit from David E. Chavez)
+ps2400_eth  :ref:`Earth Data PS2400/PS6 Ethernet<seedlink-sources-ps2400_eth-label>` GFZ; `gempa GmbH <https://gempa.de>`_
+q330        Quanterra Q330                                                           Jet Spring, Inc.; ISTI, Inc.; Chad Trabant (IRIS); GFZ
+.           Quanterra Q380/Q680, Q4120, Q720   (not supported by SeisComp 3.0)       GFZ (based on Comserv by Quanterra, Inc.)
+reftek      RefTek RTPD                                                              GFZ (based on software library provided by RefTek, Inc.)
+sadc        SARA SADC10/18/20/30                                                     GFZ
+scream      SCREAM                                                                   Reinoud Sleeman (KNMI)
+win         WIN                                                                      GFZ (based on source code of WIN system)
+.           Lacrosse 2300 Weather Station                                            GFZ (based on open2300 library from Kenneth Lavrsen)
+.           Generic MODBUS/TCP devices                                               GFZ
+=========== ======================================================================== =====================================================================================================
 
 
 Supported data sources
@@ -82,6 +83,7 @@ Example fetching the SeedLink version: ::
    hello
    SeedLink v3.3 (2020.122)
    ...
+
 
 Queries
 -------
@@ -144,6 +146,7 @@ is shown in :ref:`seedlink-handshaking`.
 
    Handshaking in uni-station vs. multi-station mode.
 
+
 Data Transfer
 -------------
 
@@ -179,6 +182,7 @@ client to close connection. The latter mode is called "dial-up mode" because
 it is normally used in conjunction with dial-up lines to open the connection
 periodically for a short time and download all data available. A SeedLink
 packet can never start with "END" thus no ambiguity arises.
+
 
 .. _seedlink_commands:
 
@@ -296,6 +300,7 @@ pt
 fmt
     format string, as used by printf(), followed by a variable number of arguments.
 
+
 Compatibility with Earlier Versions
 ===================================
 
@@ -364,6 +369,7 @@ but relying on them is not recommended):
 
 seedlink.ini is generated from :file:`\~/.seiscomp/seedlink.cfg` and
 :file:`etc/seedlink.cfg`.
+
 
 streams.xml
 -----------
