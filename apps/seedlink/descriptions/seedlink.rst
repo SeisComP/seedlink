@@ -24,30 +24,40 @@ data streams and assemble miniSEED packets.
 =========== ======================================================================== =====================================================================================================
 Name        Digitizer/DAS                                                            Plugin Implementer
 =========== ======================================================================== =====================================================================================================
-antelope    Antelope                                                                 Chad Trabant (IRIS)
+antelope*   Antelope                                                                 Chad Trabant (IRIS)
 caps        CAPS server                                                              gempa GmbH
 chain       SeedLink                                                                 GFZ
-dm24        Guralp DM24                                                              GFZ (based on libgcf2 from Guralp)
+dm24**      Guralp DM24                                                              GFZ; based on libgcf2 from Guralp
 dr24        Geotech DR24                                                             GFZ
+echopro     Kelunji Echo/EchoPro                                                     Oyvind Natvik (UiB)
 edata       Earth Data PS2400/PS6-24                                                 GFZ
 ewexport    Earthworm                                                                Chad Trabant (IRIS)
 hrd24       Nanometrics HRD24                                                        GFZ; Recai Yalgin
 liss        LISS                                                                     Chad Trabant (IRIS)
-m24         Lennartz M24                                                             Lennartz Electronic GmbH
+m24*        Lennartz M24                                                             Lennartz Electronic GmbH
+minilogger  SEP064 USB Seismometer Interface                                         GFZ; Anthony Lomax
+mseedfifo   Generic                                                                  GFZ
+mseedscan   Generic                                                                  Chad Trabant (IRIS)
+mk6*        MK6                                                                      Jan Wiszniowski (IGPAS)
 mws         Reinhardt MWS5/MWS9 Weather Station                                      GFZ
-naqs        NAQS                                                                     Chad Trabant (IRIS; based on sample code from Nanometrics, Inc.); Matteo Quintiliani (INGV; nmxptool)
-.           NRTS                                                                     GFZ (based on ISI toolkit from David E. Chavez)
+naqs        NAQS                                                                     Chad Trabant (IRIS); based on sample code from Nanometrics, Inc.
+nmxp*       NAQS                                                                     Matteo Quintiliani (INGV)
+nrts**      NRTS                                                                     GFZ; based on ISI toolkit from David E. Chavez
 ps2400_eth  :ref:`Earth Data PS2400/PS6 Ethernet<seedlink-sources-ps2400_eth-label>` GFZ; `gempa GmbH <https://gempa.de>`_
-q330        Quanterra Q330                                                           Jet Spring, Inc.; ISTI, Inc.; Chad Trabant (IRIS); GFZ
-.           Quanterra Q380/Q680, Q4120, Q720   (not supported by SeisComp 3.0)       GFZ (based on Comserv by Quanterra, Inc.)
-reftek      RefTek RTPD                                                              GFZ (based on software library provided by RefTek, Inc.)
+q330        Quanterra Q330                                                           GFZ; based on lib330 maintained by ISTI, Inc.
+comserv**   Quanterra Q380/Q680, Q4120, Q720                                         GFZ; based on Comserv by Quanterra, Inc.
+reftek      RefTek RTPD                                                              GFZ; based on software library provided by RefTek, Inc.
 sadc        SARA SADC10/18/20/30                                                     GFZ
 scream      SCREAM                                                                   Reinoud Sleeman (KNMI)
-win         WIN                                                                      GFZ (based on source code of WIN system)
-.           Lacrosse 2300 Weather Station                                            GFZ (based on open2300 library from Kenneth Lavrsen)
-.           Generic MODBUS/TCP devices                                               GFZ
+wago        WAGO MODBUS/TCP devices                                                  GFZ
+wave24*     Wave24                                                                   MicroStep-MIS
+win         WIN                                                                      GFZ; based on source code of WIN system
+ws2300**    Lacrosse 2300 Weather Station                                            GFZ; based on open2300 library from Kenneth Lavrsen
 =========== ======================================================================== =====================================================================================================
 
+*3rd-party plugin, not included in SeisComP distribution
+
+**No longer supported
 
 Supported data sources
 ----------------------
