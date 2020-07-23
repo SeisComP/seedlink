@@ -57,7 +57,7 @@
 #include "plugin.h"
 #include "diag.h"
 
-#define MYVERSION "3.4 (2020.203)"
+#define MYVERSION "3.3 (2020.203)"
 
 #ifndef CONFIG_FILE
 #define CONFIG_FILE "/home/sysop/config/seedlink.ini"
