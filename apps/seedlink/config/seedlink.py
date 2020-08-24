@@ -1,6 +1,6 @@
 from __future__ import print_function
 import os, string, time, re, glob, shutil, sys, imp, resource
-import seiscomp.kernel, seiscomp.config, seiscomp.system
+import seiscomp.kernel, seiscomp.config
 
 try:
     import seiscomp.system
