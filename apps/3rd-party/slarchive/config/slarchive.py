@@ -116,7 +116,7 @@ class Module(seiscomp.kernel.Module):
 
   def updateConfig(self):
     self._readConfig()
-    template_dir = os.path.join(self.env.SEISCOMP_ROOT, "share", "templates", self.name)
+    template_dir = os.path.join(self.env.SEISCOMP_ROOT, "share", "templates", "slarchive")
 
     # Create purge_datafiles script
     tpl_paths = [template_dir]
@@ -136,7 +136,7 @@ class Module(seiscomp.kernel.Module):
 
     bindings_dir = os.path.join(self.env.SEISCOMP_ROOT, "etc", "key")
     key_dir = os.path.join(bindings_dir, self.name)
-    config_file = os.path.join(self.config_dir, "slarchive.streams")
+    config_file = os.path.join(self.config_dir, self.name + ".streams")
 
     # Remove config file
     try: os.remove(config_file)
@@ -204,6 +204,9 @@ class Module(seiscomp.kernel.Module):
 
     return 0
 
+  def supportsAliases(self):
+    # The default handler does not support aliases
+    return True
 
   def printCrontab(self):
     print("20 3 * * * %s/purge_datafiles >/dev/null 2>&1" % (self.config_dir))
