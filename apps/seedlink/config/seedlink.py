@@ -594,6 +594,9 @@ class Module(TemplateModule):
         self._set_default("connections_per_ip", "20", False)
         self._set_default("bytespersec", "0", False)
 
+        # This seedlink version expectes composed station ids: net.sta
+        self._set("composed_station_id", "true", False)
+
         ## Expand the @Variables@
         if hasSystem:
             e = seiscomp.system.Environment.Instance()
