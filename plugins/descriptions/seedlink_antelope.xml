@@ -3,7 +3,13 @@
 	<binding module="seedlink" name="antelope" category="sources">
 		<description>Antelope ORB (TCP/IP)</description>
 		<configuration>
-			<parameter name="address" type="string">
+			<parameter name="select" type="string" default="*">
+				<description>
+				Regular expression to match ORB packets, default is all
+				waveform data.
+				</description>
+			</parameter>
+			<parameter name="address" type="string" default="localhost">
 				<description>Hostname or IP of the Antelope ORB.</description>
 			</parameter>
 			<parameter name="port" type="int" default="39136">
