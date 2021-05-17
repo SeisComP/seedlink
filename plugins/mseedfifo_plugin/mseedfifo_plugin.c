@@ -19,6 +19,8 @@
 #include <time.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stdlib.h>
+#include <signal.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -29,7 +31,7 @@
 #include "libslink.h"
 #include "plugin.h"
 
-#define MYVERSION "1.0 (2010.256)"
+#define MYVERSION "1.0 (2021.137)"
 
 #ifndef SYSLOG_FACILITY
 #define SYSLOG_FACILITY LOG_LOCAL0
@@ -133,9 +135,21 @@ static const char *get_progname(const char *argv0)
     return argv0;
   }
 
+static char *fifo_path = NULL;
+
+static void fifo_cleanup(void)
+  {
+    if(fifo_path) remove(fifo_path);
+  }
+
+static void signal_exit(int signo)
+  {
+    fifo_cleanup();
+    _exit(1);
+  }
+
 int main(int argc, char **argv)
   {
-    char *fifo_path = NULL;
     struct sl_fsdh_s *fsdh = NULL;
     struct stat st;
     char sta_id[11];
@@ -222,11 +236,15 @@ int main(int argc, char **argv)
         exit(1);
       }
 
+    signal(SIGTERM, signal_exit);
+
     if((fd = open(fifo_path, O_RDONLY)) < 0)
       {
         log_printf("cannot open %s: %s", fifo_path, strerror(errno));
         exit(1);
       }
+
+    atexit(fifo_cleanup);
 
     while(1)
       {
