@@ -1,8 +1,7 @@
-import os
-
 '''
 Plugin handler for the mseedfifo plugin.
 '''
+
 class SeedlinkPluginHandler:
   # Create defaults
   def __init__(self):
