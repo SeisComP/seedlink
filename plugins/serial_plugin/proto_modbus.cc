@@ -43,7 +43,8 @@ using namespace SeedlinkPlugin;
 
 namespace {
 
-const int NCHAN             = 256;
+const int NUNIT             = 256;
+const int NADDR             = 256;
 const int SAMPLE_PERIOD     = 10;
 const int MAX_TIME_ERROR    = 1000000;
 
@@ -70,14 +71,12 @@ struct ModbusResponse
     u_int8_t unit_id;
     u_int8_t function;
     u_int8_t bc_ex;
-    be_int16_t data[NCHAN];
+    be_int16_t data[NADDR];
   } PACKED;
 
 //*****************************************************************************
 // ModbusProtocol
 //*****************************************************************************
-
-void alarm_handler(int sig);
 
 class OutputChannelEx: public OutputChannel
   {
@@ -86,7 +85,7 @@ class OutputChannelEx: public OutputChannel
     const double realoffset;
     const string realunit;
     const int precision;
-    
+
     OutputChannelEx(const string &channel_name, const string &station_name,
       int max_zeros, double scale, double realscale_init,
       double realoffset_init, const string &realunit_init, int precision_init):
@@ -99,9 +98,10 @@ class ModbusProtocol: public Proto
   {
   private:
     int fd;
-    vector<rc_ptr<OutputChannelEx> > modbus_channels;
-    int minchan, maxchan;
-    int tran_count;
+    vector<vector<rc_ptr<OutputChannelEx> > > modbus_channels;
+    unsigned int minaddr[NUNIT], maxaddr[NUNIT];
+    unsigned int curunit;
+    unsigned int tran_count;
     bool startup_message;
     bool soh_message;
     int last_day;
@@ -110,18 +110,24 @@ class ModbusProtocol: public Proto
 
     static ModbusProtocol *obj;
     static void alarm_handler(int sig);
-    
+
     ssize_t writen(int fd, const void *vptr, size_t n);
     void handle_response();
     void send_request();
     void do_start();
 
   public:
-    ModbusProtocol(const string &myname): modbus_channels(NCHAN),
-      minchan(NCHAN), maxchan(0), tran_count(0), startup_message(true),
+    ModbusProtocol(const string &myname): modbus_channels(NUNIT),
+      curunit(NUNIT), tran_count(0), startup_message(true),
       soh_message(true), last_day(-1), last_soh(-1)
       {
         obj = this;
+
+        for(int i = 0; i < NUNIT; ++i)
+          {
+            minaddr[i] = NADDR;
+            maxaddr[i] = 0;
+          }
       }
 
     void attach_output_channel(const string &source_id,
@@ -144,39 +150,48 @@ void ModbusProtocol::attach_output_channel(const string &source_id,
   double scale, double realscale, double realoffset, const string &realunit,
   int precision)
   {
-    int n;
-    char *tail;
+    unsigned int unit_id, addr;
 
-    n = strtoul(source_id.c_str(), &tail, 10);
-    
-    if(*tail || n > NCHAN)
+    if(sscanf(source_id.c_str(), "%u.%u", &unit_id, &addr) != 2 ||
+      unit_id >= NUNIT || addr > NADDR)
         throw PluginADInvalid(source_id, channel_name);
 
-    if(n == NCHAN)
+    if(addr == NADDR)
         return;
-    
-    if(modbus_channels[n] != NULL)
-        throw PluginADInUse(source_id, modbus_channels[n]->channel_name);
 
-    modbus_channels[n] = new OutputChannelEx(channel_name, station_name,
-      dconf.zero_sample_limit, scale, realscale, realoffset, realunit, precision);
+    if(!modbus_channels[unit_id].size())
+        modbus_channels[unit_id] = vector<rc_ptr<OutputChannelEx> >(NADDR);
 
-    if(n < minchan) minchan = n;
+    if(modbus_channels[unit_id][addr] != NULL)
+        throw PluginADInUse(source_id, modbus_channels[unit_id][addr]->channel_name);
 
-    if(n > maxchan) maxchan = n;
+    modbus_channels[unit_id][addr] = new OutputChannelEx(channel_name, station_name,
+      dconf.zero_sample_limit, scale, realscale, realoffset, realunit,
+      precision);
+
+    if(addr < minaddr[unit_id]) minaddr[unit_id] = addr;
+
+    if(addr > maxaddr[unit_id]) maxaddr[unit_id] = addr;
+
+    if(unit_id < curunit) curunit = unit_id;
   }
 
 void ModbusProtocol::flush_channels()
   {
-    for(int n = 0; n < NCHAN; ++n)
+    for(unsigned int unit_id = 0; unit_id < NUNIT; ++unit_id)
       {
-        if(modbus_channels[n] != NULL)
-            modbus_channels[n]->flush_streams();
+        for(unsigned int addr = 0; addr < modbus_channels[unit_id].size(); ++addr)
+          {
+            if(modbus_channels[unit_id][addr] != NULL)
+                modbus_channels[unit_id][addr]->flush_streams();
+          }
       }
   }
 
 void ModbusProtocol::start()
   {
+    if(curunit == NUNIT) throw PluginError("no channels defined");
+
     fd = open_port(O_RDWR);
 
     try
@@ -185,6 +200,7 @@ void ModbusProtocol::start()
       }
     catch(PluginError &e)
       {
+        seed_log << e.what() << endl;
         seed_log << "closing device" << endl;
         close(fd);
         throw;
@@ -198,7 +214,7 @@ ssize_t ModbusProtocol::writen(int fd, const void *vptr, size_t n)
   {
     ssize_t nwritten;
     size_t nleft = n;
-    const char *ptr = (const char *) vptr;   
+    const char *ptr = (const char *) vptr;
 
     while (nleft > 0)
       {
@@ -226,7 +242,7 @@ ssize_t ModbusProtocol::writen(int fd, const void *vptr, size_t n)
         nleft -= nwritten;
         ptr += nwritten;
       }
-    
+
     return(n);
   }
 
@@ -236,7 +252,7 @@ void ModbusProtocol::handle_response()
     N(gettimeofday(&tv, NULL));
     time_t t = tv.tv_sec;
     tm* ptm = gmtime(&t);
-    
+
     EXT_TIME et;
     et.year = ptm->tm_year + 1900;
     et.month = ptm->tm_mon + 1;
@@ -248,7 +264,7 @@ void ModbusProtocol::handle_response()
     et.doy = mdy_to_doy(et.month, et.day, et.year);
 
     INT_TIME it = ext_to_int(et);
-    
+
     if(!digitime.valid)
       {
         digitime.it = it;
@@ -257,11 +273,10 @@ void ModbusProtocol::handle_response()
       }
     else
       {
-        digitime.it = add_time(digitime.it, SAMPLE_PERIOD, 0);
         double time_diff = tdiff(it, digitime.it);
 
         DEBUG_MSG("time_diff = " << time_diff << endl);
-        
+
         if(time_diff < -MAX_TIME_ERROR || time_diff > MAX_TIME_ERROR)
           {
             logs(LOG_WARNING) << "time diff. " << time_diff / 1000000.0 << " sec" << endl;
@@ -275,7 +290,7 @@ void ModbusProtocol::handle_response()
         soh_message = true;
         last_day = digitime.it.second / (24 * 60 * 60);
       }
-    
+
     if(dconf.statusinterval &&
       digitime.it.second / (dconf.statusinterval * 60) != last_soh)
       {
@@ -296,49 +311,66 @@ void ModbusProtocol::handle_response()
 
         if(soh_message)
           {
-            soh_message = false;
             char tbuf[50];
             strftime(tbuf, 50, "%Y-%m-%d;%H:%M:%S", ptm);
-            seed_log << fixed << "status: " << tbuf;
+            seed_log << fixed << "status: " << tbuf << ";" << curunit;
 
-            for(int n = minchan; n <= maxchan; ++n)
+            for(unsigned int addr = minaddr[curunit]; addr <= maxaddr[curunit]; ++addr)
               {
-                if(modbus_channels[n] == NULL) continue;
+                if(modbus_channels[curunit][addr] == NULL) continue;
 
-                seed_log << ";" << setprecision(modbus_channels[n]->precision);
+                seed_log << ";" << setprecision(modbus_channels[curunit][addr]->precision);
 
-                if(modbus_channels[n]->realscale < 0)
-                    seed_log << (resp.data[n - minchan] - modbus_channels[n]->realoffset);
+                if(modbus_channels[curunit][addr]->realscale < 0)
+                    seed_log << (resp.data[addr - minaddr[curunit]] - modbus_channels[curunit][addr]->realoffset);
                 else
-                    seed_log << (resp.data[n - minchan] * modbus_channels[n]->realscale - modbus_channels[n]->realoffset);
-                seed_log << modbus_channels[n]->realunit;
+                    seed_log << (resp.data[addr - minaddr[curunit]] * modbus_channels[curunit][addr]->realscale - modbus_channels[curunit][addr]->realoffset);
+                seed_log << modbus_channels[curunit][addr]->realunit;
               }
 
-            seed_log << endl;
+            seed_log << defaultfloat << endl;
           }
       }
 
-    for(int n = minchan; n <= maxchan; ++n)
+    for(unsigned int addr = minaddr[curunit]; addr <= maxaddr[curunit]; ++addr)
       {
-        if(modbus_channels[n] == NULL) continue;
+        if(modbus_channels[curunit][addr] == NULL) continue;
 
-        modbus_channels[n]->set_timemark(digitime.it, 0, digitime.quality);
-        modbus_channels[n]->put_sample(resp.data[n - minchan]);
+        modbus_channels[curunit][addr]->set_timemark(digitime.it, 0, digitime.quality);
+        modbus_channels[curunit][addr]->put_sample(resp.data[addr - minaddr[curunit]]);
       }
+
+    while((curunit = (curunit + 1) % NUNIT))
+      {
+        if(modbus_channels[curunit].size())
+          {
+            send_request();
+            return;
+          }
+      }
+
+    digitime.it = add_time(digitime.it, SAMPLE_PERIOD, 0);
+    soh_message = false;
+
+    do
+      {
+        if(modbus_channels[curunit].size()) break;
+      }
+    while((curunit = (curunit + 1) % NUNIT));
   }
 
 void ModbusProtocol::send_request()
   {
-    DEBUG_MSG("request" << endl);
+    DEBUG_MSG("request unit " << curunit << endl);
 
     ModbusRequest req;
     req.transaction_id = tran_count++;
     req.protocol_id = 0;
     req.length = 6;
-    req.unit_id = 1;
+    req.unit_id = curunit;
     req.function = 4;
-    req.reference = dconf.baseaddr + minchan;
-    req.word_count = maxchan - minchan + 1;
+    req.reference = dconf.baseaddr + minaddr[curunit];
+    req.word_count = maxaddr[curunit] - minaddr[curunit] + 1;
 
     if(writen(fd, &req, sizeof(ModbusRequest)) < 0)
         throw PluginLibraryError("error writing to " + dconf.port_name);
@@ -359,29 +391,26 @@ void ModbusProtocol::do_start()
     itv.it_value.tv_usec = 0;
 
     N(setitimer(ITIMER_REAL, &itv, NULL));
-    
+
     while(!terminate_proc)
       {
-        if(read_port(fd, &resp, 11 + (maxchan - minchan) * 2) == 0)
+        if(read_port(fd, &resp, 11 + (maxaddr[curunit] - minaddr[curunit]) * 2) == 0)
             continue;
 
         if(resp.function == 0x04)
           {
-            if(resp.bc_ex != (maxchan - minchan + 1) * 2)
-              {
-                logs(LOG_ERR) << "unexpected byte count " << resp.bc_ex << endl;
-                continue;
-              }
+            if(resp.bc_ex != (maxaddr[curunit] - minaddr[curunit] + 1) * 2)
+                throw PluginError("unexpected byte count " + to_string(resp.bc_ex));
 
             handle_response();
           }
         else if(resp.function == 0x84)
           {
-            logs(LOG_ERR) << "Modbus exception " << resp.bc_ex << endl;
+            throw PluginError("Modbus exception " + to_string(resp.bc_ex));
           }
         else
           {
-            logs(LOG_ERR) << "unexpected function code " << resp.function << endl;
+            throw PluginError("unexpected function code " + to_string(resp.function));
           }
       }
   }

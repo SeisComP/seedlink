@@ -38,80 +38,80 @@ default_tq = -1
 * which is referenced from seedlink.ini
 
 * Strom 5A 12V System
-channel SA source_id=$sources.wago.channels.a.sid realscale=0.183 realunit=mA precision=2
+channel SA source_id=1.$sources.wago.channels.a.sid realscale=0.183 realunit=mA precision=2
 
 * Strom 5A 24V System
-channel SB source_id=$sources.wago.channels.b.sid realscale=0.183 realunit=mA precision=2
+channel SB source_id=1.$sources.wago.channels.b.sid realscale=0.183 realunit=mA precision=2
 
 * Strom 5A Reserve
-channel SC source_id=$sources.wago.channels.c.sid realscale=0.183 realunit=mA precision=2
+channel SC source_id=1.$sources.wago.channels.c.sid realscale=0.183 realunit=mA precision=2
 
 * Strom 5A Reserve
-channel SD source_id=$sources.wago.channels.d.sid realscale=0.183 realunit=mA precision=2
+channel SD source_id=1.$sources.wago.channels.d.sid realscale=0.183 realunit=mA precision=2
 
 * Spannung 30V DC Solarcontroller 1
-channel SE source_id=$sources.wago.channels.e.sid realscale=0.000916 realunit=V precision=3
+channel SE source_id=1.$sources.wago.channels.e.sid realscale=0.000916 realunit=V precision=3
 
 * Spannung 30V DC Solarcontroller 2
-channel SF source_id=$sources.wago.channels.f.sid realscale=0.000916 realunit=V precision=3
+channel SF source_id=1.$sources.wago.channels.f.sid realscale=0.000916 realunit=V precision=3
 
 * Spannung 30V DC Solarcontroller 3
-channel SG source_id=$sources.wago.channels.g.sid realscale=0.000916 realunit=V precision=3
+channel SG source_id=1.$sources.wago.channels.g.sid realscale=0.000916 realunit=V precision=3
 
 * Spannung 30V DC Solarcontroller 4
-channel SH source_id=$sources.wago.channels.h.sid realscale=0.000916 realunit=V precision=3
+channel SH source_id=1.$sources.wago.channels.h.sid realscale=0.000916 realunit=V precision=3
 
 * Spannung 30V DC Solarcontroller 5
-channel SI source_id=$sources.wago.channels.i.sid realscale=0.000916 realunit=V precision=3
+channel SI source_id=1.$sources.wago.channels.i.sid realscale=0.000916 realunit=V precision=3
 
 * Spannung 30V DC Solarcontroller 6
-channel SJ source_id=$sources.wago.channels.j.sid realscale=0.000916 realunit=V precision=3
+channel SJ source_id=1.$sources.wago.channels.j.sid realscale=0.000916 realunit=V precision=3
 
 * Spannung 30V DC Solarcontroller 7
-channel SK source_id=$sources.wago.channels.k.sid realscale=0.000916 realunit=V precision=3
+channel SK source_id=1.$sources.wago.channels.k.sid realscale=0.000916 realunit=V precision=3
 
 * Spannung 30V DC Solarcontroller 8
-channel SL source_id=$sources.wago.channels.l.sid realscale=0.000916 realunit=V precision=3
+channel SL source_id=1.$sources.wago.channels.l.sid realscale=0.000916 realunit=V precision=3
 
 * Spannung 30V DC Diodenverknuepfung SC1+SC2
-channel SM source_id=$sources.wago.channels.m.sid realscale=0.000916 realunit=V precision=3
+channel SM source_id=1.$sources.wago.channels.m.sid realscale=0.000916 realunit=V precision=3
 
 * Spannung 30V DC Diodenverknuepfung SC3+SC8
-channel SN source_id=$sources.wago.channels.n.sid realscale=0.000916 realunit=V precision=3
+channel SN source_id=1.$sources.wago.channels.n.sid realscale=0.000916 realunit=V precision=3
 
 * Spannung 30V DC 12V VSAT (geschaltet) [Sri Lanka, Madagaskar]
-channel SO source_id=$sources.wago.channels.o.sid realscale=0.000916 realunit=V precision=3
+channel SO source_id=1.$sources.wago.channels.o.sid realscale=0.000916 realunit=V precision=3
 
 * Spannung 30V DC 24V Converter
-channel SP source_id=$sources.wago.channels.p.sid realscale=0.000916 realunit=V precision=3
+channel SP source_id=1.$sources.wago.channels.p.sid realscale=0.000916 realunit=V precision=3
 
 * Spannung 30V DC VSAT Router geschaltet 24V
-channel SQ source_id=$sources.wago.channels.q.sid realscale=0.000916 realunit=V precision=3
+channel SQ source_id=1.$sources.wago.channels.q.sid realscale=0.000916 realunit=V precision=3
 
 * Spannung 30V DC Diodenverknuepfung SC1-SC4 [Sri Lanka]
-channel SR source_id=$sources.wago.channels.r.sid realscale=0.000916 realunit=V precision=3
+channel SR source_id=1.$sources.wago.channels.r.sid realscale=0.000916 realunit=V precision=3
 
 * Spannung 30V Reserve
-channel SS source_id=$sources.wago.channels.s.sid realscale=0.000916 realunit=V precision=3
+channel SS source_id=1.$sources.wago.channels.s.sid realscale=0.000916 realunit=V precision=3
 
 * Spannung 30V Reserve
-channel ST source_id=$sources.wago.channels.t.sid realscale=0.000916 realunit=V precision=3
+channel ST source_id=1.$sources.wago.channels.t.sid realscale=0.000916 realunit=V precision=3
 
 * Spannung 30V Reserve
-channel SU source_id=$sources.wago.channels.u.sid realscale=0.000916 realunit=V precision=3
+channel SU source_id=1.$sources.wago.channels.u.sid realscale=0.000916 realunit=V precision=3
 
 * Wiederstandsmessung Schwimmer
-channel SV source_id=$sources.wago.channels.v.sid realscale=0.5 realunit=Ohm precision=3
+channel SV source_id=1.$sources.wago.channels.v.sid realscale=0.5 realunit=Ohm precision=3
 
 * Wiederstandsmessung Tuerk
-channel SW source_id=$sources.wago.channels.w.sid realscale=0.5 realunit=Ohm precision=3
+channel SW source_id=1.$sources.wago.channels.w.sid realscale=0.5 realunit=Ohm precision=3
 
 * Wiederstandsmessung Reserve
-channel SX source_id=$sources.wago.channels.x.sid realscale=0.5 realunit=Ohm precision=3
+channel SX source_id=1.$sources.wago.channels.x.sid realscale=0.5 realunit=Ohm precision=3
 
 * Wiederstandsmessung Reserve
-channel SY source_id=$sources.wago.channels.y.sid realscale=0.5 realunit=Ohm precision=3
+channel SY source_id=1.$sources.wago.channels.y.sid realscale=0.5 realunit=Ohm precision=3
 
 * 230V Messung
-channel SZ source_id=$sources.wago.channels.z.sid realscale=0.1 realunit=V precision=3
+channel SZ source_id=1.$sources.wago.channels.z.sid realscale=0.1 realunit=V precision=3
 
