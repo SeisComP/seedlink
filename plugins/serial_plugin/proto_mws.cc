@@ -51,8 +51,6 @@ const int MAX_TIME_ERROR    = 1000000;
 // MWSProtocol
 //*****************************************************************************
 
-void alarm_handler(int sig);
-
 class MWSProtocol: public Proto
   {
   private:

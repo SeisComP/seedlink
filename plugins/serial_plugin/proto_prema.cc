@@ -68,8 +68,6 @@ const char *chselect[DATA_CHANNELS] = { "M01", "M02" };
 // PremaProtocol
 //*****************************************************************************
 
-void alarm_handler(int sig);
-
 class PremaProtocol: public Proto
   {
   private:
