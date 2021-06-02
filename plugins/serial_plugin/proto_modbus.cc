@@ -11,6 +11,7 @@
  * https://www.gnu.org/licenses/agpl-3.0.html.                             *
  ***************************************************************************/
 
+#include <iostream>
 #include <iomanip>
 #include <vector>
 #include <algorithm>
