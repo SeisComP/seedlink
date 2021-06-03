@@ -312,6 +312,7 @@ void ModbusProtocol::handle_response()
 
         if(soh_message)
           {
+            std::ios_base::fmtflags ff(seed_log.flags());
             char tbuf[50];
             strftime(tbuf, 50, "%Y-%m-%d;%H:%M:%S", ptm);
             seed_log << fixed << "status: " << tbuf << ";" << curunit;
@@ -329,7 +330,8 @@ void ModbusProtocol::handle_response()
                 seed_log << modbus_channels[curunit][addr]->realunit;
               }
 
-            seed_log << defaultfloat << endl;
+            seed_log << endl;
+	    seed_log.flags(ff);
           }
       }
 
