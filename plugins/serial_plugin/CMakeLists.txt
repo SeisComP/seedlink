@@ -16,6 +16,7 @@ SET(SERIALPLUGIN_SOURCES
 	proto_prema.cc
 	proto_sadc.cc
 	proto_solar.cc
+	proto_vaisala.cc
 	proto_ws2300.cc
 	proto_modbus.cc
 )
