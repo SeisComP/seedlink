@@ -35,8 +35,17 @@
 			</parameter>
 			<parameter name="proc" type="string">
 				<description>
-				Name of the proc object (defined in streams.xml); used for processing
-				raw streams (streams submitted by a plugin as raw samples).
+				Name of the proc object uniquely defined in a template file of
+				the q330 plugin e.g.
+				$SEISCOMP_ROOT/share/templates/seedlink/q330/streams_{name}.tpl.
+				proc is used for processing, e.g. renaming or resampling of raw
+				streams (streams submitted by a plugin as raw samples).
+				The template file is used to generate
+				$SEISCOMP_ROOT/var/lib/seedlink/streams.xml .
+
+				Example template: $SEISCOMP_ROOT/share/templates/seedlink/q330/streams_q330_100.tpl
+
+				If proc is not given, the streams are taken as provided by the DAS.
 				</description>
 			</parameter>
 			<parameter name="slot" type="int" default="1">

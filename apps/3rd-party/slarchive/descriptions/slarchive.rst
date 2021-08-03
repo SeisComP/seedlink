@@ -1,21 +1,78 @@
 slarchive connects to a SeedLink server, requests data streams and writes received
-packets into directory/file structures. The precise layout of the directories and
-files is defined in a format string.
+packets into directory/file structures (archives). The precise layout
+of the directories and files is defined in a format string.
 
-The implemented file layouts are:
+The implemented layouts are:
 
-- the SeisComP Data Structure (SDS)
-- Buffer of Uniform Data structure (BUD)
-- the old SeisComP/datalog structure (DLOG) for backwards compatibility
+- :ref:`SDS <slarchive-section-sds>`: The SeisComP Data Structure, default in |scname|
+- BUD: Buffer of Uniform Data structure
+- DLOG: The old SeisComP/datalog structure for backwards compatibility
 
-To write more than one archive simply specify multiple format definitions (or presets).
+The duration for which the data are kept in archive is controlled by the bindings
+parameter :confal:`keep`. slarchive itself does not clean the archive. For removing
+old data execute :file:`$SEISCOMP_ROOT/var/lib/slarchive/purge_datafiles`. A
+regular clean-up is suggested by ::
+
+   seiscomp print crontab
+
+The resulting line, e.g. ::
+
+   20 3 * * * /home/sysop/seiscomp/var/lib/slarchive/purge_datafiles >/dev/null 2>&1
+
+can be adjusted and added to crontab.
+
+
+Background Execution
+====================
+
+When starting slarchive in |scname| as a daemon module in the background SDS is
+considered and the packets are written without modification: ::
+
+   $ seiscomp start slarchive
+
+
+Command-Line Execution
+======================
+
+Writing to **other layouts** or to **multiple archives** and other options are
+supported when executing slarchive on the command line.
+E.g. to write to more than one archive simply specify multiple format definitions
+(or presets).
+
+For more command-line option read the help: ::
+
+   $ slarchive -h
+
+
+Multiple Instances
+==================
+
+slarchive allows generating aliases, e.g. for running in multiple instances with
+different module and bindings configurations. For creating/removing aliases use the
+:ref:`seiscomp script <sec-management-commands>`, e.g. ::
+
+   $ seiscomp alias create slarchive2 slarchive
+
+
+.. _slarchive-section-sds:
 
 SDS definition
 ==============
 
-The basic directory and file layout is defined as:
+SDS is the basic directory and file layout in |scname| for waveform archives. The
+archive base directory is defined by :confval:`archive`. The SDS layout is defined
+as:
 
-:file:`<SDSdir>/Year/NET/STA/CHAN.TYPE/NET.STA.LOC.CHAN.TYPE.YEAR.DAY`.
+.. code-block:: sh
+
+   <SDSdir>
+     + year
+       + network code
+         + station code
+           + channel code
+             + one file per day and location, e.g. NET.STA.LOC.CHAN.D.YEAR.DOY
+
+File example: :file:`<SDSdir>/Year/NET/STA/CHAN.TYPE/NET.STA.LOC.CHAN.TYPE.YEAR.DAY`.
 
 +-----------+-----------------------------------------------+
 | Field     | Description                                   |

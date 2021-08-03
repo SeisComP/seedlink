@@ -1,7 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <seiscomp>
 	<binding module="seedlink" name="mseedscan" category="sources">
-		<description>MseedScan</description>
+		<description>
+			MseedScan transfers new or changed miniSEED files from a directory
+			to a SeedLink server. It recursively a directory
+			structures and continuously checks for file modifications. The files
+			are presumed to be composed of Mini-SEED records of 512 Bytes. As the
+			files are appended or created the plugin will feed the new records to
+			the controlling SeedLink server.
+		</description>
 		<configuration>
 			<parameter name="dir" type="string">
 				<description>Directory to scan.</description>

@@ -39,11 +39,11 @@ documentation in form of UNIX manual pages.
 
 .. csv-table::
    :widths: 2 3 5
-   :header: Plugin name, Digitizer/DAS, Plugin Implementer
+   :header: Plugin name, Source or Digitizer/DAS, Plugin Implementer
    :align: left
 
    :ref:`seedlink-sources-antelope-label` * ,  Antelope, Chad Trabant (IRIS)
-   :ref:`seedlink-sources-caps-label`       ,  CAPS server, `gempa GmbH <https://gempa.de>`_
+   :ref:`seedlink-sources-caps-label`       ,  `CAPS server <https://docs.gempa.de/caps/current/index.html>`_ , `gempa GmbH <https://gempa.de>`_
    :ref:`seedlink-sources-chain-label`      ,  SeedLink, GFZ
    dm24 **    ,  Guralp DM24, GFZ; based on libgcf2 from Guralp
    :ref:`seedlink-sources-dr24-label`       ,  Geotech DR24, GFZ
@@ -57,8 +57,9 @@ documentation in form of UNIX manual pages.
    :ref:`seedlink-sources-m24-label` *      ,  Lennartz M24, Lennartz Electronic GmbH
    :ref:`seedlink-sources-minilogger-label` ,  SEP064 USB Seismometer Interface, GFZ; Anthony Lomax
    :ref:`seedlink-sources-mseedfifo-label`  ,  Generic, GFZ
-   :ref:`seedlink-sources-mseedscan-label`  ,  Generic, Chad Trabant (IRIS)
+   :ref:`seedlink-sources-mseedscan-label`  ,  Transfers miniSEED files from a directory, Chad Trabant (IRIS)
    :ref:`seedlink-sources-mk6-label` *      ,  MK6, Jan Wiszniowski (IGPAS)
+   :ref:`seedlink-sources-mppt-label` *     ,  SunSaver MPPT via Modbus TCP/IP,
    :ref:`seedlink-sources-mws-label`        ,  Reinhardt MWS5/MWS9 Weather Station, GFZ
    :ref:`seedlink-sources-naqs-label`       ,  NAQS, "Chad Trabant (IRIS); based on sample code from Nanometrics, Inc."
    :ref:`seedlink-sources-nmxp-label` *     ,  NAQS, Matteo Quintiliani (INGV)
@@ -70,6 +71,7 @@ documentation in form of UNIX manual pages.
    :ref:`seedlink-sources-sadc-label`       ,  SARA SADC10/18/20/30, GFZ
    :ref:`seedlink-sources-scream-label`     ,  SCREAM, Reinoud Sleeman (KNMI)
    :ref:`seedlink-sources-scream_ring-label`  ,  SCREAM, "Reinoud Sleeman (KNMI), This is the second revision of the scream plugin which supports buffering for short-term completeness."
+   :ref:`seedlink-sources-vaisala-label`     ,  Vaisala ASCII protocol (serial plugin), GFZ
    :ref:`seedlink-sources-wago-label`       ,  WAGO MODBUS/TCP devices, GFZ
    :ref:`seedlink-sources-wave24-label` *   ,  Wave24, MicroStep-MIS
    :ref:`seedlink-sources-win-label`        ,  WIN, GFZ; based on source code of WIN system

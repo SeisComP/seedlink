@@ -26,8 +26,15 @@
 			</parameter>
 			<parameter name="proc" type="string" default="reftek">
 				<description>
-				Name of the proc object (defined in streams.xml); used for processing
-				raw streams (streams submitted by a plugin as raw samples).
+					Name of the proc object uniquely defined in a template file of
+					the reftek plugin e.g.
+					$SEISCOMP_ROOT/share/templates/seedlink/reftek/streams_{name}.tpl.
+					proc is used for processing, e.g. renaming or resampling of raw
+					streams (streams submitted by a plugin as raw samples).
+					The template file is used to generate
+					$SEISCOMP_ROOT/var/lib/seedlink/streams.xml .
+
+					Example template: $SEISCOMP_ROOT/share/templates/seedlink/reftek/streams_reftek.tpl
 				</description>
 			</parameter>
 			<parameter name="timeout" type="int" default="60" unit="s">
