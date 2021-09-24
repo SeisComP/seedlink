@@ -47,9 +47,14 @@ class SeedlinkPluginHandler:
             streams = ["*.*"]
 
         try:
-            encoding = seedlink.param('sources.caps.encoding')
+            seedlink.param('sources.caps.encoding')
         except KeyError:
             seedlink.setParam('sources.caps.encoding', "STEIM2")
+
+        try:
+            seedlink.param('sources.caps.proc')
+        except KeyError:
+            seedlink.setParam('sources.caps.proc', "")
 
         # parse address URL and create capsId of form:
         # host[.port][_user]
