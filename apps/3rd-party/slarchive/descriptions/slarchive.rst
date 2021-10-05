@@ -9,7 +9,7 @@ The implemented layouts are:
 - DLOG: The old SeisComP/datalog structure for backwards compatibility
 
 The duration for which the data are kept in archive is controlled by the bindings
-parameter :confal:`keep`. slarchive itself does not clean the archive. For removing
+parameter :confval:`keep`. slarchive itself does not clean the archive. For removing
 old data execute :file:`$SEISCOMP_ROOT/var/lib/slarchive/purge_datafiles`. A
 regular clean-up is suggested by ::
 
