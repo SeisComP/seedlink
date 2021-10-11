@@ -244,7 +244,7 @@ sl_collect (SLCD *slconn, SLpacket **slpack)
         if ((update_stream (slconn, (SLpacket *)&slconn->stat->databuf[slconn->stat->sendptr])) == -1)
         {
           /* If updating didn't work the packet is broken */
-          retpacket = 0;
+          return SLTERMINATE;
         }
       }
 

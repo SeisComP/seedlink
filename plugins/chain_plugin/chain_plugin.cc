@@ -50,7 +50,7 @@
 
 #include "schedule.h"
 
-#define MYVERSION "2.0 (2019.199)"
+#define MYVERSION "2.0 (2021.284)"
 
 #ifndef CONFIG_FILE
 #define CONFIG_FILE "/home/sysop/config/chain.xml"
