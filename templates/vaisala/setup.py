@@ -1,7 +1,7 @@
 import os
 
 '''
-Plugin handler for the MWS plugin.
+Plugin handler for the Vaisala plugin.
 '''
 class SeedlinkPluginHandler:
   # Create defaults

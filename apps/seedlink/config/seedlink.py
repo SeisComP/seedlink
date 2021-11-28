@@ -446,11 +446,12 @@ class Module(TemplateModule):
             sproc_name = self._get('sources.%s.proc' % (source_type))
             if sproc_name:
                 self.sproc_used = True
-                sproc = self._process_template("streams_%s.tpl" % sproc_name, source_type, True, False)
+                sproc_filename = "streams_%s.tpl" % sproc_name.split(':')[0]
+                sproc = self._process_template(sproc_filename, source_type, True, False)
                 if sproc:
                     self.sproc[sproc_name] = sproc
                 else:
-                    print("WARNING: cannot find streams_%s.tpl" % sproc_name)
+                    print("WARNING: cannot find %s" % sproc_filename)
 
             # Read plugins.ini template for this source and store content
             # under the provided key for this binding
@@ -473,11 +474,12 @@ class Module(TemplateModule):
         sproc_name = self._get('proc')
         if sproc_name:
             self.sproc_used = True
-            sproc = self._process_template("streams_%s.tpl" % sproc_name, None, True, False)
+            sproc_filename = "streams_%s.tpl" % sproc_name
+            sproc = self._process_template(sproc_filename, None, True, False)
             if sproc:
                 self.sproc[sproc_name] = sproc
             else:
-                print("WARNING: cannot find streams_%s.tpl" % sproc_name)
+                print("WARNING: cannot find %s" % sproc_filename)
 
         # Create station section for seedlink.ini
         self.seedlink_station[(self.net, self.sta)] = self._generateStationForIni()

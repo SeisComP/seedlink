@@ -11,6 +11,12 @@
  * https://www.gnu.org/licenses/agpl-3.0.html.                             *
  ***************************************************************************/
 
+/*Modif Tristan DIDIER 01/2018 pour plugin miscSerial
+ *  Add vars channelsNumber, flush_period, and sample_period to struct DigitizerConfig*/
+/*Modif Tristan DIDIER 04/2019 pour plugin miscScript
+ *  Add vars script_path and script_args*/
+
+
 #ifndef SERIAL_PLUGIN_H
 #define SERIAL_PLUGIN_H
 
@@ -92,10 +98,24 @@ struct DigitizerConfig
     int nbundles;              // HRD-24
     string soh_log_dir;        // HRD-24
     int baseaddr;              // Modbus
+    //Modif Tristan DIDIER 01/2018 pour plugin miscSerial
+    int channelsNumber;
+    int flush_period;
+    double sample_period;
+    int serial_clock_period;
+    //Modif Tristan DIDIER 04/2018 pour plugin miscSerial
+    string script_path;
+    string script_args;
+    //Fin Modif TD
 
     DigitizerConfig(): port_bps(0), checksum_used(0), use_pctime_if_no_gps(0),
       lsb(8), statusinterval(0), time_offset(0), zero_sample_limit(-1),
-      default_tq(0), unlock_tq(10), nbundles(59), baseaddr(0) {}
+      default_tq(0), unlock_tq(10), nbundles(59), baseaddr(0),
+      //Modif Tristan DIDIER 01/2018 pour plugin miscSerial
+      channelsNumber(1), flush_period(0), sample_period(1), serial_clock_period(0),
+      //Modif Tristan DIDIER 04/2018 pour plugin miscScript
+      script_path(""), script_args("")
+      {}
   };
 
 //*****************************************************************************

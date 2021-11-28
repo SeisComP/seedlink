@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<seiscomp>
+	<binding module="seedlink" name="miscSerial" category="sources">
+		<description>Miscellaneous ASCII serial Plugin (serial plugin)</description>
+		<configuration>
+			<parameter name="comport" type="string" default="/dev/data">
+				<description>Serial port.</description>
+			</parameter>
+			<parameter name="baudrate" type="int" default="9600">
+				<description>Baud rate.</description>
+			</parameter>
+			<parameter name="proc" type="string" default="auto">
+				<description>
+				Name of the proc object used for channel naming (and eventually down sampling). If this field is left to default (auto), a basic proc (without decimation) will be automatically generated.
+				</description>
+			</parameter>
+			<parameter name="channels" type="string" default="HHZ,HHN,HHE">
+				<description>
+				Names of the channels. These names are only used if you choose to automatically generate the proc. Nevertheless, even if you are not using the auto proc, it is important to declare correctly this list as the number of channels is used to size the internal plugin's buffers. If you do not want seedlink to use one of the channels, replace it names with "none". Example : 01HHZ,none,none,02HHZ,HHE,HHN
+				</description>
+			</parameter>
+			<parameter name="sample_frequency" type="string" default="1">
+				<description>
+				Sampling frequency. Must be integer or a fraction of integers.
+				</description>
+			</parameter>
+			<parameter name="flush_period" type="int" default="0">
+				<description>
+				This parameter aims at enforcing the sending of seedlink data blocks (512bytes, even if they are not yet full. 0 means no enforcing.
+				</description>
+			</parameter>
+			<parameter name="serial_clock_period" type="int" default="0">
+				<description>
+				If this parameter is not 0, a date frame ("YYYY,mm,dd hh:mm:ss\n") will be send on serial port every serial_clock_period seconds.
+				</description>
+			</parameter>
+		</configuration>
+	</binding>
+</seiscomp>

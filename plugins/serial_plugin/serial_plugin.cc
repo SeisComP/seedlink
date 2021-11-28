@@ -11,6 +11,13 @@
  * https://www.gnu.org/licenses/agpl-3.0.html.                             *
  ***************************************************************************/
 
+/*Modif Tristan DIDIER 01/2018 pour plugin miscSerial :
+ * Add channelsNumber,flush_period, and sample_period support to configure_plugin function*/
+/*Modif Tristan DIDIER 04/2019 pour Misc_Script :
+ * Add script_path and script_args*/
+/*Modif Tristan DIDIER 02/2020 pour plugin miscSerial
+ * Add serial_clock_period*/
+
 #include <iostream>
 #include <iomanip>
 #include <string>
@@ -46,7 +53,7 @@
 #include "serial_plugin.h"
 #include "diag.h"
 
-#define MYVERSION "2.2 (2021.153)"
+#define MYVERSION "2.3 (2021.332)"
 
 #ifndef CONFIG_FILE
 #define CONFIG_FILE "/home/sysop/config/plugins.ini"
@@ -607,6 +614,16 @@ void configure_plugin(const string &config_file)
     atts->add_item(IntAttribute("bundles", dconf.nbundles, 1, 59));
     atts->add_item(StringAttribute("soh_log_dir", dconf.soh_log_dir));
     atts->add_item(IntAttribute("baseaddr", dconf.baseaddr, 0, 65535));
+
+    /*Modif Tristan DIDIER 01/2018 pour plugin miscSerial*/
+    atts->add_item(IntAttribute("ChannelsNumber",dconf.channelsNumber,0,65535));
+    atts->add_item(FloatAttribute("sample_period", dconf.sample_period, double(0.001), double(86400)));
+    atts->add_item(IntAttribute("flush_period",dconf.flush_period,0,86400));
+    atts->add_item(IntAttribute("serial_clock_period",dconf.serial_clock_period,0,86400));
+    /*Modif Tristan DIDIER 04/2019 pour plugin miscScript*/
+    atts->add_item(StringAttribute("script_path",dconf.script_path));
+    atts->add_item(StringAttribute("script_args",dconf.script_args));
+    /*Fin Modif TD*/
 
     rc_ptr<CfgElementMap> elms = new CfgElementMap;
     elms->add_item(ChannelDef("channel"));

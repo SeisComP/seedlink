@@ -19,6 +19,9 @@ SET(SERIALPLUGIN_SOURCES
 	proto_vaisala.cc
 	proto_ws2300.cc
 	proto_modbus.cc
+	proto_miscString.cc
+	proto_miscSerial.cc
+	proto_miscScript.cc
 )
 
 INCLUDE_DIRECTORIES(../../libs/plugin)
@@ -37,6 +40,7 @@ TARGET_LINK_LIBRARIES(
 	serial_plugin
 		slplugin
 		slutils
+		pthread
 )
 
 INSTALL(TARGETS serial_plugin RUNTIME DESTINATION ${SEEDLINK_PLUGIN_OUTPUT_DIR})

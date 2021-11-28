@@ -3,7 +3,7 @@
 
 [$seedlink.source.id]
 
-* Settings for Reinhardt weather station (GITEWS)
+* Settings for Vaisala weather station
 
 * Station ID (network/station code is set in seedlink.ini)
 station=$seedlink.station.id

@@ -15,7 +15,8 @@ CONFIG_FILE = $(CONFIG_DIR)/plugins.ini
 
 OBJS = serial_plugin.o rw2300.o linux2300.o proto_edata.o proto_edata2.o \
     proto_guralp2.o proto_dr24.o proto_prema.o proto_hrd24.o proto_sadc.o \
-    proto_ws2300.o proto_mws.o proto_solar.o proto_modbus.o
+    proto_ws2300.o proto_mws.o proto_solar.o proto_modbus.o \
+    proto_miscString.o proto_miscSerial.o proto_miscScript.o
 
 CXX = g++
 CXXFLAGS = -Wall -O2 -fno-strict-aliasing
@@ -81,6 +82,18 @@ proto_solar.o: proto_solar.cc
 proto_modbus.o: proto_modbus.cc
 	$(CXX) $(CXXFLAGS) $(OPTIONS) -I$(SLPLUGINSDIR) -I$(SLUTILSDIR) \
            -I$(QDIR) -c $< -o $@
+
+proto_miscString.o: proto_miscString.cc
+	$(CXX) $(CXXFLAGS) $(OPTIONS) -I$(SLPLUGINSDIR) -I$(SLUTILSDIR) \
+	   -I$(QDIR) -c $< -o $@
+
+proto_miscSerial.o: proto_miscSerial.cc
+	$(CXX) $(CXXFLAGS) $(OPTIONS) -I$(SLPLUGINSDIR) -I$(SLUTILSDIR) \
+	   -I$(QDIR) -c $< -o $@
+
+proto_miscScript.o: proto_miscScript.cc
+	$(CXX) $(CXXFLAGS) $(OPTIONS) -I$(SLPLUGINSDIR) -I$(SLUTILSDIR) \
+	   -I$(QDIR) -c $< -o $@
 
 rw2300.o linux2300.o: %.o: %.c
 	$(CC) $(CFLAGS) $(WSOPTIONS) -c $< -o $@
