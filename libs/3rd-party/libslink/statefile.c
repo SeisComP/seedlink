@@ -41,6 +41,12 @@ sl_savestate (SLCD *slconn, const char *statefile)
     return -1;
   }
 
+  if (ftruncate(statefd, 0) < 0)
+  {
+    sl_log_r (slconn, 2, 0, "cannot truncate state file\n");
+    return -1;
+  }
+
   sl_log_r (slconn, 1, 2, "saving connection state to state file\n");
 
   /* Traverse stream chain and write sequence numbers */
