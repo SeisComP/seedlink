@@ -232,10 +232,10 @@ class Module(TemplateModule):
                             print(" removing sequence file %s" % f, file=sys.stderr)
                             os.remove(f)
                 else:
-                    prin(" sequence_file_cleanup disabled", file=sys.stderr)
+                    print(" sequence_file_cleanup disabled", file=sys.stderr)
 
             except ValueError:
-                prin(" sequence_file_cleanup parameter is not a number: '%s'" % str(self.global_params["sequence_file_cleanup"]), file=sys.stderr)
+                print(" sequence_file_cleanup parameter is not a number: '%s'" % str(self.global_params["sequence_file_cleanup"]), file=sys.stderr)
                 return 1
 
         return self.env.start(self.name, self.env.binaryFile(self.name), daemon_opt,\
