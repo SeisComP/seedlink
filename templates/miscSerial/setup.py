@@ -75,7 +75,7 @@ class SeedlinkPluginHandler:
         ##### Auto-generate proc conf and channel/source_id mapping
 
         if seedlink.param("sources.miscSerial.proc") == "auto":
-            seedlink.setParam("sources.miscSerial.proc", "auto_miscSerial:%s" % key)
+            seedlink.setParam("sources.miscSerial.proc", "auto:miscSerial_%s" % key)
             trees = ""
             channels = ""
             idx = 0
