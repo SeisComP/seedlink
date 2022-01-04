@@ -43,7 +43,7 @@ documentation in form of UNIX manual pages.
    :align: left
 
    :ref:`seedlink-sources-antelope-label` * ,  Antelope, Chad Trabant (IRIS)
-   :ref:`seedlink-sources-caps-label`       ,  `CAPS server <https://docs.gempa.de/caps/current/index.html>`_ , `gempa GmbH <https://gempa.de>`_
+   :ref:`seedlink-sources-caps-label`       ,  `CAPS server <https://docs.gempa.de/caps/current/index.html>`_ , `gempa GmbH <https://www.gempa.de>`_
    :ref:`seedlink-sources-chain-label`      ,  SeedLink, GFZ
    dm24 **    ,  Guralp DM24, GFZ; based on libgcf2 from Guralp
    :ref:`seedlink-sources-dr24-label`       ,  Geotech DR24, GFZ
@@ -64,7 +64,7 @@ documentation in form of UNIX manual pages.
    :ref:`seedlink-sources-naqs-label`       ,  NAQS, "Chad Trabant (IRIS); based on sample code from Nanometrics, Inc."
    :ref:`seedlink-sources-nmxp-label` *     ,  NAQS, Matteo Quintiliani (INGV)
    nrts **    ,  NRTS, GFZ; based on ISI toolkit from David E. Chavez
-   :ref:`seedlink-sources-ps2400_eth-label` ,  :ref:`Earth Data PS2400/PS6 Ethernet<seedlink-sources-ps2400_eth-label>`, GFZ; `gempa GmbH <https://gempa.de>`_
+   :ref:`seedlink-sources-ps2400_eth-label` ,  :ref:`Earth Data PS2400/PS6 Ethernet<seedlink-sources-ps2400_eth-label>`, GFZ; `gempa GmbH <https://www.gempa.de>`_
    :ref:`seedlink-sources-q330-label`       ,  Quanterra Q330, "GFZ; based on lib330 maintained by ISTI, Inc."
    comserv ** ,  "Quanterra Q380/Q680, Q4120, Q720", "GFZ; based on Comserv by Quanterra, Inc."
    :ref:`seedlink-sources-reftek-label`     ,  RefTek RTPD, "GFZ; based on software library provided by RefTek, Inc."
