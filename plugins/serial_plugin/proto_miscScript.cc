@@ -256,12 +256,12 @@ char** miscScriptProtocol::prepare_args(string path,string args)
 
 	for(vector<string>::iterator it = v.begin() ; it != v.end(); ++it){
 		str=*it;
-		argsTab[i]=(char*)str.c_str();
+		argsTab[i]=strdup((char*)str.c_str());
 		i++;
 	}
 
 	//Set last tab element to NULL
-	argsTab[i]=new char[1];
+	//argsTab[i]=new char[1];
 	argsTab[i]=(char*)NULL;
 	
 	//return resultat;
