@@ -1,4 +1,4 @@
-  <proc name="vaisala">
+  <proc name="gmeteo">
     <tree>
       <input name="KO" channel="KO" location="" rate="1/10"/>
       <input name="IO" channel="IO" location="" rate="1/10"/>

@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <seiscomp>
-	<binding module="seedlink" name="vaisala" category="sources">
-		<description>Vaisala ASCII protocol (serial plugin)</description>
+	<binding module="seedlink" name="gmeteo" category="sources">
+		<description>GFZ meteo protocol (serial plugin)</description>
 		<configuration>
-			<parameter name="comport" type="string" default="/dev/weatherstation">
+			<parameter name="comport" type="string" default="/dev/meteo">
 				<description>Serial port.</description>
 			</parameter>
 			<parameter name="baudrate" type="int" default="19200">
 				<description>Baud rate.</description>
 			</parameter>
-			<parameter name="proc" type="string" default="vaisala">
+			<parameter name="proc" type="string" default="gmeteo">
 				<description>
 				Name of the proc object (defined in streams.xml); used for processing
 				raw streams (streams submitted by a plugin as raw samples).

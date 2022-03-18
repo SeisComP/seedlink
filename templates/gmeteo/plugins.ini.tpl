@@ -3,20 +3,20 @@
 
 [$seedlink.source.id]
 
-* Settings for Vaisala weather station
+* Settings for GFZ meteo
 
 * Station ID (network/station code is set in seedlink.ini)
 station=$seedlink.station.id
 
 * Use the command 'serial_plugin -m' to find out which protocols are
 * supported.
-protocol=vaisala
+protocol=gmeteo
 
 * Serial port
-port=$sources.vaisala.comport
+port=$sources.gmeteo.comport
 
 * Baud rate
-bps=$sources.vaisala.baudrate
+bps=$sources.gmeteo.baudrate
 
 * Time interval in minutes when weather information is logged, 0 (default)
 * means "disabled". Weather channels can be used independently of this
@@ -38,23 +38,23 @@ default_tq = -1
 * which is referenced from seedlink.ini
 
 * Outdoor Temperature (C * 100)
-channel KO source_id=Ta scale=100
+channel KO source_id=TD scale=100
 
 * Outdoor Humidity (%RH)
-channel IO source_id=Ua scale=1
+channel IO source_id=HR scale=1
 
 * Air Pressure (hPa * 10)
-channel DO source_id=Pa scale=10
+channel DO source_id=PR scale=10
 
 * Wind Direction (deg)
-channel WD source_id=Dm scale=1
+channel WD source_id=WD scale=1
 
 * Wind Speed (m/s * 10)
-channel WS source_id=Sm scale=10
+channel WS source_id=WS scale=10
 
 * Rain accumulation (mm * 100)
-channel RA source_id=Rc scale=100
+channel RA source_id=RI scale=100
 
 * Hail accumulation (hits/cm^2 * 10)
-channel HA source_id=Hc scale=10
+channel HA source_id=HI scale=10
 
