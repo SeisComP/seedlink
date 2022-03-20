@@ -201,6 +201,12 @@ void VaisalaProtocol::decode_message(const char *msg)
 
 void VaisalaProtocol::handle_response(const char *msg)
   {
+    if(strncmp(msg, "0R", 2))
+      {
+        logs(LOG_WARNING) << "invalid message: " << msg << endl;
+        return;
+      }
+
     struct timeval tv;
     N(gettimeofday(&tv, NULL));
     time_t t = tv.tv_sec;
