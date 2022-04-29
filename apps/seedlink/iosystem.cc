@@ -78,7 +78,7 @@ using namespace Utilities;
 // Conflicts with definition in libslink.h
 // const char *const SIGNATURE         = "SL";
 const int         IOSIZE            = 520;
-const int         CMDLEN            = 140;
+const int         CMDLEN            = 1024;
 
 #ifdef FD_REALLOC
 const int         FD_REALLOC_LIMIT    = 1024 * 1024;
@@ -812,6 +812,7 @@ class ConnectionState: private ConnectionStateBase
     bool batchmode;
     bool ws_enabled;
     string ws_key;
+    string ws_proto;
     string ws_buf;
 
     ConnectionState(const string &host_init, int port_init, bool rlog,
@@ -864,6 +865,7 @@ void ConnectionState::ws_accept()
         "HTTP/1.1 101 Switching Protocols\r\n" \
         "Upgrade: websocket\r\n" \
         "Connection: Upgrade\r\n" \
+        "Sec-WebSocket-Protocol: " + ws_proto + "\r\n"
         "Sec-WebSocket-Accept: " + string(cdigest) + "\r\n\r\n";
 
     have_response = true;
@@ -2311,6 +2313,18 @@ bool Connection::request(const vector<string> &cmdvec)
             if(cmdvec.size() == 2)
               {
                 cx.ws_key = cmdvec[1];
+              }
+            else
+              {
+                cx.request_invalid(cmdvec);
+                return true;
+              }
+          }
+        else if(!strcasecmp(cmdvec[0].c_str(), "SEC-WEBSOCKET-PROTOCOL"))
+          {
+            if(cmdvec.size() == 2)
+              {
+                cx.ws_proto = cmdvec[1];
               }
             else
               {
