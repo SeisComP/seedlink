@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<seiscomp>
+	<module name="gdrt_plugin" category="Acquisition">
+		<description>SeedLink plugin for receiving GDRT messages</description>
+		<command-line>
+			<group name="Generic">
+				<optionReference>generic#help</optionReference>
+				<optionReference>generic#version</optionReference>
+				<optionReference>generic#config-file</optionReference>
+				<optionReference>generic#plugins</optionReference>
+				<optionReference>generic#daemon</optionReference>
+			</group>
+
+			<group name="Verbosity">
+				<optionReference>verbosity#verbosity</optionReference>
+				<optionReference>verbosity#v</optionReference>
+				<optionReference>verbosity#quiet</optionReference>
+				<optionReference>verbosity#print-component</optionReference>
+				<optionReference>verbosity#print-context</optionReference>
+				<optionReference>verbosity#component</optionReference>
+				<optionReference>verbosity#syslog</optionReference>
+				<optionReference>verbosity#lockfile</optionReference>
+				<optionReference>verbosity#console</optionReference>
+				<optionReference>verbosity#debug</optionReference>
+				<optionReference>verbosity#trace</optionReference>
+				<optionReference>verbosity#log-file</optionReference>
+			</group>
+
+			<group name="Plugin">
+				<option long-flag="udpport" argument="int" param-ref="plugins.gdrt.udpport"/>
+				<option long-flag="stations-from" argument="string" param-ref="plugins.gdrt.stationsFrom"/>
+			</group>
+		</command-line>
+
+		<configuration>
+			<group name="plugins">
+				<group name="gdrt">
+					<parameter name="udpport" type="int" default="9999">
+						<description>
+							UDP port for receiving GDRT messages. By default port 9999 will be used.
+						</description>
+					</parameter>
+					<parameter name="stationsFrom" type="string" default="stations.txt">
+						<description>
+							Location of station list file.
+						</description>
+					</parameter>
+				</group>
+			</group>
+		</configuration>
+	</module>
+
+	<binding module="seedlink" name="gdrt" category="sources">
+		<description>Transfers GDRT data to SeedLink server</description>
+		<configuration>
+			<parameter name="station" type="string">
+				<description>
+					GDRT station code.
+				</description>
+			</parameter>
+			<parameter name="locationCode" type="string" default="">
+				<description>
+					Location code.
+				</description>
+			</parameter>
+			<parameter name="sampleRate" type="double" default="1.0" unit="Hz">
+				<description>
+					Sample rate in Hz.
+				</description>
+			</parameter>
+			<parameter name="udpport" type="int" default="9999">
+				<description>
+					UDP port for receiving GDRT messages. By default port 9999 will be used.
+				</description>
+			</parameter>
+		</configuration>
+	</binding>
+</seiscomp>

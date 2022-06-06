@@ -15,6 +15,7 @@ IF ( NOT MACOSX )
 			ewexport_plugin
 			ewexport_pasv_plugin
 			fs_plugin
+			gdrt_plugin
 			minilogger_plugin
 			mseedscan_plugin
 			naqsplugin
