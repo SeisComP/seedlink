@@ -15,7 +15,6 @@ IF ( NOT MACOSX )
 			ewexport_plugin
 			ewexport_pasv_plugin
 			fs_plugin
-			gdrt_plugin
 			minilogger_plugin
 			mseedscan_plugin
 			naqsplugin
@@ -29,6 +28,10 @@ IF ( NOT MACOSX )
 			win_plugin
 	) 
 ENDIF ( NOT MACOSX )
+
+IF (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/../../common)
+	SET(_DIR_LIST ${_DIR_LIST} gdrt_plugin)
+ENDIF()
 
 SET(SEEDLINK_PLUGIN_OUTPUT_DIR ${SC3_PACKAGE_SHARE_DIR}/plugins/seedlink)
 
