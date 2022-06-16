@@ -33,7 +33,7 @@ section 5.1.1.5. Antelope, Earthworm and NAQS can also import data from
 SeisComP. In SeisComP the class :ref:`RecordStream <global_recordstream>` is implemented that supports both
 SeedLink and ArcLink sources; this class is used by all SeisComP modules that
 work with waveform data. On a lower level, SeedLink clients can be implemented
-using the `libslink`_ software library or its Java counterpart, JSeedLink. Libslink
+using the :cite:t:`libslink` software library or its Java counterpart, JSeedLink. Libslink
 supports Linux/UNIX, Windows and MacOS X platforms, and comes with an exhaustive
 documentation in form of UNIX manual pages.
 
@@ -43,15 +43,15 @@ documentation in form of UNIX manual pages.
    :align: left
 
    :ref:`seedlink-sources-antelope-label` * ,  Antelope, Chad Trabant (IRIS)
-   :ref:`seedlink-sources-caps-label`       ,  `CAPS server <https://docs.gempa.de/caps/current/index.html>`_ , `gempa GmbH <https://www.gempa.de>`_
+   :ref:`seedlink-sources-caps-label`       ,  CAPS server :cite:p:`caps` , `gempa GmbH <https://www.gempa.de>`_
    :ref:`seedlink-sources-chain-label`      ,  SeedLink, GFZ
-   dm24 **    ,  Guralp DM24, GFZ; based on libgcf2 from Guralp
+   dm24 **                                  ,  Guralp DM24, GFZ; based on libgcf2 from Guralp
    :ref:`seedlink-sources-dr24-label`       ,  Geotech DR24, GFZ
-   :ref:`seedlink-sources-echopro_3ch100hz-label` /  :ref:`seedlink-sources-echopro_6ch200hz-label`   ,  Kelunji Echo/EchoPro, Oyvind Natvik (UiB)
+   :ref:`seedlink-sources-echopro_3ch100hz-label` /  :ref:`seedlink-sources-echopro_6ch200hz-label`, Kelunji Echo/EchoPro, Oyvind Natvik (UiB)
    :ref:`seedlink-sources-edata-label`      ,  Earth Data PS2400/PS6-24, GFZ
    :ref:`seedlink-sources-ewexport-label`   ,  "Earthworm export server (TCP/IP), Chad Trabant (IRIS)"
-   :ref:`seedlink-sources-ewexport_pasv-label`   ,  Earthworm passive export server (TCP/IP), Chad Trabant (IRIS)
-   :ref:`seedlink-sources-fs_mseed-label`,  miniSEED file plugin,
+   :ref:`seedlink-sources-ewexport_pasv-label`,  Earthworm passive export server (TCP/IP), Chad Trabant (IRIS)
+   :ref:`seedlink-sources-fs_mseed-label`   ,  miniSEED file plugin,
    :ref:`seedlink-sources-hrd24-label`      ,  Nanometrics HRD24, GFZ; Recai Yalgin
    :ref:`seedlink-sources-liss-label`       ,  LISS, Chad Trabant (IRIS)
    :ref:`seedlink-sources-m24-label` *      ,  Lennartz M24, Lennartz Electronic GmbH
@@ -70,8 +70,8 @@ documentation in form of UNIX manual pages.
    :ref:`seedlink-sources-reftek-label`     ,  RefTek RTPD, "GFZ; based on software library provided by RefTek, Inc."
    :ref:`seedlink-sources-sadc-label`       ,  SARA SADC10/18/20/30, GFZ
    :ref:`seedlink-sources-scream-label`     ,  SCREAM, Reinoud Sleeman (KNMI)
-   :ref:`seedlink-sources-scream_ring-label`  ,  SCREAM, "Reinoud Sleeman (KNMI), This is the second revision of the scream plugin which supports buffering for short-term completeness."
-   :ref:`seedlink-sources-vaisala-label`     ,  Vaisala ASCII protocol (serial plugin), GFZ
+   :ref:`seedlink-sources-scream_ring-label`,  SCREAM, "Reinoud Sleeman (KNMI), This is the second revision of the scream plugin which supports buffering for short-term completeness."
+   :ref:`seedlink-sources-vaisala-label`    ,  Vaisala ASCII protocol (serial plugin), GFZ
    :ref:`seedlink-sources-wago-label`       ,  WAGO MODBUS/TCP devices, GFZ
    :ref:`seedlink-sources-wave24-label` *   ,  Wave24, MicroStep-MIS
    :ref:`seedlink-sources-win-label`        ,  WIN, GFZ; based on source code of WIN system
@@ -454,11 +454,3 @@ can be added by creation a corresponding template file.
 
 Again, the **source** and **proc** definition is used to resolve the streams proc
 template file at :file:`share/templates/seedlink/[source]/streams_[proc].tpl`.
-
-
-References
-==========
-
-.. target-notes::
-
-.. _`libslink` : https://ds.iris.edu/ds/nodes/dmc/software/downloads/libslink/
