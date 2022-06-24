@@ -5,6 +5,7 @@ SET(
 	GDRT_SOURCES
 		main.cpp
 		app.cpp
+		ecef.cpp
 		settings.cpp
 		station.cpp
 		udpclient.cpp

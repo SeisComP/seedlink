@@ -32,8 +32,10 @@ namespace GDRT {
 Station::Station(const std::string &networkCode,
 		 const std::string &stationCode,
 		 const std::string &locationCode,
-		 double sampleRate)
-: _lbs(networkCode, stationCode, locationCode, "LBS", sampleRate)
+		 double sampleRate,
+		 Gempa::Ecef2Enu *ecef2enu)
+: _ecef2enu(ecef2enu)
+, _lbs(networkCode, stationCode, locationCode, "LBS", sampleRate)
 , _lbo(networkCode, stationCode, locationCode, "LBO", sampleRate)
 , _lbp(networkCode, stationCode, locationCode, "LBP", sampleRate)
 , _lbt(networkCode, stationCode, locationCode, "LBT", sampleRate)
@@ -47,7 +49,10 @@ Station::Station(const std::string &networkCode,
 , _lb3(networkCode, stationCode, locationCode, "LB3", sampleRate)
 , _lb4(networkCode, stationCode, locationCode, "LB4", sampleRate)
 , _lb5(networkCode, stationCode, locationCode, "LB5", sampleRate)
-, _lb6(networkCode, stationCode, locationCode, "LB6", sampleRate) {
+, _lb6(networkCode, stationCode, locationCode, "LB6", sampleRate)
+, _lbe(networkCode, stationCode, locationCode, "LBE", sampleRate)
+, _lbn(networkCode, stationCode, locationCode, "LBN", sampleRate)
+, _lbu(networkCode, stationCode, locationCode, "LBU", sampleRate) {
 }
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
@@ -90,6 +95,13 @@ void Station::parse(const string &msg) {
 	_lb4.put(tm, xy);
 	_lb5.put(tm, xz);
 	_lb6.put(tm, yz);
+
+	if ( _ecef2enu ) {
+		auto v = _ecef2enu->convert(x, y, z);
+		_lbe.put(tm, v.x);
+		_lbn.put(tm, v.y);
+		_lbu.put(tm, v.z);
+	}
 }
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 

@@ -61,7 +61,7 @@ void UDPClient::handleReceive(const boost::system::error_code& error,
 			SEISCOMP_INFO("Ignoring unconfigured station %s", sta);
 	}
 	else {
-		SEISCOMP_ERROR("Invalid message: %s", msg.c_str());
+		SEISCOMP_WARNING("Invalid message: %s", msg.c_str());
 	}
 
 	wait();
@@ -76,12 +76,14 @@ void UDPClient::addStation(const string &key,
 			   const string &networkCode,
 			   const string &stationCode,
 			   const string &locationCode,
-			   double sampleRate) {
+			   double sampleRate,
+			   Gempa::Ecef2Enu *ecef2enu) {
 	_stations.insert(pair<string, StationPtr>(key,
 						  new Station(networkCode,
 							      stationCode,
 							      locationCode,
-							      sampleRate)));
+							      sampleRate,
+							      ecef2enu)));
 }
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 

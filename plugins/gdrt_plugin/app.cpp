@@ -32,7 +32,8 @@ namespace GDRT {
 Application::Application(int argc, char** argv)
 : Client::Application(argc, argv) {
 	setMessagingEnabled(false);
-	setDatabaseEnabled(false, false);
+	setDatabaseEnabled(true, false);
+	setLoadStationsEnabled(true);
 	bindSettings(&global);
 }
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -65,8 +66,40 @@ bool Application::init() {
 		if ( locationCode == "--" )
 			locationCode = "";
 
-		_client.addStation(key, networkCode, stationCode, locationCode, sampleRate);
+		Gempa::Ecef2Enu* ecef2enu = nullptr;
+
+		DataModel::SensorLocation* loc = Client::Inventory::Instance()->getSensorLocation(
+			networkCode,
+			stationCode,
+			locationCode,
+			Core::Time::GMT());
+
+		if ( loc ) {
+			try {
+				ecef2enu = new Gempa::Ecef2Enu(loc->latitude(),
+							       loc->longitude(),
+							       loc->elevation());
+			}
+			catch ( Core::ValueError ) {
+			}
+		}
+
+		if ( !ecef2enu )
+			SEISCOMP_WARNING("Cannot find coordinates of %s.%s.%s, transformed streams will not be available",
+					 networkCode.c_str(),
+					 stationCode.c_str(),
+					 locationCode.c_str());
+
+		_client.addStation(key,
+				   networkCode,
+				   stationCode,
+				   locationCode,
+				   sampleRate,
+				   ecef2enu);
 	}
+
+	// Inventory no longer needed
+	Client::Inventory::Reset();
 
 	if ( !ifs.eof() ) {
 		SEISCOMP_ERROR("%s: invalid input", global.plugins.gdrt.stationsFrom.c_str());

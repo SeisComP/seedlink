@@ -32,7 +32,8 @@ class UDPClient {
 				const std::string &networkCode,
 				const std::string &stationCode,
 				const std::string &locationCode,
-				double sampleRate);
+				double sampleRate,
+				Gempa::Ecef2Enu *ecef2enu);
 
 		void run();
 		void stop();

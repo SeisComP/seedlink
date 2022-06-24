@@ -18,6 +18,7 @@
 
 #include "station.h"
 #include "channel.h"
+#include "ecef.h"
 
 
 namespace Seiscomp {
@@ -30,11 +31,13 @@ class Station : public Core::BaseObject {
 		Station(const std::string &networkCode,
 			const std::string &stationCode,
 			const std::string &locationCode,
-			double sampleRate);
+			double sampleRate,
+			Gempa::Ecef2Enu *ecef2enu);
 
 		void parse(const std::string &msg);
 
 	private:
+		Gempa::Ecef2Enu *_ecef2enu;
 		Channel<std::int32_t> _lbs;
 		Channel<std::int32_t> _lbo;
 		Channel<std::int32_t> _lbp;
@@ -50,6 +53,9 @@ class Station : public Core::BaseObject {
 		Channel<double> _lb4;
 		Channel<double> _lb5;
 		Channel<double> _lb6;
+		Channel<double> _lbe;
+		Channel<double> _lbn;
+		Channel<double> _lbu;
 };
 
 
