@@ -52,6 +52,7 @@ documentation in form of UNIX manual pages.
    :ref:`seedlink-sources-ewexport-label`   ,  "Earthworm export server (TCP/IP), Chad Trabant (IRIS)"
    :ref:`seedlink-sources-ewexport_pasv-label`,  Earthworm passive export server (TCP/IP), Chad Trabant (IRIS)
    :ref:`seedlink-sources-fs_mseed-label`   ,  miniSEED file plugin,
+   :ref:`seedlink-sources-gdrt-label`       ,  GDRT server, GFZ
    :ref:`seedlink-sources-hrd24-label`      ,  Nanometrics HRD24, GFZ; Recai Yalgin
    :ref:`seedlink-sources-liss-label`       ,  LISS, Chad Trabant (IRIS)
    :ref:`seedlink-sources-m24-label` *      ,  Lennartz M24, Lennartz Electronic GmbH

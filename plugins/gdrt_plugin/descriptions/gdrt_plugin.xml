@@ -12,10 +12,10 @@
 		Federal Ministry of Education and Research (BMBF) within the EWRICA project.
 
 		The GDRT plugin is a SeedLink plugin that converts GDRT UDP messages to
-		Mini-SEED channels according to the following table:
+		miniSEED channels according to the following table:
 
 		+-------+---------------------+----------------+---------------------------------------+-------------------+
-		| Index | Field name          | Format         | Description                           | Mini-SEED channel |
+		| Index | Field name          | Format         | Description                           | miniSEED channel  |
 		+=======+=====================+================+=======================================+===================+
 		|   1   | Start of message    | character(1)   | A fixed character '>'                 |                   |
 		+-------+---------------------+----------------+---------------------------------------+-------------------+
@@ -108,7 +108,7 @@
 			</parameter>
 			<parameter name="locationCode" type="string" default="">
 				<description>
-					Location code.
+					Sensor location code.
 				</description>
 			</parameter>
 			<parameter name="sampleRate" type="double" default="1.0" unit="Hz">
