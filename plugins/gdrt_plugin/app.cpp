@@ -77,10 +77,10 @@ bool Application::init() {
 		if ( loc ) {
 			try {
 				ecef2enu = new Gempa::Ecef2Enu(loc->latitude(),
-							       loc->longitude(),
-							       loc->elevation());
+				                               loc->longitude(),
+				                               loc->elevation());
 			}
-			catch ( Core::ValueError ) {
+			catch ( Core::ValueError & ) {
 			}
 		}
 
