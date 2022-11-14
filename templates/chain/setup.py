@@ -186,7 +186,12 @@ class SeedlinkPluginHandler:
     chain_key = (group_tag, status_file)
 
     # Find out what chain.xml instance to use
-    station_key = seedlink.net + "." + seedlink.sta
+    try:
+        sta = seedlink.param("sources.chain.station")
+    except: sta = seedlink.sta
+
+    station_key = seedlink.net + "." + sta
+
     chain_instance = 0
     if station_key in self.stations:
       chain_instance = self.stations[station_key]+1
