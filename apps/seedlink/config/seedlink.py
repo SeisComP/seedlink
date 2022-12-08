@@ -336,7 +336,7 @@ class Module(TemplateModule):
             try:
                 rc = seiscomp.config.Config()
                 rc.readConfig(os.path.join(self.rc_dir, "station_%s_%s" % (self.net, self.sta)))
-                description = rc.getString("description")
+                description = rc.getString("description").decode()
             except Exception as e:
                 # Maybe the rc file doesn't exist, maybe there's no readable description.
                 pass
