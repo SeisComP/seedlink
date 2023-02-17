@@ -3,7 +3,7 @@
 	<binding module="seedlink" name="mppt" category="sources">
 		<description>SunSaver MPPT via Modbus TCP/IP</description>
 		<configuration>
-			<parameter name="address" type="string">
+			<parameter name="address" type="string" default="localhost">
 				<description>
 					Hostname or IP.
 				</description>
@@ -11,6 +11,11 @@
 			<parameter name="port" type="int" default="502">
 				<description>
 					TCP port.
+				</description>
+			</parameter>
+			<parameter name="unit_id" type="int" default="1">
+				<description>
+					Modbus unit identifier.
 				</description>
 			</parameter>
 			<parameter name="channels" type="list:string" default="">

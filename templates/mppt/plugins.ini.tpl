@@ -41,17 +41,17 @@ baseaddr = 8
 * which is referenced from seedlink.ini
 
 * Battery voltage
-channel SA source_id=1.$sources.mppt.channels.a.sid realscale=0.003052 realunit=V precision=2
+channel SA source_id=${sources.mppt.unit_id}.${sources.mppt.channels.a.sid} realscale=0.003052 realunit=V precision=2
 
 * Array voltage
-channel SB source_id=1.$sources.mppt.channels.b.sid realscale=0.003052 realunit=V precision=2
+channel SB source_id=${sources.mppt.unit_id}.${sources.mppt.channels.b.sid} realscale=0.003052 realunit=V precision=2
 
 * Load voltage
-channel SC source_id=1.$sources.mppt.channels.c.sid realscale=0.003052 realunit=V precision=2
+channel SC source_id=${sources.mppt.unit_id}.${sources.mppt.channels.c.sid} realscale=0.003052 realunit=V precision=2
 
 * Charging current
-channel SD source_id=1.$sources.mppt.channels.d.sid realscale=0.002416 realunit=A precision=2
+channel SD source_id=${sources.mppt.unit_id}.${sources.mppt.channels.d.sid} realscale=0.002416 realunit=A precision=2
 
 * Load current
-channel SE source_id=1.$sources.mppt.channels.e.sid realscale=0.002416 realunit=A precision=2
+channel SE source_id=${sources.mppt.unit_id}.${sources.mppt.channels.e.sid} realscale=0.002416 realunit=A precision=2
 
