@@ -71,7 +71,7 @@
 
 #include "plugin.h"
 
-#define MYVERSION "1.0 (2010.256)"
+#define MYVERSION "1.0 (2023.164)"
 
 #ifndef SYSLOG_FACILITY
 #define SYSLOG_FACILITY LOG_LOCAL0
@@ -492,6 +492,7 @@ void decode_second_block(unsigned char *ptr, int len)
         log_printf("time stamp %02d%02d%02d %02d%02d%02d", t[0], t[1], t[2],
           t[3], t[4], t[5]);
 
+    memset(&t_parts, 0, sizeof(t_parts));
     t_parts.tm_year = t[0] + 100;
     t_parts.tm_mon = t[1] - 1;
     t_parts.tm_mday = t[2];
@@ -505,6 +506,7 @@ void decode_second_block(unsigned char *ptr, int len)
         return;
       }
 
+    memset(&pt, 0, sizeof(pt));
     pt.year = t_parts.tm_year + 1900;
     pt.yday = t_parts.tm_yday + 1;
     pt.hour = t_parts.tm_hour;
