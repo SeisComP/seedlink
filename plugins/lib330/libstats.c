@@ -152,7 +152,7 @@ void lib_stats_timer (pq330 q330)
 begin
   enum tacctype acctype ;
   integer minute, last_minute, comeff_valids ;
-  longint total, sentdif, resdif, val, duty ;
+  longint total, sentdif, resdif, val ;
   paqstruc paqs ;
   taccmstat *paccm ;
 
@@ -172,7 +172,6 @@ begin
       end
     else
       q330->share.accmstats[AC_COMEFF].accum_ds = 0 ;
-  duty = q330->share.accmstats[AC_DUTY].accum_ds ;
   for (acctype = AC_FIRST ; acctype <= AC_LAST ; acctype++)
     begin
       paccm = addr(q330->share.accmstats[acctype]) ;

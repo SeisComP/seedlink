@@ -234,11 +234,7 @@ begin
 end
 #endif
 
-#ifdef CONSTMSG
 void msgadd (pq330 q330, word msgcode, longword dt, const string95 *msgsuf, boolean client)
-#else
-void msgadd (pq330 q330, word msgcode, longword dt, string95 *msgsuf, boolean client)
-#endif
 begin
   string s, s1, s2 ;
   paqstruc paqs ;
@@ -258,7 +254,7 @@ begin
       sprintf(s1, "[%s] ", jul_string(dt, addr(s2))) ;
     else
       strcpy(s1, " ") ;
-  sprintf(s, "{%d}%s%s%s", msgcode, s1, lib_get_msg (msgcode, addr(s2)), msgsuf) ;
+  sprintf(s, "{%d}%s%s%s", msgcode, s1, lib_get_msg (msgcode, addr(s2)), (char *)msgsuf) ;
   if (((msgcode div 100) != 7) lor (q330->cur_verbosity and VERB_AUXMSG))
     then
       begin
@@ -297,21 +293,13 @@ begin
   msgunlock (q330) ;
 end
 
-#ifdef CONSTMSG
 void libmsgadd (pq330 q330, word msgcode, const string95 *msgsuf)
-#else
-void libmsgadd (pq330 q330, word msgcode, string95 *msgsuf)
-#endif
 begin
 
   msgadd (q330, msgcode, 0, msgsuf, FALSE) ;
 end
 
-#ifdef CONSTMSG
 void libdatamsg (pq330 q330, word msgcode, const string95 *msgsuf)
-#else
-void libdatamsg (pq330 q330, word msgcode, string95 *msgsuf)
-#endif
 begin
   longword dt ;
   paqstruc paqs ;

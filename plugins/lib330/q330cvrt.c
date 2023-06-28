@@ -601,7 +601,7 @@ begin
   ssstat->hdr.count = loadword (p) ;
   for (w = 1 ; w <= ssstat->hdr.count ; w++)
     begin
-      pnext = p ;
+      pnext = *p ;
       sz = loadword (p) ;
       incn(pnext, sz) ; /* bytes for this entry */
       st = loadword (p) ;
@@ -630,7 +630,7 @@ begin
                         pss->exttemp = loadlongint (p) ;
                       end
                 end
-            p = pnext ;
+            *p = pnext ;
           end
         else
           break ; /* invalid entry, skip entire block */
@@ -977,7 +977,7 @@ begin
       pfs->sensor_serial[0] = loadlongword (p) ;
       pfs->sensor_serial[1] = loadlongword (p) ;
 #endif
-      for (j = 0 ; j <= 3 ; i++)
+      for (j = 0 ; j <= 3 ; j++)
         pfs->booms[j] = loadbyte (p) ;
     end
 end

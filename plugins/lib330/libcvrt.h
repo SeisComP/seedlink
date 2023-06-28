@@ -47,7 +47,7 @@ extern int16 loadint16 (pbyte *p) ;
 extern longword loadlongword (pbyte *p) ;
 extern longint loadlongint (pbyte *p) ;
 extern single loadsingle (pbyte *p) ;
-extern void loadstring (pbyte *p, integer fieldwidth, string *) ;
+extern void loadstring (pbyte *p, integer fieldwidth, string *s) ;
 extern void loadmac (pbyte *p, tsix *mac) ;
 extern void loadblock (pbyte *p, integer size, pointer pdest) ;
 

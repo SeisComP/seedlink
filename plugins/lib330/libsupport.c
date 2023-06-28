@@ -37,11 +37,15 @@ Edit History:
 #endif
 #include <ctype.h>
 #include <stdio.h>
-#ifndef X86_WIN32
+#ifdef X86_WIN32
+#include <io.h>				/* close(), lseek(), read(), write() */
+#else
 #include <sys/stat.h>
 #include <sys/socket.h>
+#include <sys/types.h>			/* off_t */
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <unistd.h>			/* close(), lseek(), read(), write() */
 #endif
 
 const dms_type days_mth = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31} ;
@@ -313,7 +317,6 @@ end
 
 longword getip (pchar s, boolean *domain)
 begin
-typedef longword *plword ;
   longword ip ;
 #ifdef X86_WIN32
   struct hostent *phost ;
@@ -390,8 +393,8 @@ begin
   return s ;
 end
 
-longint baler_file (pfile_owner powner, enum tfileacc_type fatype, pstring fname,
-                    integer opt1, integer opt2)
+static longint baler_file (pfile_owner powner, enum tfileacc_type fatype,
+                           pstring fname, integer opt1, integer opt2)
 begin
   tfileacc_call fc ;
 
@@ -534,7 +537,7 @@ begin
           flags = flags or O_WRONLY ;
   else if (mode and LFO_READ)
     then
-      flags or O_RDONLY ;
+      flags = flags or O_RDONLY ;
   rwmode = S_IRUSR or S_IWUSR or S_IRGRP or S_IROTH ;
   if (powner)
     then

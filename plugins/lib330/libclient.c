@@ -673,7 +673,7 @@ begin
   return result ;
 end
 
-const tmodules modules =
+static /* typedef'd const */ tmodules modules =
    {{/*name*/"LibClient", /*ver*/VER_LIBCLIENT},     {/*name*/"LibStrucs", /*ver*/VER_LIBSTRUCS},
     {/*name*/"LibTypes", /*ver*/VER_LIBTYPES},       {/*name*/"LibMsgs", /*ver*/VER_LIBMSGS},
     {/*name*/"LibSupport", /*ver*/VER_LIBSUPPORT},   {/*name*/"LibStats", /*ver*/VER_LIBSTATS},
@@ -691,7 +691,7 @@ const tmodules modules =
 #endif
     {/*name*/"Q330Types", /*ver*/VER_Q330TYPES},     {/*name*/"Q330IO", /*ver*/VER_Q330IO},
     {/*name*/"Q330Cvrt", /*ver*/VER_Q330CVRT},       {/*name*/"LibPOC", /*ver*/VER_LIBPOC},
-    {/*name*/"", /*ver*/0}} ;
+    {/*name*/"", /*ver*/0}} ; /* Null name to indicate end of list */
 
 pmodules lib_get_modules (void)
 begin

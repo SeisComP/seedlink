@@ -49,7 +49,7 @@ extern "C" {
 #include "libsupport.h"
 }
 
-#define MYVERSION "2.0 (2016.106)"
+#define MYVERSION "2.0 (2023.178)"
 
 #ifndef CONFIG_FILE
 #define CONFIG_FILE "/home/sysop/config/plugins.ini"
@@ -825,7 +825,7 @@ void init_plugin(int argc, char **argv)
     MSG(LOG_INFO, "lib330 modules:");
     for(int i = 0; i < MAX_MODULES; ++i)
       {
-        tmodule* mod = &(*mods)[i];
+        const tmodule* mod = &(*mods)[i];
         if(!mod->name[0])
             continue;
 

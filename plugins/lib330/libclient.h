@@ -405,7 +405,7 @@ typedef struct { /* one module */
   string15 name ;
   integer ver ;
 } tmodule ;
-typedef tmodule tmodules[MAX_MODULES] ; /* Null name to indicate end of list */
+typedef const tmodule tmodules[MAX_MODULES] ; /* Null name to indicate end of list */
 typedef tmodules *pmodules ;
 
 enum tmd5op_type {MDO_INIT, /* initialize buffer */

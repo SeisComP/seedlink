@@ -446,9 +446,9 @@ begin
   q330 = paqs->owner ;
   pavg->signed_sum = pavg->signed_sum + s ; /* update sum */
   pavg->sqr_sum = pavg->sqr_sum + samp * samp ; /* update mean-sqr */
-  if (abs(samp) > pavg->peak_abs)
+  if (fabs(samp) > pavg->peak_abs)
     then
-      pavg->peak_abs = abs(samp) ;
+      pavg->peak_abs = fabs(samp) ;
   inc(pavg->avg_count) ;
   if (pavg->avg_count >= q->avg_length)
     then

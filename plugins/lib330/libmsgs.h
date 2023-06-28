@@ -190,15 +190,9 @@ Edit History:
 
 #define HOSTMSG_ALL 800
 
-#ifdef CONSTMSG
 extern void libmsgadd (pq330 q330, word msgcode, const string95 *msgsuf) ;
 extern void libdatamsg (pq330 q330, word msgcode, const string95 *msgsuf) ;
 extern void msgadd (pq330 q330, word msgcode, longword dt, const string95 *msgsuf, boolean client) ;
-#else
-extern void libmsgadd (pq330 q330, word msgcode, string95 *msgsuf) ;
-extern void libdatamsg (pq330 q330, word msgcode, string95 *msgsuf) ;
-extern void msgadd (pq330 q330, word msgcode, longword dt, string95 *msgsuf, boolean client) ;
-#endif
 
 #ifndef OMIT_SEED
 extern void dump_msgqueue (pq330 q330) ;

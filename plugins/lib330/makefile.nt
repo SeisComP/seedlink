@@ -1,33 +1,52 @@
-!include <ntwin32.mak>
+!IF "$(EW_DEBUG)" == "1"
+!ELSE
+NODEBUG = 1
+!ENDIF
 
+!include <Win32.Mak>
 
+CFLAGS  = $(cflags)    $(cdebug) $(cvarsmt)   $(GLOBALFLAGS) \
+		/DX86_WIN32 /w24005 /w24047 /w24024 /w24048 /w24133
 
-OBJS = libarchive.obj libcvrt.obj libnetserv.obj libslider.obj libverbose.obj\
-      libclient.obj libdetect.obj libopaque.obj libstats.obj q330cvrt.obj\
-      libcmds.obj libfilters.obj libpoc.obj libstrucs.obj q330io.obj\
-      libcompress.obj liblogs.obj libsampcfg.obj libsupport.obj\
-      libcont.obj libmd5.obj libsample.obj libtokens.obj libdss.obj\
-      libctrldet.obj libmsgs.obj libseed.obj libtypes.obj\
+L = $(EW_HOME)\$(EW_VERSION)\lib
 
-HDRS =	libarchive.h libclient.h libcmds.h libcompress.h libcont.h libctrldet.h\
-	libcvrt.h libdetect.h libfilters.h liblogs.h libmd5.h libmsgs.h\
-	libnetserv.h libopaque.h libpoc.h libsampcfg.h libsampglob.h libdss.h\
- 	libsample.h libseed.h libslider.h libstats.h libstrucs.h libsupport.h\
-	libtokens.h libtypes.h libverbose.h pascal.h platform.h q330cvrt.h\
-	q330io.h q330types.h
-
-
-
-DEFINES = -DWIN32 -DX86_WIN32 -D_CRT_SECURE_NO_DEPRECATE
-
-all:	lib330.lib
-
-.c.obj:
-	cl /c $(DEFINES) $<
+OBJS = \
+	libarchive.obj \
+	libclient.obj \
+	libcmds.obj \
+	libcompress.obj \
+	libcont.obj \
+	libctrldet.obj \
+	libcvrt.obj \
+	libdetect.obj \
+	libdss.obj \
+	libfilters.obj \
+	liblogs.obj \
+	libmd5.obj \
+	libmsgs.obj \
+	libnetserv.obj \
+	libopaque.obj \
+	libpoc.obj \
+	libsampcfg.obj \
+	libsample.obj \
+	libseed.obj \
+	libslider.obj \
+	libstats.obj \
+	libstrucs.obj \
+	libsupport.obj \
+	libtokens.obj \
+	libtypes.obj \
+	libverbose.obj \
+	q330cvrt.obj \
+	q330io.obj
 
 lib330.lib: $(OBJS)
-	lib /OUT:lib330.lib $(OBJS)
+	lib /nologo /OUT:$@ $(OBJS)
 
-clean:
-	del *.obj
-	del lib330.lib
+
+# Clean-up rules
+clean: PHONY
+	-del a.out core *.o *.obj *% *~
+	-del lib330.a lib330.lib
+
+PHONY:

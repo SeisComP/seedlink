@@ -37,6 +37,13 @@ Edit History:
 */
 #ifndef OMIT_SEED /* Can't use without seed generation */
 #ifndef OMIT_NETWORK /* or without network */
+
+#ifdef X86_WIN32
+#include <io.h>				/* close() */
+#else
+#include <unistd.h>			/* close() */
+#endif
+
 #ifndef libnetserv_h
 #include "libnetserv.h"
 #endif
@@ -171,9 +178,13 @@ end
 
 static void open_socket (pnsstr nsstr)
 begin
-  integer lth, j ;
+  socklen_t lth ;
   integer err ;
-  integer flag ;
+#ifdef X86_WIN32
+  longword flag ;
+#else
+  integer flags ;
+#endif
   word host_port ;
   struct sockaddr xyz ;
   struct sockaddr_in *psock ;
@@ -216,37 +227,23 @@ begin
   psock->sin_addr.s_addr = INADDR_ANY ;
   flag2 = 1 ;
 #ifdef X86_WIN32
-  j = sizeof(BOOL) ;
-  setsockopt (nsstr->npath, SOL_SOCKET, SO_REUSEADDR, addr(flag2), j) ;
+  lth = sizeof(BOOL) ;
 #else
-  j = sizeof(int) ;
-  setsockopt (nsstr->npath, SOL_SOCKET, SO_REUSEADDR, addr(flag2), j) ;
+  lth = sizeof(int) ;
 #endif
-  flag = sizeof(struct linger) ;
-#ifdef X86_WIN32
-  getsockopt (nsstr->npath, SOL_SOCKET, SO_LINGER, addr(lingeropt), addr(flag)) ;
-#else
-  getsockopt (nsstr->npath, SOL_SOCKET, SO_LINGER, addr(lingeropt), addr(flag)) ;
-#endif
+  setsockopt (nsstr->npath, SOL_SOCKET, SO_REUSEADDR, addr(flag2), lth) ;
+  lth = sizeof(struct linger) ;
+  getsockopt (nsstr->npath, SOL_SOCKET, SO_LINGER, addr(lingeropt), addr(lth)) ;
   if (lingeropt.l_onoff)
     then
       begin
         lingeropt.l_onoff = 0 ;
         lingeropt.l_linger = 0 ;
-        flag = sizeof(struct linger) ;
-#ifdef X86_WIN32
-        setsockopt (nsstr->npath, SOL_SOCKET, SO_LINGER, addr(lingeropt), flag) ;
-#else
-        setsockopt (nsstr->npath, SOL_SOCKET, SO_LINGER, addr(lingeropt), flag) ;
-#endif
+        lth = sizeof(struct linger) ;
+        setsockopt (nsstr->npath, SOL_SOCKET, SO_LINGER, addr(lingeropt), lth) ;
       end
-#ifdef X86_WIN32
   err = bind(nsstr->npath, addr(nsstr->nsockin), sizeof(struct sockaddr)) ;
   if (err)
-#else
-  err = bind(nsstr->npath, addr(nsstr->nsockin), sizeof(struct sockaddr)) ;
-  if (err)
-#endif
     then
       begin
         err =
@@ -262,13 +259,13 @@ begin
         lib_msg_add(nsstr->ns_par.stnctx, AUXMSG_BINDERR, 0, addr(s)) ;
         return ;
       end
-  flag = 1 ;
 #ifdef X86_WIN32
+  flag = 1 ;
   ioctlsocket (nsstr->npath, FIONBIO, addr(flag)) ;
   err = listen (nsstr->npath, 1) ;
 #else
-  flag = fcntl (nsstr->npath, F_GETFL, 0) ;
-  fcntl (nsstr->npath, F_SETFL, flag or O_NONBLOCK) ;
+  flags = fcntl (nsstr->npath, F_GETFL, 0) ;
+  fcntl (nsstr->npath, F_SETFL, flags or O_NONBLOCK) ;
   err = listen (nsstr->npath, 1) ;
 #endif
   if (err)
@@ -298,8 +295,13 @@ end
 
 static void accept_ns_socket (pnsstr nsstr)
 begin
-  integer i, lth, err, err2 ;
-  integer flag ;
+  socklen_t lth ;
+  integer i, err, err2 ;
+#ifdef X86_WIN32
+  longword flag ;
+#else
+  integer flags ;
+#endif
   integer bufsize ;
   longword client_ip ;
   word client_port ;
@@ -313,11 +315,7 @@ begin
   if (nsstr->npath == INVALID_SOCKET)
     then
       return ;
-#ifdef X86_WIN32
   nsstr->sockpath = accept (nsstr->npath, addr(nsstr->client), addr(lth)) ;
-#else
-  nsstr->sockpath = accept (nsstr->npath, addr(nsstr->client), addr(lth)) ;
-#endif
   if (nsstr->sockpath == INVALID_SOCKET)
     then
       begin
@@ -349,8 +347,8 @@ begin
         if (nsstr->sockpath > nsstr->high_socket)
           then
             nsstr->high_socket = nsstr->sockpath ;
-        flag = fcntl (nsstr->sockpath, F_GETFL, 0) ;
-        fcntl (nsstr->sockpath, F_SETFL, flag or O_NONBLOCK) ;
+        flags = fcntl (nsstr->sockpath, F_GETFL, 0) ;
+        fcntl (nsstr->sockpath, F_SETFL, flags or O_NONBLOCK) ;
 #endif
         psock = (pointer) addr(nsstr->client) ;
         showdot (ntohl(psock->sin_addr.s_addr), addr(hostname)) ;
@@ -382,31 +380,23 @@ begin
                     return ;
                   end
             end
-        sprintf(s, "\"%s:%d\" to netserv[%d] port", addr(hostname), client_port, nsstr->ns_par.server_number) ;
+        sprintf(s, "\"%s:%d\" to netserv[%d] port", (char *)addr(hostname), client_port, nsstr->ns_par.server_number) ;
         lib_msg_add (nsstr->ns_par.stnctx, AUXMSG_CONN, 0, addr(s)) ;
         lth = sizeof(integer) ;
-#ifdef X86_WIN32
         err = getsockopt (nsstr->sockpath, SOL_SOCKET, SO_SNDBUF, addr(bufsize), addr(lth)) ;
-#else
-        err = getsockopt (nsstr->sockpath, SOL_SOCKET, SO_SNDBUF, addr(bufsize), addr(lth)) ;
-#endif
         if ((err == 0) land (bufsize < 30000))
           then
             begin
               bufsize = 30000 ;
-#ifdef X86_WIN32
               setsockopt (nsstr->sockpath, SOL_SOCKET, SO_SNDBUF, addr(bufsize), lth) ;
-#else
-              setsockopt (nsstr->sockpath, SOL_SOCKET, SO_SNDBUF, addr(bufsize), lth) ;
-#endif
             end
 #ifndef X86_WIN32
-        flag = 1 ;
-        lth = sizeof(integer) ;
 #if defined(linux) || defined(solaris)
         signal (SIGPIPE, SIG_IGN) ;
 #else
-        setsockopt (nsstr->sockpath, SOL_SOCKET, SO_NOSIGPIPE, addr(flag), lth) ;
+        flags = 1 ;
+        lth = sizeof(integer) ;
+        setsockopt (nsstr->sockpath, SOL_SOCKET, SO_NOSIGPIPE, addr(flags), lth) ;
 #endif
 #endif
         nsstr->haveclient = TRUE ;

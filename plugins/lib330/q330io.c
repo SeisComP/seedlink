@@ -42,6 +42,13 @@ Edit History:
    13 2010-03-27 rdr Add Q335 support.
    14 2010-05-13 rdr Add detection of 127.0.0.1 as additional baler port.
 */
+
+#ifdef X86_WIN32
+#include <io.h>				/* close(), read(), write() */
+#else
+#include <unistd.h>			/* close(), read(), write() */
+#endif
+
 #ifdef CMEX32
 #include "cmexserial.h"
 #endif
@@ -147,7 +154,7 @@ begin
 end
 
 #ifndef OMIT_NETWORK
-static longword baler_socket (pq330 q330, integer sockpath, enum tbaler_socket socktype)
+static longword baler_socket (pq330 q330, pntrint sockpath, enum tbaler_socket socktype)
 begin
 
   if (q330->par_create.call_baler)
@@ -157,7 +164,7 @@ begin
         q330->baler_call.baler_type = BT_SOCKET ;
         memcpy(addr(q330->baler_call.station_name), addr(q330->station_ident), sizeof(string9)) ;
         q330->baler_call.info = socktype ;
-        q330->baler_call.info2 = (pointer) sockpath ;
+        q330->baler_call.info2 = (void *) sockpath ;
         q330->baler_call.response = 0 ;
         q330->par_create.call_baler (addr(q330->baler_call)) ;
         return q330->baler_call.response ;
@@ -178,8 +185,13 @@ end
 
 boolean open_sockets (pq330 q330, boolean both, boolean fromback)
 begin
-  integer lth, j, err ;
-  integer flag ;
+  socklen_t lth ;
+  integer err ;
+#ifdef X86_WIN32
+  longword flag ;
+#else
+  integer flags ;
+#endif
   integer bufsize ;
   struct sockaddr xyz ;
   boolean isd ;
@@ -261,12 +273,12 @@ begin
   psock->sin_family = AF_INET ;
   psock->sin_port = htons(q330->q330cport) ;
   psock->sin_addr.s_addr = htonl(q330->q330ip) ;
-  flag = 1 ;
 #ifdef X86_WIN32
+  flag = 1 ;
   ioctlsocket (q330->cpath, FIONBIO, addr(flag)) ;
 #else
-  flag = fcntl (q330->cpath, F_GETFL, 0) ;
-  fcntl (q330->cpath, F_SETFL, flag or O_NONBLOCK) ;
+  flags = fcntl (q330->cpath, F_GETFL, 0) ;
+  fcntl (q330->cpath, F_SETFL, flags or O_NONBLOCK) ;
 #endif
   if (q330->tcp)
     then
@@ -274,12 +286,11 @@ begin
         q330->tcpidx = 0 ;
         flag2 = 1 ;
 #ifdef X86_WIN32
-        j = sizeof(BOOL) ;
-        setsockopt (q330->cpath, SOL_SOCKET, SO_REUSEADDR, addr(flag2), j) ;
+        lth = sizeof(BOOL) ;
 #else
-        j = sizeof(int) ;
-        setsockopt (q330->cpath, SOL_SOCKET, SO_REUSEADDR, addr(flag2), j) ;
+        lth = sizeof(int) ;
 #endif
+        setsockopt (q330->cpath, SOL_SOCKET, SO_REUSEADDR, addr(flag2), lth) ;
         err = connect (q330->cpath, addr(q330->csockout), sizeof(struct sockaddr)) ;
         if (err)
           then
@@ -308,13 +319,8 @@ begin
         psock->sin_family = AF_INET ;
         psock->sin_port = htons(q330->par_register.host_ctrlport) ;
         psock->sin_addr.s_addr = INADDR_ANY ;
-#ifdef X86_WIN32
         err = bind(q330->cpath, addr(q330->csockin), sizeof(struct sockaddr)) ;
         if (err)
-#else
-        err = bind(q330->cpath, addr(q330->csockin), sizeof(struct sockaddr)) ;
-        if (err)
-#endif
           then
             begin
               err =
@@ -337,11 +343,7 @@ begin
             baler_socket (q330, q330->cpath, BS_CONTROL) ;
       end
   lth = sizeof(struct sockaddr) ;
-#ifdef X86_WIN32
   getsockname (q330->cpath, addr(xyz), addr(lth)) ;
-#else
-  getsockname (q330->cpath, addr(xyz), addr(lth)) ;
-#endif
   psock = (pointer) addr(xyz) ;
   q330->ctrlport = ntohs(psock->sin_port) ;
   if (q330->tcp)
@@ -370,36 +372,25 @@ begin
               return TRUE ;
             end
         lth = sizeof(longint) ;
-#ifdef X86_WIN32
-        err = getsockopt (q330->dpath, SOL_SOCKET, SO_RCVBUF, addr(bufsize), addr(lth)) ;
-#else
+#ifndef X86_WIN32
         if (q330->dpath > q330->high_socket)
           then
             q330->high_socket = q330->dpath ;
-        err = getsockopt (q330->dpath, SOL_SOCKET, SO_RCVBUF, addr(bufsize), addr(lth)) ;
 #endif
+        err = getsockopt (q330->dpath, SOL_SOCKET, SO_RCVBUF, addr(bufsize), addr(lth)) ;
         if ((err == 0) land (bufsize < 30000))
           then
             begin
               bufsize = 30000 ;
-#ifdef X86_WIN32
               setsockopt (q330->dpath, SOL_SOCKET, SO_RCVBUF, addr(bufsize), lth) ;
-#else
-              setsockopt (q330->dpath, SOL_SOCKET, SO_RCVBUF, addr(bufsize), lth) ;
-#endif
             end
         psock = (pointer) addr(q330->dsockin) ;
         memset(psock, 0, sizeof(struct sockaddr)) ;
         psock->sin_family = AF_INET ;
         psock->sin_port = htons(q330->par_register.host_dataport) ;
         psock->sin_addr.s_addr = INADDR_ANY ;
-#ifdef X86_WIN32
         err = bind(q330->dpath, addr(q330->dsockin), sizeof(struct sockaddr)) ;
         if (err)
-#else
-        err = bind(q330->dpath, addr(q330->dsockin), sizeof(struct sockaddr)) ;
-        if (err)
-#endif
           then
             begin
               err =
@@ -421,16 +412,15 @@ begin
         psock->sin_family = AF_INET ;
         psock->sin_port = htons(q330->q330dport) ;
         psock->sin_addr.s_addr = htonl(q330->q330ip) ;
-        flag = 1 ;
-        lth = sizeof(struct sockaddr) ;
 #ifdef X86_WIN32
+        flag = 1 ;
         ioctlsocket (q330->dpath, FIONBIO, addr(flag)) ;
-        getsockname (q330->dpath, addr(xyz), addr(lth)) ;
 #else
-        flag = fcntl (q330->dpath, F_GETFL, 0) ;
-        fcntl (q330->dpath, F_SETFL, flag or O_NONBLOCK) ;
-        getsockname (q330->dpath, addr(xyz), addr(lth)) ;
+        flags = fcntl (q330->dpath, F_GETFL, 0) ;
+        fcntl (q330->dpath, F_SETFL, flags or O_NONBLOCK) ;
 #endif
+        lth = sizeof(struct sockaddr) ;
+        getsockname (q330->dpath, addr(xyz), addr(lth)) ;
         psock = (pointer) addr(xyz) ;
         q330->dataport = ntohs(psock->sin_port) ;
         sprintf(addr(msg), "on data port %d", q330->dataport) ;
@@ -499,7 +489,7 @@ typedef byte tenc[4] ;
       actual = q330->recvhdr.datalength + QDP_HDR_LTH ; /* replace with exact length */
     else
       return -1 ; /* no good, return */
-  thiscrc = gcrccalc (addr(q330->crc_table), (pointer)((integer)psave + 4), actual - 4) ;
+  thiscrc = gcrccalc (addr(q330->crc_table), (pointer)((pntrint)psave + 4), actual - 4) ;
   if (thiscrc == q330->recvhdr.crc)
     then
       return actual ; /* good crc, return actual length */
@@ -513,7 +503,7 @@ begin
   pbyte p ;
 
   p = addr(q330->datain.qdp) ;
-  thiscrc = gcrccalc (addr(q330->crc_table), (pointer)((integer)p + 4), lth - 4) ;
+  thiscrc = gcrccalc (addr(q330->crc_table), (pointer)((pntrint)p + 4), lth - 4) ;
   loadqdphdr (addr(p), addr(q330->recvhdr)) ;
   if (thiscrc == q330->recvhdr.crc)
     then
@@ -559,7 +549,8 @@ end
 #ifndef OMIT_NETWORK
 void read_data_socket (pq330 q330)
 begin
-  integer lth, err ;
+  socklen_t lth ;
+  integer err ;
   string95 msg ;
 
   if (q330->dpath == INVALID_SOCKET)
@@ -620,7 +611,7 @@ begin
 
   add_status (q330, AC_READ, msglth + IP_HDR_LTH + UDP_HDR_LTH) ;
   p = addr(q330->commands.cmsgin.qdp) ;
-  thiscrc = gcrccalc (addr(q330->crc_table), (pointer)((integer)p + 4), msglth - 4) ;
+  thiscrc = gcrccalc (addr(q330->crc_table), (pointer)((pntrint)p + 4), msglth - 4) ;
   loadqdphdr (addr(p), addr(q330->recvhdr)) ;
   if (thiscrc != q330->recvhdr.crc)
     then
@@ -637,9 +628,9 @@ end
 
 void read_cmd_socket (pq330 q330)
 begin
-  integer lth ;
-  pbyte p ;
+  socklen_t lth ;
   integer err ;
+  pbyte p ;
   word poff, qdplth ;
   string95 msg ;
 
@@ -859,19 +850,18 @@ begin
                            addr(q330->recvip), addr(q330->recvudp), *p) ;
         return ;
       end
-  p = psave ;
-  loadqdphdr (addr(p), addr(q330->recvhdr)) ;
+  loadqdphdr (p, addr(q330->recvhdr)) ;
   if (q330->recvhdr.datalength > MAXDATA)
     then
       return ;
-  if (q330->recvhdr.crc != gcrccalc (addr(q330->crc_table), (pointer)((integer)psave + 4),
+  if (q330->recvhdr.crc != gcrccalc (addr(q330->crc_table), (pointer)((pntrint)psave + 4),
                        q330->recvhdr.datalength + QDP_HDR_LTH - 4))
     then
       begin
         add_status (q330, AC_CHECK, 1) ;
         return ;
       end
-  lib_command_response (q330, p) ;
+  lib_command_response (q330, *p) ;
 end
 
 static void proc_tcp (pq330 q330, pbyte *p)
@@ -1010,7 +1000,7 @@ begin
             case SLIP_FRM :
               q330->escpend = FALSE ;
               q330->needframe = FALSE ;
-              bufidx = (integer)pout - (integer)addr(q330->commands.cmsgin.headers) ;
+              bufidx = (integer)((pntrint)pout - (pntrint)addr(q330->commands.cmsgin.headers)) ;
               if (bufidx)
                 then
                   begin
@@ -1050,7 +1040,7 @@ begin
               *pout++ = c ;
               break ;
           end
-      if ((longint)pout > ((longint)maxp + 1))
+      if ((pntrint)pout > ((pntrint)maxp + 1))
         then
           begin
             pout = addr(q330->commands.cmsgin.headers) ;
@@ -1243,7 +1233,7 @@ begin
       begin
         build_tcp (payload, srcaddr, destaddr, srcport, destport, datalength,
                    seq, ack, window, flags) ;
-        build_ip (q330, payload, srcaddr, destaddr, IPT_TCP, abs(datalength) + TCP_HDR_LTH) ;
+        build_ip (q330, payload, srcaddr, destaddr, IPT_TCP, datalength + TCP_HDR_LTH) ;
       end
   sendpkt (q330, payload) ;
 end

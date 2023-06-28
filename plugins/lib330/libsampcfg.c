@@ -109,7 +109,7 @@ end
 void clear_sg (paqstruc paqs)
 begin
 
-  memset (addr(paqs->first_sg), 0, (longint)addr(paqs->last_sg) - (longint)addr(paqs->first_sg)) ;
+  memset (addr(paqs->first_sg), 0, (pntrint)addr(paqs->last_sg) - (pntrint)addr(paqs->first_sg)) ;
   string2fixed (addr(paqs->log_tim.tim_location), "  ") ;
   string2fixed (addr(paqs->log_tim.tim_seedname), "ACE") ;
 #ifndef OMIT_SEED
@@ -223,8 +223,8 @@ begin
       end
     else
       begin
-        q->gap_secs = q->gap_threshold * fabs(q->rate) ;
-        q->gap_offset = fabs(q->rate) ; /* default is one data point per "rate" seconds */
+        q->gap_secs = q->gap_threshold * abs(q->rate) ;
+        q->gap_offset = abs(q->rate) ; /* default is one data point per "rate" seconds */
       end
 end
 
@@ -378,10 +378,10 @@ begin
           pl->datasize = pl->rate * sizeof(longint) ;
         else
           pl->datasize = sizeof(longint) ;
-      getbuf (q330, addr(pl->databuf), pl->datasize) ;
+      getbuf (q330, (pointer *)addr(pl->databuf), pl->datasize) ;
       if (pl->rate > 1)
         then
-          getbuf (q330, addr(pl->idxbuf), (pl->rate + 1) * sizeof(word)) ;
+          getbuf (q330, (pointer *)addr(pl->idxbuf), (pl->rate + 1) * sizeof(word)) ;
       switch (pl->rate) begin
         case 100 :
           pl->segsize = SS_100 ;
@@ -422,7 +422,7 @@ begin
       if (q330->par_create.call_minidata)
         then
           begin
-            pl->mini_filter = q330->par_create.opt_minifilter and OMF_ALL ;
+            pl->mini_filter = q330->par_create.opt_minifilter and (OMF_ALL or OMF_CFG or OMF_TIM or OMF_MSG) ;
             if ((q330->par_create.opt_minifilter and OMF_NETSERV) land (pl->lcq_opt and LO_NETS))
               then
                 pl->mini_filter = pl->mini_filter or OMF_NETSERV ;
@@ -430,7 +430,7 @@ begin
       if ((paqs->arc_size > 0) land (q330->par_create.call_aminidata))
         then
           begin
-            pl->arc.amini_filter = q330->par_create.opt_aminifilter and OMF_ALL ;
+            pl->arc.amini_filter = q330->par_create.opt_aminifilter and (OMF_ALL or OMF_CFG or OMF_TIM or OMF_MSG) ;
             pl->arc.incremental = (pl->rate <= q330->par_create.amini_512highest) ;
           end
 #endif
@@ -443,7 +443,7 @@ begin
             pl->seg_seq = 0xFFFFFFFF ;
             getbuf (q330, addr(pl->dholdq), sizeof(dholdqtype)) ;
             pl->dholdq->ppkt = NIL ;
-            getbuf (q330, addr(pl->mergedbuf), pl->segsize) ;
+            getbuf (q330, (pointer *)addr(pl->mergedbuf), pl->segsize) ;
           end
       pl->pack_class = PKC_DATA ; /* assume data */
       if (pl->raw_data_source and 0x80)
@@ -623,7 +623,7 @@ begin
           pr->link = pl->com->ring ;
       if (pl->arc.amini_filter)
         then
-          getbuf (q330, addr(pl->arc.pcfr), paqs->arc_size) ;
+          getbuf (q330, (pointer *)addr(pl->arc.pcfr), paqs->arc_size) ;
       if (pl->lcq_opt and LO_EVENT)
         then
           begin
@@ -731,7 +731,7 @@ begin
   pr->link = pl->com->ring ; /* just keeps going back to itself */
   if (pl->arc.amini_filter)
     then
-      getthrbuf (q330, addr(pl->arc.pcfr), paqs->arc_size) ;
+      getthrbuf (q330, (pointer *)addr(pl->arc.pcfr), paqs->arc_size) ;
 #endif
 end
 
