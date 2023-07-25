@@ -22,6 +22,7 @@ class SeedlinkPluginHandler:
     except: seedlink.setParam('sources.naqs.proc', 'naqs_bb40_sm100')
 
     self.__channels.add(seedlink.param('seedlink.station.code'))
+    seedlink.setParam('sources.naqs.channels', ",".join(self.__channels))
 
     # Key is address and network code
     return (address + ":" + str(port), seedlink.param('seedlink.station.network'))
@@ -29,5 +30,4 @@ class SeedlinkPluginHandler:
 
   # Flush does nothing
   def flush(self, seedlink):
-    seedlink.setParam('sources.naqs.channels', ",".join(self.__channels))
     pass
