@@ -166,7 +166,7 @@ void process_record(char *inseed, char *match,
   if ( (spcptr = strstr(prtloc, " ")) != NULL ) *spcptr = '\0';
   if ( (spcptr = strstr(prtchan, " ")) != NULL ) *spcptr = '\0';
 
-  snprintf(sta_id, 11, "%s.%s", prtnet, prtsta);
+  snprintf(sta_id, 11, "%s.%s", netcode ? netcode : prtnet, prtsta);
 
   if (prtnet[0] != '\0') strcat(prtnet, "_");
   if (prtsta[0] != '\0') strcat(prtsta, "_");
