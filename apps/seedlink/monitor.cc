@@ -31,6 +31,7 @@
 
 #include <libxml/xmlIO.h>
 #include <libxml/tree.h>
+#include <libxml/xmlerror.h>
 
 #include "qtime.h"
 
