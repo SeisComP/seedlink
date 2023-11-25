@@ -37,24 +37,57 @@ default_tq = -1
 * match the input names of the stream processing scheme in streams.xml,
 * which is referenced from seedlink.ini
 
-* Outdoor Temperature (C * 100)
+* Outdoor temperature (C * 100)
 channel KO source_id=Ta scale=100
 
-* Outdoor Humidity (%RH)
+* Outdoor humidity (%RH)
 channel IO source_id=Ua scale=1
 
-* Air Pressure (hPa * 10)
+* Air pressure (hPa * 10)
 channel DO source_id=Pa scale=10
 
-* Wind Direction (deg)
+* Wind direction (deg)
 channel WD source_id=Dm scale=1
 
-* Wind Speed (m/s * 10)
+* Wind direction minimum (deg)
+channel W1 source_id=Dn scale=1
+
+* Wind direction maximum (deg)
+channel W2 source_id=Dx scale=1
+
+* Wind speed (m/s * 10)
 channel WS source_id=Sm scale=10
+
+* Wind speed minimum (m/s * 10)
+channel W3 source_id=Sn scale=10
+
+* Wind speed maximum (m/s * 10)
+channel W4 source_id=Sx scale=10
 
 * Rain accumulation (mm * 100)
 channel RA source_id=Rc scale=100
 
+* Rain duration (s)
+channel RD source_id=Rd scale=1
+
+* Rain intensity (mm/h * 10)
+channel RI source_id=Ri scale=10
+
+* Rain peak intensity (mm/h * 10)
+channel RP source_id=Rp scale=10
+
 * Hail accumulation (hits/cm^2 * 10)
 channel HA source_id=Hc scale=10
+
+* Hail duration (s)
+channel HD source_id=Hd scale=1
+
+* Hail intensity (hits/cm^2h * 10)
+channel HI source_id=Hi scale=10
+
+* Hail peak intensity (hits/cm^2h * 10)
+channel HP source_id=Hp scale=10
+
+* Supply voltage (V * 10)
+channel EV source_id=Vs scale=10
 

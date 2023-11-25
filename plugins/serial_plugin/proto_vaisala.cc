@@ -42,10 +42,10 @@ using namespace SeedlinkPlugin;
 
 namespace {
 
-const int SAMPLE_PERIOD     = 10;
+const int SAMPLE_PERIOD     = 1;
 const int RECVBUFSIZE       = 256;
 const int READ_TIMEOUT      = 15;
-const int MAX_TIME_ERROR    = 1000000;
+const int MAX_TIME_ERROR    = 100000;
 
 //*****************************************************************************
 // VaisalaProtocol
@@ -206,6 +206,9 @@ void VaisalaProtocol::handle_response(const char *msg)
         logs(LOG_WARNING) << "invalid message: " << msg << endl;
         return;
       }
+
+    if(msg[2] == '0')  // automatic message
+        return;
 
     struct timeval tv;
     N(gettimeofday(&tv, NULL));
