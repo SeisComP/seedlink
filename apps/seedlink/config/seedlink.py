@@ -194,7 +194,6 @@ class TemplateModule(seiscomp.kernel.Module):
     def _set(self, name, value, station_scope=True):
         if station_scope:
             self.station_params[name] = value
-
         else:
             self.global_params[name] = value
 
@@ -440,7 +439,7 @@ class Module(TemplateModule):
             # Update internal parameters usable by a template
             self._set('seedlink.source.type', source_type)
             self._set('seedlink.source.id', source_id)
-            source_dict[source_key] = (source_type, source_id, self.global_params.copy(), self.station_params.copy())
+            source_dict[source_key] = (source_type, source_id, self.global_params, self.station_params.copy())
 
             # Create procs for this type for streams.xml
             sproc_name = self._get('sources.%s.proc' % (source_type))
