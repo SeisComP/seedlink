@@ -8,9 +8,6 @@ class SeedlinkPluginHandler:
     pass
 
   def push(self, seedlink):
-    pass
-
-  def flush(self, seedlink):
     # Check and set defaults
     address = "%s/%s" % (seedlink.run_dir,'mseedfifo')
     try: address = seedlink.param('plugins.mseedfifo.fifo', False)
@@ -27,3 +24,6 @@ class SeedlinkPluginHandler:
         noexit = ''
     except: noexit = ''
     seedlink.setParam('plugins.mseedfifo.noexit_param', noexit, False)
+
+  def flush(self, seedlink):
+    self.push(seedlink)
