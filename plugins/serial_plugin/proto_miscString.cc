@@ -82,7 +82,7 @@ void miscStringProtocol::handle_response(char* frame)
 
     /*** Extract miscString_time ***/
     time_t tt_miscStringTime;//timestamp for miscString_time
-    tm tm_miscStringTime;//tm struct for miscString_time
+    tm tm_miscStringTime={0};//tm struct for miscString_time
     float seconds_float;
     int usec;
     char separator;
