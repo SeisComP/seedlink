@@ -1228,16 +1228,16 @@ sl_packettype (const SLpacket *slpack)
   p = (const struct sl_blkt_head_s *)((const char *)fsdh +
                                       begin_blockette);
 
-  blkt_type = (uint16_t)ntohs (p->blkt_type);
-  next_blkt = (uint16_t)ntohs (p->next_blkt);
-
   do
   {
     if (((const char *)p) - ((const char *)fsdh) >
-        MAX_HEADER_SIZE)
+        MAX_HEADER_SIZE - 4)
     {
       return SLNUM;
     }
+
+    blkt_type = (uint16_t)ntohs (p->blkt_type);
+    next_blkt = (uint16_t)ntohs (p->next_blkt);
 
     if (blkt_type >= 200 && blkt_type <= 299)
       return SLDET;
@@ -1251,8 +1251,6 @@ sl_packettype (const SLpacket *slpack)
     p = (const struct sl_blkt_head_s *)((const char *)fsdh +
                                         next_blkt);
 
-    blkt_type = (uint16_t)ntohs (p->blkt_type);
-    next_blkt = (uint16_t)ntohs (p->next_blkt);
   } while ((const struct sl_fsdh_s *)p != fsdh);
 
   if (samprate_fact == 0)
