@@ -1,0 +1,149 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+############################################################################
+# Copyright (C) GFZ Potsdam                                                #
+# All rights reserved.                                                     #
+#                                                                          #
+# GNU Affero General Public License Usage                                  #
+# This file may be used under the terms of the GNU Affero                  #
+# Public License version 3.0 as published by the Free Software Foundation  #
+# and appearing in the file LICENSE included in the packaging of this      #
+# file. Please review the following information to ensure the GNU Affero   #
+# Public License version 3.0 requirements will be met:                     #
+# https://www.gnu.org/licenses/agpl-3.0.html.                              #
+############################################################################
+
+import sys
+import json
+import datetime
+import argparse
+import zmq
+import seiscomp.datamodel, seiscomp.core, seiscomp.io
+
+
+VERSION = "0.1 (2024.024)"
+
+
+def main():
+    parser = argparse.ArgumentParser()
+
+    parser.set_defaults(
+        address="tcp://localhost:3333",
+        sample_rate=100,
+        gain=1.0,
+        network="XX",
+        station="{channel:05d}",
+        location="",
+        channel="HSF"
+    )
+
+    parser.add_argument("--version",
+        action="version",
+        version="%(prog)s " + VERSION
+    )
+
+    parser.add_argument("-a", "--address",
+        help="ZeroMQ address (default %(default)s)"
+    )
+
+    parser.add_argument("-r", "--sample-rate",
+        type = int,
+        help = "sample rate (default %(default)s)"
+    )
+
+    parser.add_argument("-g", "--gain",
+        type=float,
+        help="gain (default %(default)s)"
+    )
+
+    parser.add_argument("-n", "--network",
+        help="network code (default %(default)s)"
+    )
+
+    parser.add_argument("-s", "--station",
+        help="station code template (default %(default)s)"
+    )
+
+    parser.add_argument("-l", "--location",
+        help="location code (default %(default)s)"
+    )
+
+    parser.add_argument("-c", "--channel",
+        help="channel code (default %(default)s)"
+    )
+
+    args = parser.parse_args()
+
+    sock = zmq.Context().socket(zmq.SUB)
+    sock.connect(args.address)
+    sock.setsockopt(zmq.SUBSCRIBE, b"")
+
+    header = json.loads(sock.recv().decode("utf-8"))
+
+    inv = seiscomp.datamodel.Inventory()
+
+    resp = seiscomp.datamodel.ResponsePAZ_Create()
+    resp.setType("A")
+    resp.setGain(args.gain * header["sensitivities"][0]["factor"] / header["dataScale"])
+    resp.setGainFrequency(0)
+    resp.setNormalizationFactor(1)
+    resp.setNormalizationFrequency(0)
+    resp.setNumberOfZeros(0)
+    resp.setNumberOfPoles(0)
+    inv.add(resp)
+
+    sensor = seiscomp.datamodel.Sensor_Create()
+    sensor.setName(header["instrument"])
+    sensor.setDescription(header["instrument"])
+    sensor.setUnit(header["sensitivities"][0]["unit"])
+    sensor.setResponse(resp.publicID())
+    inv.add(sensor)
+
+    datalogger = seiscomp.datamodel.Datalogger_Create()
+    datalogger.setDescription(header["instrument"])
+    datalogger.setGain(1)
+    datalogger.setMaxClockDrift(0)
+    deci = seiscomp.datamodel.Decimation()
+    deci.setSampleRateNumerator(args.sample_rate)
+    deci.setSampleRateDenominator(1)
+    datalogger.add(deci)
+    inv.add(datalogger)
+
+    net = seiscomp.datamodel.Network_Create()
+    net.setCode(args.network)
+    net.setDescription(header["experiment"])
+    net.setStart(seiscomp.core.Time.FromYearDay(datetime.datetime.utcnow().year ,1))
+    inv.add(net)
+
+    for roi in header["roiTable"]:
+        for c in range(roi["roiStart"], roi["roiEnd"] + 1, roi["roiDec"]):
+            sta = seiscomp.datamodel.Station_Create()
+            sta.setCode(eval("f'''" + args.station + "'''", {"channel": c}))
+            sta.setDescription("DAS channel %d" % c)
+            sta.setStart(net.start())
+            net.add(sta)
+
+            loc = seiscomp.datamodel.SensorLocation_Create()
+            loc.setCode(args.location)
+            loc.setStart(net.start())
+            sta.add(loc)
+
+            cha = seiscomp.datamodel.Stream_Create()
+            cha.setCode(args.channel)
+            cha.setStart(net.start())
+            cha.setGain(args.gain * header["sensitivities"][0]["factor"] / header["dataScale"])
+            cha.setGainUnit(header["sensitivities"][0]["unit"])
+            cha.setSensor(sensor.publicID())
+            cha.setDatalogger(datalogger.publicID())
+            loc.add(cha)
+
+    ar = seiscomp.io.XMLArchive()
+    ar.create("-")
+    ar.setFormattedOutput(True)
+    ar.writeObject(inv)
+    ar.close()
+
+
+if __name__ == "__main__":
+    main()
+
