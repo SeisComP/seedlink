@@ -194,7 +194,6 @@ class TemplateModule(seiscomp.kernel.Module):
     def _set(self, name, value, station_scope=True):
         if station_scope:
             self.station_params[name] = value
-
         else:
             self.global_params[name] = value
 
