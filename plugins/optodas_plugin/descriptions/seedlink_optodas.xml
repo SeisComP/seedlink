@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<seiscomp>
+	<binding module="seedlink" name="optodas" category="sources">
+		<description>OptoDAS interrogator via ZeroMQ</description>
+		<configuration>
+			<parameter name="address" type="string" default="tcp://localhost:3333">
+				<description>
+				ZeroMQ address.
+				</description>
+			</parameter>
+			<parameter name="sampleRate" type="int" default="100">
+				<description>
+				Sample rate.
+				</description>
+			</parameter>
+			<parameter name="gain" type="double" default="1.0">
+				<description>
+				Gain.
+				</description>
+			</parameter>
+			<parameter name="networkCode" type="string" default="XX">
+				<description>
+				Network code.
+				</description>
+			</parameter>
+			<parameter name="stationCode" type="string" default="{channel:05d}">
+				<description>
+				Station code template.
+				</description>
+			</parameter>
+			<parameter name="locationCode" type="string" default="">
+				<description>
+				Location code.
+				</description>
+			</parameter>
+			<parameter name="channelCode" type="string" default="HSF">
+				<description>
+				Channel code.
+				</description>
+			</parameter>
+			<parameter name="proc" type="string" default="auto">
+				<description>
+				Name of the proc object (defined in streams.xml); used for processing
+				raw streams (streams submitted by a plugin as raw samples).
+				</description>
+			</parameter>
+		</configuration>
+	</binding>
+</seiscomp>

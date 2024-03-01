@@ -44,27 +44,27 @@
 			</parameter>
 			<parameter name="station" type="string">
 				<description>
-					Defines the input station if different from the stations
-					code. Usually leave this parameter unconfigured. If
-					configured and different from the stations code
-					the station code will be renamed to match the local station
-					code.
+					Defines the remote station code if different from the inventory
+					station code. Usually leave this parameter unconfigured. If
+					configured and different from the inventory station code,
+					the remote station code will be renamed to match the inventory
+					station code.
 				</description>
 			</parameter>
 			<parameter name="network" type="string">
 				<description>
-					Defines the input network if different from the stations
-					network. Usually leave this parameter unconfigured. If
-					configured and different from the stations network code
-					the network code will be renamed to match the local network
-					code.
+					Defines the remote network code if different from the inventory
+					network code. Usually leave this parameter unconfigured. If
+					configured and different from the inventory network code,
+					the remote network code will be renamed to match the inventory
+					network code.
 				</description>
 			</parameter>
 			<parameter name="group" type="string">
 				<description>
 					Usually stations with the same source addresses and dialup
 					options are grouped together and managed by a chain plugin
-					process. You can give here an additional group ID. Available
+					process. Here you can define an additional group ID. Available
 					placeholders are $NET and $STA that are replaced by the
 					network code or station code. Whitespaces are replaced by
 					underscores when generating chain.xml.
@@ -122,25 +122,26 @@
 			<group name="channels">
 				<parameter name="rename" type="list:string">
 					<description>
-						Allows to rename channels. This is a list of
-						strings where each item defines one mapping in the
-						format "SRC_LOCCHA:DST_LOCCHA". Either SRC_LOCCHA or
-						DST_LOCCHA may contain wildcard characters (question
-						mark) and the location code (LOC) in both identifiers
-						is optional.
+						Optionally rename channels. This is a comma separated list
+						of strings where each item defines one mapping from source to
+						destination in the format "LOCCHA:LOCCHA".
+						Either LOC or CHA can contain wildcard characters (question mark)
+						and the location code (LOC) in both identifiers is optional.
+						??HHZ:10HHZ renames all HHZ location codes to 10,
+						0J???:??? renames all 0J location codes to nothing (''),
+						HH?:EH? renames all HH channels to EH, etc.
 					</description>
 				</parameter>
 				<parameter name="unpack" type="list:string">
 					<description>
-						Allows to unpack channels instead of sending them as
+						Optionally unpack channels instead of sending them as
 						miniseed to Seedlink. Unpacked streams can be downsampled
 						by Seedlink. This is a list of strings where each item
-						defines one unpack mapping  in the format
-						"SRC_LOCCHA:DST_ID:1" where DST_ID can
-						be an arbitrary channel id which must match the definition of
-						a stream in streams.xml. The last ":1" is optional and defines
+						defines one unpack mapping  in the format "LOCCHA:ID:1" where
+						ID can be an arbitrary channel id which must match the definition
+						of a stream in streams.xml. The last ":1" is optional and defines
 						if the unpacked data should be doubled (duplicate each sample).
-						In case rename mappings are active, SRC_LOCCHA referes to
+						In case rename mappings are active, LOCCHA refers to
 						the final channel name after renaming.
 					</description>
 				</parameter>

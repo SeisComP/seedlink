@@ -2463,7 +2463,7 @@ bool Connection::deliver()
     do
       {
         DEBUG_MSG("loop = " << loop << endl);
-        internal_check(++loop < 10000);
+        internal_check(++loop < 1000000);
         if((++current_station) == requested_stations.end())
             current_station = requested_stations.begin();
         

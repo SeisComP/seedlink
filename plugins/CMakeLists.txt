@@ -18,6 +18,7 @@ IF ( NOT MACOSX )
 			minilogger_plugin
 			mseedscan_plugin
 			naqsplugin
+			optodas_plugin
 			q330plugin
 			reftek_plugin
 			scream_plugin
@@ -37,5 +38,6 @@ SET(SEEDLINK_PLUGIN_OUTPUT_DIR ${SC3_PACKAGE_SHARE_DIR}/plugins/seedlink)
 
 FILE(GLOB descs "${CMAKE_CURRENT_SOURCE_DIR}/descriptions/*.xml")
 INSTALL(FILES ${descs} DESTINATION ${SC3_PACKAGE_APP_DESC_DIR})
+INSTALL(FILES plugin.py DESTINATION ${SEEDLINK_PLUGIN_OUTPUT_DIR})
 
 SUBDIRS(${_DIR_LIST})
