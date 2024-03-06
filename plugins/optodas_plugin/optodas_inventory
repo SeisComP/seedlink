@@ -133,6 +133,7 @@ def main():
             cha.setStart(net.start())
             cha.setGain(args.gain * header["sensitivities"][0]["factor"] / header["dataScale"])
             cha.setGainUnit(header["sensitivities"][0]["unit"])
+            cha.setGainFrequency(0)
             cha.setSensor(sensor.publicID())
             cha.setDatalogger(datalogger.publicID())
             loc.add(cha)
