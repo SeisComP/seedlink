@@ -48,7 +48,7 @@ extern "C" {
 #include "plugin_exceptions.h"
 #include "diag.h"
 
-#define MYVERSION "1.3 (2013.226)"
+#define MYVERSION "1.3 (2024.094)"
 
 #ifndef CONFIG_FILE
 #define CONFIG_FILE "/home/sysop/config/plugins.ini"
@@ -270,8 +270,8 @@ void ReftekUnit::proc_DT(const struct reftek_dt &dt)
   {
     ptime pt = depoch2pt(dt.tstamp);
 
-    char stream_id[4];
-    snprintf(stream_id, 4, "%d.%d", dt.stream, dt.chan);
+    char stream_id[6];
+    snprintf(stream_id, 6, "%d.%d", dt.stream, dt.chan);
 
     int tq = 100;
     int kstmp;
