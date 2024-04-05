@@ -127,14 +127,15 @@ void MWSProtocol::decode_message(const char *msg)
   {
     DEBUG_MSG(msg << endl);
 
-    int n = 0, rp = 0, toklen, seplen;
+    int rp = 0, toklen, seplen;
     while(toklen = strcspn(msg + rp, ", "),
       seplen = strspn(msg + rp + toklen, ", "))
       {
-        if (++n < 3)
+        if(msg[rp] >= '0' && msg[rp] <= '3')
           {
+            // ignore date and time
             rp += (toklen + seplen);
-            continue; // ignore date and time
+            continue;
           }
         
         char source_id[3];
@@ -194,7 +195,17 @@ void MWSProtocol::handle_response(const char *msg)
         if(time_diff < -MAX_TIME_ERROR || time_diff > MAX_TIME_ERROR)
           {
             logs(LOG_WARNING) << "time diff. " << time_diff / 1000000.0 << " sec" << endl;
-            digitime.it = it;
+
+            if(time_diff > -2000000 && time_diff < -1000000)
+              {
+                logs(LOG_WARNING) << "ignoring sample" << endl;
+                digitime.it = add_time(digitime.it, -SAMPLE_PERIOD, 0);
+                return;
+              }
+            else
+              {
+                digitime.it = it;
+              }
           }
       }
 

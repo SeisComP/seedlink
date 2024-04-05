@@ -53,7 +53,7 @@
 #include "serial_plugin.h"
 #include "diag.h"
 
-#define MYVERSION "2.3 (2023.340)"
+#define MYVERSION "2.3 (2024.096)"
 
 #ifndef CONFIG_FILE
 #define CONFIG_FILE "/home/sysop/config/plugins.ini"
