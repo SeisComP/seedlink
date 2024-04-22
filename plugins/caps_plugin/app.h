@@ -61,46 +61,49 @@ class App : public Application {
 	//  Application interface
 	// ----------------------------------------------------------------------
 	public:
-		virtual void exit(int returnCode);
+		void exit(int returnCode) override;
 
 	protected:
-		virtual bool validateParameters();
+		bool validateParameters() override;
 
-		virtual bool init();
-		virtual bool initCommandLine();
-		virtual bool run();
-		virtual void done();
+		bool init() override;
+		bool initCommandLine() override;
+		bool run() override;
+		void done() override;
 
 
 	private:
 		struct Packet {
-			Packet(const std::string &streamID) : streamID(streamID),
-			    record(NULL) {}
+			Packet(const std::string &streamID) : streamID(streamID) {}
 			~Packet() {
-				if ( record ) delete record;
+				if ( record ) {
+					delete record;
+				}
 			}
 
 			size_t size() const {
-				return header.size() + record?record->dataSize(true):0;
+				return header.size() + (record?record->dataSize(true):0);
 			}
 
 			std::string         streamID;
 			std::vector<char>   header;
-			CAPS::DataRecord   *record;
+			CAPS::DataRecord   *record{nullptr};
 		};
 
-		typedef boost::shared_ptr<Packet> PacketPtr;
-		typedef std::list<PacketPtr> Packets;
+		using PacketPtr = boost::shared_ptr<Packet>;
+		using Packets = std::list<PacketPtr>;
+
+		using Unpack = std::list<std::string>;
 
 		struct Request {
 			Request(const std::string &streamID)
-			: streamID(streamID)
-			, receivedData(false) {}
+			: streamID(streamID) {}
 
-			std::string  streamID;
-			CAPS::Time   startTime;
-			CAPS::Time   endTime;
-			bool         receivedData;
+			std::string   streamID;
+			CAPS::Time    startTime;
+			CAPS::Time    endTime;
+			bool          receivedData{false};
+			Unpack        unpack;
 		};
 
 		typedef boost::shared_ptr<Request> RequestPtr;
@@ -114,12 +117,13 @@ class App : public Application {
 		                const std::string &loc, const std::string &cha,
 		                const Time &stime,
 		                const Time &etime,
+		                const Unpack &unpack,
 		                bool receivedData = false);
 
 		/**
 		 * Finds a request by stream ID. To speed up the search the first stage
 		 * uses a simple comparison to find the request. In contrast to the
-		 * second stage takes also wild cards into account. Returns NULL if
+		 * second stage takes also wild cards into account. Returns nullptr if
 		 * the stream ID does not match.
 		*/
 		Request *findRequest(const std::string &streamID);
@@ -140,11 +144,11 @@ class App : public Application {
 	private:
 		typedef std::map<std::string, Time> StreamStates;
 
-		std::string               _host;
-		unsigned short            _port;
+		std::string               _host{"localhost"};
+		unsigned short            _port{18002};
 		std::string               _user;
 		std::string               _password;
-		bool                      _ssl;
+		bool                      _ssl{false};
 
 		std::string               _address;
 		StreamStates              _states;
@@ -154,13 +158,13 @@ class App : public Application {
 		SessionTable              _sessionTable;
 		RequestByID               _requestByID;
 		Requests                  _requests;
-		bool                      _dump;
-		bool                      _archive;
-		bool                      _allowOutOfOrder;
+		bool                      _dump{false};
+		bool                      _archive{false};
+		bool                      _allowOutOfOrder{false};
 		socketbuf<Socket,512>     _socketBuf;
 		char                      _lineBuf[201];
-		int                       _currentID;
-		SessionTableItem         *_currentItem;
+		int                       _currentID{-1};
+		SessionTableItem         *_currentItem{nullptr};
 		DataRecord::Header        _rawPacketHeader;
 		RawResponseHeader         _rawResponseHeader;
 		std::string               _streamsFile;
@@ -168,9 +172,10 @@ class App : public Application {
 		CAPS::Time                _endTime;
 		std::string               _strStartTime;
 		std::string               _strEndTime;
-		unsigned int              _verbosity;
-		float                     _pMaximumTimeDiff;
+		unsigned int              _verbosity{0};
+		float                     _pMaximumTimeDiff{86400.0f};
 		TimeSpan                  _maximumTimeDiff;
+		bool                      _unpackRequested{false};
 
 		typedef boost::shared_ptr<boost::program_options::options_description> OptionsPtr;
 		OptionsPtr                              _options;

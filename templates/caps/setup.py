@@ -56,6 +56,11 @@ class SeedlinkPluginHandler:
         except KeyError:
             seedlink.setParam('sources.caps.proc', "")
 
+        try:
+            self.unpack = [chaId.strip() for chaId in seedlink.param(
+                'sources.caps.unpack').split(',')]
+        except KeyError:
+            self.unpack = []
         # parse address URL and create capsId of form:
         # host[.port][_user]
         addressFormatError = "Error: invalid address format, expected " \
@@ -98,7 +103,7 @@ class SeedlinkPluginHandler:
                     "Error: invalid stream format, expected [LOC.CHA]")
 
             streamID = seedlink.net + "." + seedlink.sta + "." + chaId
-            profile.streams.append(streamID)
+            profile.streams.append((streamID, self.unpack))
             profile.stations.append((seedlink.net, seedlink.sta))
 
         log = os.path.join(seedlink.config_dir, "caps2sl.%s.state" % capsId)
@@ -119,8 +124,11 @@ class SeedlinkPluginHandler:
             caps2slreq = os.path.join(
                 seedlink.config_dir, "caps2sl.%s.req" % id)
             fd = open(caps2slreq, "w")
-            for streamId in profile.streams:
-                fd.write("%s\n" % streamId)
+            for streamId, upackStreams in profile.streams:
+                if self.unpack:
+                    fd.write("%s %s\n" % (streamId, ",".join(self.unpack)))
+                else:
+                    fd.write("%s\n" % streamId)
             fd.close()
 
             try:

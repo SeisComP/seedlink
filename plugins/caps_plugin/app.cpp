@@ -29,6 +29,7 @@
 #include <gempa/caps/log.h>
 
 #include <plugin.h>
+#include <libslink.h>
 
 #include <boost/bind.hpp>
 #include <boost/algorithm/string/split.hpp>
@@ -38,6 +39,7 @@
 #include <algorithm>
 #include <errno.h>
 #include <sstream>
+
 
 
 using namespace std;
@@ -133,6 +135,9 @@ bool wildcmp(const std::string &wild, const std::string &str) {
 	return wildcmp(wild.c_str(), str.c_str());
 }
 
+const int MAX_SAMPLES = ((SLRECSIZE - 64) * 2);
+
+
 }
 
 
@@ -148,7 +153,7 @@ namespace {
 
 typedef void (*FUNC_PTR)(const char*, ...);
 struct LogChannel {
-	LogChannel(LogLevel level = LL_UNDEFINED, FUNC_PTR f = NULL)
+	LogChannel(LogLevel level = LL_UNDEFINED, FUNC_PTR f = nullptr)
 	    : level(level), f(f) {}
 
 	LogLevel level;
@@ -163,18 +168,7 @@ struct LogChannel {
 
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 App::App(int argc, char** argv) : Application(argc, argv) {
-	_host = "localhost";
-	_port = 18002;
-	_ssl = false;
-	_dump = false;
-	_archive = false;
-	_allowOutOfOrder = true;
-	_currentID = -1;
-	_currentItem = NULL;
 	_exitRequested = false;
-	_verbosity = 0;
-	_pMaximumTimeDiff = 86400;
-
 	_sessionTable.setItemAddedFunc(boost::bind(&App::itemAdded, this, _1));
 	_sessionTable.setItemAboutToBeRemovedFunc(boost::bind(&App::itemAboutToBeRemoved, this, _1));
 }
@@ -187,7 +181,9 @@ App::App(int argc, char** argv) : Application(argc, argv) {
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 void App::exit(int returnCode) {
 	Application::exit(returnCode);
-	if ( _socket && _socket->isValid() ) _socket->close();
+	if ( _socket && _socket->isValid() ) {
+		_socket->close();
+	}
 }
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
@@ -196,12 +192,13 @@ void App::exit(int returnCode) {
 
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 App::Request *App::findRequest(const string &streamID) {
-	for ( Requests::const_iterator reqIt = _requests.begin();
-	      reqIt != _requests.end(); ++reqIt ) {
-		if ( wildcmp((*reqIt)->streamID, streamID) ) return *reqIt;
+	for ( const auto &item : _requests) {
+		if ( wildcmp(item->streamID, streamID) ) {
+			return item;
+		}
 	}
 
-	return NULL;
+	return nullptr;
 }
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
@@ -210,8 +207,13 @@ App::Request *App::findRequest(const string &streamID) {
 
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 bool App::init() {
-	if ( !Application::init() ) return false;
-	if ( !validateParameters() ) return false;
+	if ( !Application::init() ) {
+		return false;
+	}
+
+	if ( !validateParameters() ) {
+		return false;
+	}
 
 	_maximumTimeDiff = TimeSpan(_pMaximumTimeDiff);
 
@@ -241,7 +243,9 @@ bool App::init() {
 				streamID.clear();
 				time.clear();
 				ifs >> streamID >> time;
-				if ( streamID.empty() ) continue;
+				if ( streamID.empty() ) {
+					continue;
+				}
 
 				Time ts;
 				if ( !ts.fromString(time.c_str(), "%FT%T.%fZ") ) {
@@ -253,12 +257,15 @@ bool App::init() {
 		}
 	}
 
-	if ( !_startTime.valid() )
+	if ( !_startTime.valid() ) {
 		_startTime = Time::GMT();
+	}
 
 	CAPS_INFO("Recovered %d states", (int)_states.size());
 
-	if ( !_streamsFile.empty() && !readStreams(_streamsFile) ) return false;
+	if ( !_streamsFile.empty() && !readStreams(_streamsFile) ) {
+		return false;
+	}
 
 	for ( size_t i = 0; i < _streams.size(); ++i ) {
 		vector<string> toks;
@@ -271,19 +278,18 @@ bool App::init() {
 		}
 
 		addRequest(toks[0], toks[1], toks[2], toks[3],
-		           _startTime, _endTime, false);
+		           _startTime, _endTime, {}, false);
 	}
 
 
-	for ( StreamStates::const_iterator it = _states.begin();
-		  it != _states.end(); ++it ) {
-		Request *req = findRequest(it->first);
-		if ( req != NULL ) {
+	for ( const auto &item : _states ) {
+		Request *req = findRequest(item.first);
+		if ( req ) {
 			vector<string> toks;
-			const char *src = it->first.c_str();
+			const char *src = item.first.c_str();
 			boost::split(toks, src, boost::is_any_of("."), boost::token_compress_off);
 			addRequest(toks[0], toks[1], toks[2], toks[3],
-			           it->second, Time(), true);
+			           item.second, Time(), {}, true);
 		}
 	}
 
@@ -326,7 +332,10 @@ bool App::initCommandLine() {
 	    ("archive", "Disable realtime mode")
 	    ("dump", "Dump all received data to stdout and don't use the output port")
 	    ("in-order", "Request all records in-order. Out-of-order records will be skipped")
-	    ("max-time-diff", value(&_pMaximumTimeDiff), "The maxmimum time difference with respect to current time of the end time of a received record. If exceeded then the end time will not be logged into the state file.");
+	    ("max-time-diff", value(&_pMaximumTimeDiff),
+	     "The maxmimum time difference with respect to current time of the end "
+	     "time of a received record. If exceeded then the end time will not be "
+	     "logged into the state file.");
 
 	options_description streams("Streams");
 	streams.add_options()
@@ -370,28 +379,42 @@ bool App::readStreams(const string &filename) {
 	while ( getline(ifs, line) ) {
 		++line_number;
 
-		if ( !line.empty() && line[0] == '#' ) continue;
-
-		stringstream ss(line);
-		if ( !ss.good() ) {
-			LogError("Failed to read line %d from file %s",
-			           line_number, filename.c_str());
+		if ( !line.empty() && line[0] == '#' ) {
 			continue;
 		}
 
-		ss >> streamID;
+		std::vector<std::string> toks;
+		const char *src = line.c_str();
+		boost::split(toks, src, boost::is_any_of(" "),
+		             boost::token_compress_off);
 
-		vector<string> toks;
-		const char *src = streamID.c_str();
+		const std::string &streamID = toks[0];
+		Unpack unpack;
+		if ( toks.size() > 1 ) {
+			src = toks[1].c_str();
+			boost::split(unpack, src,
+			             boost::is_any_of(","), boost::token_compress_off);
+			for ( auto &item : unpack ) {
+				boost::trim(item);
+			}
+
+			if ( !_unpackRequested ) {
+				_unpackRequested = true;
+			}
+		}
+
+		toks.clear();
+
+		src = streamID.c_str();
 		boost::split(toks, src, boost::is_any_of("."), boost::token_compress_off);
 		if ( toks.size() != 4 ) {
-			LogError("%s: wrong id: expected four items separated by .",
-			               streamID.c_str());
+			LogError("%s:%d: wrong id: expected four items separated by .",
+			               streamID.c_str(), line_number);
 			return false;
 		}
 
 		addRequest(toks[NetworkCode], toks[StationCode], toks[LocationCode],
-		           toks[ChannelCode], _startTime, _endTime, false);
+		           toks[ChannelCode], _startTime, _endTime, unpack, false);
 	}
 
 	return true;
@@ -471,7 +494,7 @@ bool App::run() {
 			else {
 				if ( _currentID != responseHeader.id ) {
 					SessionTableItem *item = _sessionTable.getItem(responseHeader.id);
-					if ( item == NULL ) {
+					if ( !item ) {
 						CAPS_WARNING("Unknown data request ID %d", responseHeader.id);
 						cerr << "ignoring DATA[] ... " << responseHeader.size << endl;
 					}
@@ -619,7 +642,71 @@ bool App::storeMSEEDPacket(MSEEDDataRecord &rec) {
 		return true;
 	}
 
-	int r = send_mseed((item->net + "." + item->sta).c_str(), rec.data()->data(), rec.data()->size());
+	int r = 0;
+
+	if ( item->userData ) {
+		SLMSrecord* msr = sl_msr_new();
+		sl_msr_parse(nullptr, rec.data()->data(), &msr, 1, 1);
+
+		if ( !msr ) {
+			/*
+			logs(LOG_ERR) << "error decoding Mini-SEED packet " <<
+			  string(fsdh->sequence_number, 6) << ", "
+			  "station " << net << "_" << sta << " (" << myid << "), "
+			  "stream " << loc << "." << chn << ".D" << endl;
+			*/
+
+			return false;
+		}
+
+		if ( msr->numsamples < 0 || msr->numsamples > MAX_SAMPLES ) {
+			/*
+			logs(LOG_ERR) << "error decoding Mini-SEED packet " <<
+			  string(fsdh->sequence_number, 6) << ", "
+			  "station " << net << "_" << sta << " (" << myid << "), "
+			  "stream " << loc << "." << chn << ".D" << endl;
+			*/
+
+			sl_msr_free(&msr);
+			return false;
+		}
+
+		if ( msr->numsamples == 0 ) {
+			// not a data record
+			sl_msr_free(&msr);
+			return false;
+		}
+
+		int timing_quality = -1, usec99 = 0;
+
+		if ( msr->Blkt1001 ) {
+			timing_quality = msr->Blkt1001->timing_qual;
+			usec99 = msr->Blkt1001->usec;
+		}
+
+		struct ptime pt;
+		rec.startTime().get2(&pt.year, &pt.yday,
+		                     &pt.hour, &pt.minute, &pt.second, &pt.usec);
+
+		char id[sizeof(msr->fsdh.network) + 1 + sizeof(msr->fsdh.station) + 1] = {0};
+		strncat(id, msr->fsdh.network, sizeof(msr->fsdh.network));
+		strcat(id, ".");
+		strncat(id, msr->fsdh.station, sizeof(msr->fsdh.station));
+
+		char cha[sizeof(msr->fsdh.location) + sizeof(msr->fsdh.channel) + 1] = {0};
+		strncat(cha, msr->fsdh.location, sizeof(msr->fsdh.location));
+		strncat(cha, msr->fsdh.channel, sizeof(msr->fsdh.channel));
+
+		r = send_raw3(id, cha, &pt,
+		              msr->fsdh.time_correct, timing_quality,
+		              msr->datasamples, msr->numsamples);
+
+		sl_msr_free(&msr);
+	}
+	else {
+		r = send_mseed((item->net + "." + item->sta).c_str(), rec.data()->data(), rec.data()->size());
+	}
+
 	if ( r <= 0 ) {
 		LogError("Link to SeedLink broken: %d: %s", r, strerror(r));
 		return false;
@@ -643,12 +730,12 @@ bool App::validateParameters() {
 		return false;
 	}
 
-	for ( size_t i = 0; i < _streams.size(); ++i ) {
+	for ( const auto &stream : _streams ) {
 		vector<string> toks;
-		const char *src = _streams[i].c_str();
+		const char *src = stream.c_str();
 		boost::split(toks, src, boost::is_any_of("."), boost::token_compress_off);
 		if ( toks.size() != 4 ) {
-			LogError("Invalid streamID '%s'", _streams[i].c_str());
+			LogError("Invalid streamID '%s'", stream.c_str());
 			return false;
 		}
 	}
@@ -674,9 +761,17 @@ bool App::validateParameters() {
 		}
 	}
 
-	if ( _vm.count("dump") ) _dump = true;
-	if ( _vm.count("archive") ) _archive = true;
-	if ( _vm.count("in-order") ) _allowOutOfOrder = false;
+	if ( _vm.count("dump") ) {
+		_dump = true;
+	}
+
+	if ( _vm.count("archive") ) {
+		_archive = true;
+	}
+
+	if ( _vm.count("in-order") ) {
+		_allowOutOfOrder = false;
+	}
 
 	return true;
 }
@@ -697,17 +792,18 @@ void App::done() {
 
 	if ( !_logFile.empty() ) {
 		ofs.open(_logFile.c_str(), ios_base::out | ios_base::ate);
-		if ( !ofs.is_open() )
+		if ( !ofs.is_open() ) {
 			LogError("Unable to save state to %s, write to stdout",
 			           _logFile.c_str());
-		else
+		}
+		else {
 			os = &ofs;
+		}
 	}
 
 	CAPS_DEBUG("Flushing states");
-	for ( StreamStates::iterator it = _states.begin();
-	      it != _states.end(); ++it )
-		(*os) << it->first << " " << it->second.iso() << endl;
+	for ( const auto &item : _states )
+		(*os) << item.first << " " << item.second.iso() << endl;
 
 	os->flush();
 }
@@ -763,13 +859,15 @@ bool App::parseURL(string url) {
 
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 bool App::addRequest(const string &net, const string &sta,
-                        const string &loc, const string &cha,
-                        const Time &stime, const Time &etime,
-                        bool receivedData) {
+                     const string &loc, const string &cha,
+                     const Time &stime, const Time &etime,
+                     const Unpack &unpack,
+                     bool receivedData) {
 	string streamID = net + "." + sta + "." + loc + "." + cha;
 	RequestByID::iterator it = _requestByID.find(streamID);
 	if ( it == _requestByID.end() ) {
 		RequestPtr req(new Request(streamID));
+		req->unpack = unpack;
 		it = _requestByID.insert(make_pair(streamID, req)).first;
 		_requests.push_back(req.get());
 	}
@@ -810,10 +908,10 @@ void App::disconnect() {
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 bool App::handshake() {
 	while ( !_socket->isValid() ) {
-		for ( SessionTable::const_iterator it = _sessionTable.begin();
-		      it != _sessionTable.end(); ++it ) {
-			addRequest(it->second.net, it->second.sta, it->second.loc, it->second.cha,
-			           it->second.startTime, it->second.endTime, true);
+		for ( const auto &item : _sessionTable ) {
+			addRequest(item.second.net, item.second.sta,
+			           item.second.loc, item.second.cha,
+			           item.second.startTime, item.second.endTime, {}, true);
 		}
 
 		_sessionTable.reset();
@@ -830,11 +928,14 @@ bool App::handshake() {
 
 				wait();
 			}
-			else
+			else {
 				break;
+			}
 		}
 
-		if ( _exitRequested ) return false;
+		if ( _exitRequested ) {
+			return false;
+		}
 
 		// Do handshake
 		if ( !_user.empty() && !_password.empty() ) {
@@ -853,26 +954,27 @@ bool App::handshake() {
 			_socket->write("OUTOFORDER OFF\n", 15);
 
 		// First pass: continue all previous streams
-		for ( RequestByID::iterator it = _requestByID.begin();
-		      it != _requestByID.end(); ++it ) {
-			if ( it->second->receivedData == false ) continue;
+		for ( const auto &item : _requestByID ) {
+			if ( item.second->receivedData == false ) {
+				continue;
+			}
 
 			stringstream req;
-			req << "STREAM ADD " << it->first << endl;
+			req << "STREAM ADD " << item.first << endl;
 			req << "TIME ";
 
 			int year, mon, day, hour, minute, second;
 
-			if ( it->second->startTime.valid() ) {
-				it->second->startTime.get(&year, &mon, &day, &hour, &minute, &second);
+			if ( item.second->startTime.valid() ) {
+				item.second->startTime.get(&year, &mon, &day, &hour, &minute, &second);
 				req << year << "," << mon << "," << day << ","
 				    << hour << "," << minute << "," << second;
 			}
 
 			req << ":";
 
-			if ( it->second->endTime.valid() ) {
-				it->second->endTime.get(&year, &mon, &day, &hour, &minute, &second);
+			if ( item.second->endTime.valid() ) {
+				item.second->endTime.get(&year, &mon, &day, &hour, &minute, &second);
 				req << year << "," << mon << "," << day << ","
 				    << hour << "," << minute << "," << second;
 			}
@@ -885,26 +987,27 @@ bool App::handshake() {
 		}
 
 		// Second pass: subscribe to remaining streams
-		for ( RequestByID::iterator it = _requestByID.begin();
-		      it != _requestByID.end(); ++it ) {
-			if ( it->second->receivedData == true ) continue;
+		for ( const auto &item : _requestByID ) {
+			if ( item.second->receivedData == true ) {
+				continue;
+			}
 
 			stringstream req;
-			req << "STREAM ADD " << it->first << endl;
+			req << "STREAM ADD " << item.first << endl;
 			req << "TIME ";
 
 			int year, mon, day, hour, minute, second;
 
-			if ( it->second->startTime.valid() ) {
-				it->second->startTime.get(&year, &mon, &day, &hour, &minute, &second);
+			if ( item.second->startTime.valid() ) {
+				item.second->startTime.get(&year, &mon, &day, &hour, &minute, &second);
 				req << year << "," << mon << "," << day << ","
 				    << hour << "," << minute << "," << second;
 			}
 
 			req << ":";
 
-			if ( it->second->endTime.valid() ) {
-				it->second->endTime.get(&year, &mon, &day, &hour, &minute, &second);
+			if ( item.second->endTime.valid() ) {
+				item.second->endTime.get(&year, &mon, &day, &hour, &minute, &second);
 				req << year << "," << mon << "," << day << ","
 				    << hour << "," << minute << "," << second;
 			}
@@ -974,7 +1077,28 @@ bool App::handshake() {
 
 
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-void App::itemAdded(SessionTableItem *item) {}
+void App::itemAdded(SessionTableItem *item) {
+	if ( !_unpackRequested ) {
+		return;
+	}
+
+	for ( const auto &req : _requestByID ) {
+		if ( !wildcmp(req.first, item->streamID) ) {
+			continue;
+		}
+
+		std::string chaID = item->loc + "." + item->cha;
+		for ( const auto &expr : req.second->unpack ) {
+			if ( wildcmp(expr, chaID) ) {
+				// We use the userData attribute to signal that this
+				// stream needs to be unpacked before it is forwarded
+				// to SeedLink
+				item->userData = item;
+				break;
+			}
+		}
+	}
+}
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 
@@ -983,7 +1107,7 @@ void App::itemAdded(SessionTableItem *item) {}
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 void App::itemAboutToBeRemoved(SessionTableItem *item) {
 	if ( _currentItem == item ) {
-		_currentItem = NULL;
+		_currentItem = nullptr;
 		_currentID = -1;
 	}
 }
