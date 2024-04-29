@@ -1,5 +1,5 @@
 from __future__ import print_function
-import os, string, time, re, glob, shutil, sys, imp, resource
+import os, string, time, re, glob, shutil, sys, importlib.util, resource
 import seiscomp.kernel, seiscomp.config
 
 try:
@@ -194,7 +194,6 @@ class TemplateModule(seiscomp.kernel.Module):
     def _set(self, name, value, station_scope=True):
         if station_scope:
             self.station_params[name] = value
-
         else:
             self.global_params[name] = value
 
@@ -253,9 +252,12 @@ class Module(TemplateModule):
             if modname in sys.modules:
                 mod = sys.modules[modname]
             else:
-                # create a module
-                mod = imp.new_module(modname)
-                mod.__file__ = path
+                # Create a module spec
+                spec = importlib.util.spec_from_file_location(modname, path)
+                # Create a module from the spec
+                mod = importlib.util.module_from_spec(spec)
+                # Load the module
+                spec.loader.exec_module(mod)
 
                 # store it in sys.modules
                 sys.modules[modname] = mod
