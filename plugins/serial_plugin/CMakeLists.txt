@@ -23,6 +23,7 @@ SET(SERIALPLUGIN_SOURCES
 	proto_miscSerial.cc
 	proto_miscScript.cc
 	proto_gmeteo.cc
+	proto_maram.cc
 )
 
 INCLUDE_DIRECTORIES(../../libs/plugin)

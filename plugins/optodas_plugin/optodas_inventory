@@ -21,7 +21,7 @@ import zmq
 import seiscomp.datamodel, seiscomp.core, seiscomp.io
 
 
-VERSION = "0.1 (2024.024)"
+VERSION = "0.1 (2024.066)"
 
 
 def main():
@@ -112,7 +112,7 @@ def main():
     net = seiscomp.datamodel.Network_Create()
     net.setCode(args.network)
     net.setDescription(header["experiment"])
-    net.setStart(seiscomp.core.Time.FromYearDay(datetime.datetime.utcnow().year ,1))
+    net.setStart(seiscomp.core.Time.FromYearDay(datetime.datetime.utcnow().year, 1))
     inv.add(net)
 
     for roi in header["roiTable"]:
@@ -133,6 +133,7 @@ def main():
             cha.setStart(net.start())
             cha.setGain(args.gain * header["sensitivities"][0]["factor"] / header["dataScale"])
             cha.setGainUnit(header["sensitivities"][0]["unit"])
+            cha.setGainFrequency(0)
             cha.setSensor(sensor.publicID())
             cha.setDatalogger(datalogger.publicID())
             loc.add(cha)

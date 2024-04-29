@@ -49,23 +49,25 @@ documentation in form of UNIX manual pages.
    :ref:`seedlink-sources-dr24-label`       ,  Geotech DR24, GFZ
    :ref:`seedlink-sources-echopro_3ch100hz-label` /  :ref:`seedlink-sources-echopro_6ch200hz-label`, Kelunji Echo/EchoPro, Oyvind Natvik (UiB)
    :ref:`seedlink-sources-edata-label`      ,  Earth Data PS2400/PS6-24, GFZ
-   :ref:`seedlink-sources-ewexport-label`   ,  "Earthworm export server (TCP/IP), Chad Trabant (IRIS)"
+   :ref:`seedlink-sources-ewexport-label`   ,  Earthworm export server (TCP/IP), Chad Trabant (IRIS)
    :ref:`seedlink-sources-ewexport_pasv-label`,  Earthworm passive export server (TCP/IP), Chad Trabant (IRIS)
-   :ref:`seedlink-sources-fs_mseed-label`   ,  miniSEED file plugin,
+   :ref:`seedlink-sources-fs_mseed-label`   ,  miniSEED file plugin, GFZ
    :ref:`seedlink-sources-gdrt-label`       ,  GDRT server, GFZ
    :ref:`seedlink-sources-hrd24-label`      ,  Nanometrics HRD24, GFZ; Recai Yalgin
    :ref:`seedlink-sources-liss-label`       ,  LISS, Chad Trabant (IRIS)
    :ref:`seedlink-sources-m24-label` *      ,  Lennartz M24, Lennartz Electronic GmbH
+   :ref:`seedlink-sources-maram-label`      ,  maRam Weatherstation V1, GFZ
    :ref:`seedlink-sources-minilogger-label` ,  SEP064 USB Seismometer Interface, GFZ; Anthony Lomax
    :ref:`seedlink-sources-mseedfifo-label`  ,  Generic, GFZ
    :ref:`seedlink-sources-mseedscan-label`  ,  Transfers miniSEED files from a directory, Chad Trabant (IRIS)
    :ref:`seedlink-sources-mk6-label` *      ,  MK6, Jan Wiszniowski (IGPAS)
-   :ref:`seedlink-sources-mppt-label` *     ,  SunSaver MPPT via Modbus TCP/IP,
+   :ref:`seedlink-sources-mppt-label` *     ,  SunSaver MPPT via Modbus TCP/IP, GFZ
    :ref:`seedlink-sources-mws-label`        ,  Reinhardt MWS5/MWS9 Weather Station, GFZ
    :ref:`seedlink-sources-naqs-label`       ,  NAQS, "Chad Trabant (IRIS); based on sample code from Nanometrics, Inc."
    :ref:`seedlink-sources-nmxp-label` *     ,  NAQS, Matteo Quintiliani (INGV)
    nrts **    ,  NRTS, GFZ; based on ISI toolkit from David E. Chavez
-   :ref:`seedlink-sources-ps2400_eth-label` ,  :ref:`Earth Data PS2400/PS6 Ethernet<seedlink-sources-ps2400_eth-label>`, GFZ; `gempa GmbH <https://www.gempa.de>`_
+   :ref:`seedlink-sources-optodas-label`    ,  OptoDAS interrogator via ZeroMQ, GFZ
+   :ref:`seedlink-sources-ps2400_eth-label` ,  Earth Data PS2400/PS6 Ethernet, GFZ; `gempa GmbH <https://www.gempa.de>`_
    :ref:`seedlink-sources-q330-label`       ,  Quanterra Q330, "GFZ; based on lib330 maintained by ISTI, Inc."
    comserv ** ,  "Quanterra Q380/Q680, Q4120, Q720", "GFZ; based on Comserv by Quanterra, Inc."
    :ref:`seedlink-sources-reftek-label`     ,  RefTek RTPD, "GFZ; based on software library provided by RefTek, Inc."
