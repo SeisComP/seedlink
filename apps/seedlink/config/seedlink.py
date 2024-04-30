@@ -1,5 +1,5 @@
 from __future__ import print_function
-import os, string, time, re, glob, shutil, sys, imp, resource
+import os, string, time, re, glob, shutil, sys, importlib.util, resource
 import seiscomp.kernel, seiscomp.config
 
 try:
@@ -252,9 +252,7 @@ class Module(TemplateModule):
             if modname in sys.modules:
                 mod = sys.modules[modname]
             else:
-                # create a module
-                mod = imp.new_module(modname)
-                mod.__file__ = path
+                mod = importlib.import_module(modname)
 
                 # store it in sys.modules
                 sys.modules[modname] = mod
