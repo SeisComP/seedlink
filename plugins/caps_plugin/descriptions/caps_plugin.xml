@@ -34,8 +34,19 @@
 			</parameter>
 			<parameter name="streams" type="string" default="*.*">
 				<description>
-				Comma separated list of streams. Stream format is [LOC.CHA].
+				Comma-separated list of streams. Stream format is [LOC.CHA].
 				Streams may contain wildcards
+				</description>
+			</parameter>
+			<parameter name="unpack" type="string" default="">
+				<description>
+				Comma-separated list of streams to unpack. Stream format is [LOC.CHA].
+				Streams may contain wildcards. Unpacking in this context means that
+				incoming data is converted to RAW data before sending
+				it to SeedLink. The proc option must be set when using this option.
+				For each stream there must be a corresponding entry in the proc object
+				so that the raw stream can be processed by SeedLink. The name of the
+				input entry must match the chanel ID, e.g., 00ENZ or ENZ.
 				</description>
 			</parameter>
 			<parameter name="proc" type="string">
