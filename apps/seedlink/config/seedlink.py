@@ -252,7 +252,12 @@ class Module(TemplateModule):
             if modname in sys.modules:
                 mod = sys.modules[modname]
             else:
-                mod = importlib.import_module(modname)
+                # Create a module spec
+                spec = importlib.util.spec_from_file_location(modname, path)
+                # Create a module from the spec
+                mod = importlib.util.module_from_spec(spec)
+                # Load the module
+                spec.loader.exec_module(mod)
 
                 # store it in sys.modules
                 sys.modules[modname] = mod
