@@ -54,11 +54,15 @@ Edit History:
 #endif
 #  include <sys/time.h>
 #elif defined(linux) || defined(solaris)
-#  if defined(__i386__) || defined(__x86_64__)
+#  if defined(__i386__)
 #    define X86_UNIX32
 #    define ENDIAN_LITTLE
 #  elif defined(__x86_64__)
 #    define X86_UNIX64
+#    define ENDIAN_LITTLE
+#  elif defined(__aarch64__)
+#    define ARM_UNIX64
+#    define X86_UNIX64 /* for compatibility */
 #    define ENDIAN_LITTLE
 #  else
 #    define SPARC_UNIX32
