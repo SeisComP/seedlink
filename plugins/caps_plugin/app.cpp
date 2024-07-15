@@ -403,18 +403,17 @@ bool App::readStreams(const string &filename) {
 			}
 		}
 
-		toks.clear();
-
 		src = streamID.c_str();
-		boost::split(toks, src, boost::is_any_of("."), boost::token_compress_off);
-		if ( toks.size() != 4 ) {
+		std::vector<std::string> subToks;
+		boost::split(subToks, src, boost::is_any_of("."), boost::token_compress_off);
+		if ( subToks.size() != 4 ) {
 			LogError("%s:%d: wrong id: expected four items separated by .",
-			               streamID.c_str(), line_number);
+			         streamID.c_str(), line_number);
 			return false;
 		}
 
-		addRequest(toks[NetworkCode], toks[StationCode], toks[LocationCode],
-		           toks[ChannelCode], _startTime, _endTime, unpack, false);
+		addRequest(subToks[NetworkCode], subToks[StationCode], subToks[LocationCode],
+		           subToks[ChannelCode], _startTime, _endTime, unpack, false);
 	}
 
 	return true;
