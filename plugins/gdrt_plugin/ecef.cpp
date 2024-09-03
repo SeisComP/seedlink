@@ -14,7 +14,7 @@
 
 #include "ecef.h"
 
-#include <seiscomp3/math/matrix3.h>
+#include <seiscomp/math/matrix3.h>
 
 #include <cmath>
 #include <iostream>
