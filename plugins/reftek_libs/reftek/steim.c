@@ -875,7 +875,7 @@ INT32 steim2_compress(
 	init_packet_flags(ps,data_buffer);
 
 	prev_sample = ps->last_sample;
-	number_of_values = steim2_diff (ps, sample, &beg_sample, &end_sample);
+	number_of_values = steim2_diff (ps, sample, &beg_sample, (INT32*)&end_sample);
 
 	if(number_of_values)
 		{
