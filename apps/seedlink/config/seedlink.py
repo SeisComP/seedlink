@@ -1,4 +1,3 @@
-from __future__ import print_function
 import os, string, time, re, glob, shutil, sys, importlib.util, resource
 import seiscomp.kernel, seiscomp.config
 
@@ -33,9 +32,9 @@ def _loadDatabase(dbUrl):
     """
     Load inventory from a database, but only down to the station level.
     """
-    m = re.match("(?P<dbDriverName>^.*):\/\/(?P<dbAddress>.+?:.+?@.+?\/.+$)", dbUrl)
+    m = re.match("(?P<dbDriverName>^.*)://(?P<dbAddress>.+?:.+?@.+?/.+$)", dbUrl)
     if not m:
-        raise Exception("error in parsing SC3 DB URL")
+        raise Exception("error in parsing SC DB URL")
     db = m.groupdict()
     try:
         registry = seiscomp.system.PluginRegistry.Instance()
