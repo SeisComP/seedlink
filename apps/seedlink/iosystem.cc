@@ -108,7 +108,7 @@ inline int _fdrealloc(int fd)
         throw CannotAllocateFD();
 
     bit_set(fd_bitmap, newfd);
-    
+
     newfd += FD_SETSIZE;
     if(dup2(fd, newfd) < 0)
       {
@@ -160,7 +160,7 @@ inline int xsocket(int domain, int type, int protocol)
 
     if(fd >= FD_SETSIZE)
         throw FDSetsizeExceeded(fd);
-    
+
     return fd;
   }
 
@@ -176,7 +176,7 @@ inline int xaccept(int s, struct sockaddr *addr, socklen_t *addrlen)
 
     if(fd >= FD_SETSIZE)
         throw FDSetsizeExceeded(fd);
-    
+
     return fd;
   }
 
@@ -192,9 +192,9 @@ class Sequence
 
   public:
     enum { size = 6, mask = 0xffffff, uninitialized = -1 };
-    
+
     Sequence(): value(uninitialized) {}
-    
+
     Sequence(int value_init): value(value_init)
       {
         internal_check(value == uninitialized || !(value & ~mask));
@@ -228,7 +228,7 @@ ostream &operator<<(ostream &s, const Sequence &x)
   {
     ios_base::fmtflags flags_saved = s.flags(ios_base::hex | ios_base::uppercase);
     char filler_saved = s.fill('0');
-  
+
     internal_check(x != Sequence::uninitialized);
     s << setw(x.size) << x.value;
     s.flags(flags_saved);
@@ -242,7 +242,7 @@ istream &operator>>(istream &s, Sequence &x)
   {
     int testx;
     ios_base::fmtflags flags_saved = s.flags(ios_base::hex);
-  
+
     if(s >> testx)
       {
         if(testx & ~Sequence::mask) s.clear(ios_base::badbit);
@@ -288,7 +288,7 @@ class BufferImpl: public Buffer
       {
         free(dataptr);
       }
-    
+
   public:
     BufferImpl(int size): Buffer(size), prevptr(NULL), nextptr(NULL), dataptr(NULL)
       {
@@ -323,7 +323,7 @@ class BufferStoreImplPartner
     virtual void delete_oldest_buffer(BufferImpl *buf) =0;
     virtual ~BufferStoreImplPartner() {}
   };
-  
+
 class BufferStoreImpl: public BufferStore
   {
   private:
@@ -334,7 +334,7 @@ class BufferStoreImpl: public BufferStore
     int nbufs;
 
     void next_buffer();
-    
+
     void insert_buffer_after(BufferImpl *a, BufferImpl *b)
       {
         a->prevptr = b;
@@ -384,7 +384,7 @@ class BufferStoreImpl: public BufferStore
     void load_buffers(int fd);
     void create_blank_buffers(int n);
     void enlarge(int newsize);
-    
+
     BufferImpl *first() const
       {
         return buf_first;
@@ -399,7 +399,7 @@ class BufferStoreImpl: public BufferStore
       {
         seq = seq_init;
       }
-    
+
     Sequence end_seq() const
       {
         return seq;
@@ -411,7 +411,7 @@ BufferStoreImpl::BufferStoreImpl(BufferStoreImplPartner &partner_init, int bufsi
   nbufs(nbufs_init)
   {
     internal_check(nbufs >= 2);
-    
+
     buf_head = new BufferImpl(bufsize);
     buf_head->prevptr = buf_head->nextptr = NULL;
     buf_queue = new BufferImpl(bufsize);
@@ -424,7 +424,7 @@ BufferStoreImpl::BufferStoreImpl(BufferStoreImplPartner &partner_init, int bufsi
         insert_buffer_after(buf, buf_free);
       }
   }
-        
+
 BufferStoreImpl::~BufferStoreImpl()
   {
     while(buf_head)
@@ -438,7 +438,7 @@ BufferStoreImpl::~BufferStoreImpl()
 Buffer *BufferStoreImpl::get_buffer(void)
   {
     internal_check(buf_free != NULL);
-    
+
     BufferImpl* buf = buf_free;
     buf_free = buf_free->nextptr;
     if(buf_first == buf) buf_first = buf->nextptr;
@@ -465,7 +465,7 @@ void BufferStoreImpl::queue_buffer(Buffer *buf1)
 void BufferStoreImpl::next_buffer()
   {
     internal_check(buf_free != NULL);
-    
+
     BufferImpl* buf = buf_free;
     buf_free = buf_free->nextptr;
     buf->seq = seq;
@@ -529,11 +529,11 @@ class FileBuffer
 
   public:
     const string name;
-    
+
     FileBuffer(const string &name_init):
       nextptr(NULL), writefd(-1), nbuf(0), name(name_init) {}
     void store(BufferImpl *buf);
-    
+
     FileBuffer *next() const
       {
         return nextptr;
@@ -549,7 +549,7 @@ class FileBuffer
         return nbuf;
       }
   };
-      
+
 void FileBuffer::store(BufferImpl *buf)
   {
     internal_check(writefd >=0);
@@ -610,7 +610,7 @@ class FileStore
         int nbufs = 0;
         for(FileBuffer* p = buf_head; p; p = p->nextptr)
             nbufs += p->nbuf;
-        
+
         return nbufs;
       }
   };
@@ -635,7 +635,7 @@ FileBuffer *FileStore::get_file_helper(const string &filename)
         internal_check(buf_head != NULL);
         p = buf_head;
         if((buf_head = p->nextptr) == NULL) buf_tail = NULL;
-        
+
         partner.delete_oldest_segment(p);
         if(p->writefd != -1) xclose(p->writefd);
 
@@ -651,9 +651,9 @@ FileBuffer *FileStore::get_file_helper(const string &filename)
 
 FileStore::FileStore(FileStorePartner &partner_init, int bufsize_init,
   const string &segments_dir_init, int maxfiles_init):
-  partner(partner_init), buf_head(NULL), buf_tail(NULL), bufsize(bufsize_init), 
+  partner(partner_init), buf_head(NULL), buf_tail(NULL), bufsize(bufsize_init),
   segments_dir(segments_dir_init), maxfiles(maxfiles_init), nfiles(0) {}
-  
+
 FileStore::~FileStore()
   {
     while(buf_head)
@@ -668,7 +668,7 @@ FileStore::~FileStore()
 FileBuffer *FileStore::get_file(LONG seq_long)
   {
     if(maxfiles == 0) return NULL;
-    
+
     char tmpbuf[20];
 #ifdef LONGWORD_64BIT
     sprintf(tmpbuf, "%016lX", seq_long);
@@ -676,15 +676,15 @@ FileBuffer *FileStore::get_file(LONG seq_long)
     sprintf(tmpbuf, "%08lX%08lX", long((seq_long >> 32) & 0xffffffff),
       long(seq_long & 0xffffffff));
 #endif
-    
+
     FileBuffer* p = get_file_helper(tmpbuf);
-    
+
     if((p->writefd = xcreat(p->name.c_str(), 0644)) < 0)
         throw CannotCreateFile(p->name);
-    
+
     return p;
   }
-    
+
 void FileStore::release_file(FileBuffer *fb)
   {
     xclose(fb->writefd);
@@ -705,7 +705,7 @@ LONG FileStore::restore_state()
         segment_files.insert(de->d_name);
 
     closedir(dir);
-    
+
     FileBuffer* p = NULL;
 
     set<string>::iterator i;
@@ -729,7 +729,7 @@ LONG FileStore::restore_state()
 
         if(st.st_size % bufsize)
             throw BadFileFormat(segments_dir + "/" + *i);
-            
+
         if((p = get_file_helper(*i)) != NULL)
           {
             p->nbuf = st.st_size / bufsize;
@@ -738,13 +738,13 @@ LONG FileStore::restore_state()
             DEBUG_MSG("p->nbuf = " << p->nbuf << endl);
           }
       }
-        
+
     if(p != NULL && (p->writefd = xopen(p->name.c_str(), O_WRONLY | O_APPEND)) < 0)
         throw CannotOpenFile(p->name);
 
     return seq_long;
   }
-        
+
 //*****************************************************************************
 // ConnectionStateBase
 //*****************************************************************************
@@ -757,11 +757,11 @@ class ConnectionStateBase
 
     void request_ok(const vector<string> &cmdvec);
     void request_invalid(const vector<string> &cmdvec);
-    
+
     ConnectionStateBase(const Stream &logs_init, bool rlog_init):
       logs(logs_init), rlog(rlog_init) {}
   };
-    
+
 void ConnectionStateBase::request_ok(const vector<string> &cmdvec)
   {
     if(!rlog) return;
@@ -771,7 +771,7 @@ void ConnectionStateBase::request_ok(const vector<string> &cmdvec)
 
     for(const char* p = i->c_str(); *p; ++p)
         full_request += toupper(*p);
-   
+
     while((++i) != cmdvec.end()) full_request += (string(" ") + *i);
     logs(LOG_INFO) << full_request << endl;
   }
@@ -955,7 +955,7 @@ class StationConnectionState: private ConnectionStateBase
   friend class StationConnection;
   public:
     const string station_key;
-    
+
   private:
     ConnectionState &cx;
     const rc_ptr<ConnectionMonitor> monitor;
@@ -979,7 +979,7 @@ class StationConnectionState: private ConnectionStateBase
       seq(Sequence::uninitialized), bufpos(0), readfd(-1),
       realtime(true), discard(false), active(false), ready(false) {}
   };
-    
+
 void StationConnectionState::reset_queue()
   {
     if(readfd >= 0) xclose(readfd);
@@ -1016,7 +1016,7 @@ class StationConnection
     StationConnectionState sx;
     list<StationConnectionState *>::iterator station_link;
     enum DeliveryResult { Ok, Retry, Fail };
-  
+
     ssize_t write_zeros(int count);
     DeliveryResult do_deliver();
 
@@ -1024,7 +1024,7 @@ class StationConnection
     StationConnection(StationConnectionPartner &partner_init,
       const string &station_key, bool rlog, ConnectionState &cx,
       rc_ptr<ConnectionMonitor> monitor, Stream &logs):
-      partner(partner_init), sx(station_key, rlog, logs, cx, monitor) 
+      partner(partner_init), sx(station_key, rlog, logs, cx, monitor)
       {
         station_link = partner.attach(&sx);
       }
@@ -1035,7 +1035,7 @@ class StationConnection
       }
 
     bool deliver();
-    
+
     void reset()
       {
         sx.reset_queue();
@@ -1045,12 +1045,12 @@ class StationConnection
       {
         return sx.station_key;
       }
-    
+
     bool ready()
       {
         return sx.ready;
       }
-    
+
     bool request(const vector<string> &cmdvec)
       {
         return partner.request(sx, cmdvec);
@@ -1071,16 +1071,16 @@ StationConnection::DeliveryResult StationConnection::do_deliver()
     void *dataptr;
 
     int size = min(IOSIZE - Sequence::size - 2, (1 << MSEED_RECLEN) - sx.bufpos);
-    
+
     if(sx.bufpos == 0) sx.discard = false;
-    
+
     if(sx.discard)
       {
         if(write_zeros(size) <= 0) return Fail;
         sx.bufpos = (sx.bufpos + size) % (1 << MSEED_RECLEN);
         return Ok;
       }
-    
+
     if(sx.monitor->end_of_data())
       {
         sx.buffer_queue = NULL;
@@ -1109,9 +1109,9 @@ StationConnection::DeliveryResult StationConnection::do_deliver()
             DEBUG_MSG(sx.station_key << " : " << "opening new file segment, "
               "seq = " << sx.seq << endl);
           }
-          
+
         int r = read(sx.readfd, input_buf, size);
-        
+
         if(r == 0)
           {
             xclose(sx.readfd);
@@ -1139,7 +1139,7 @@ StationConnection::DeliveryResult StationConnection::do_deliver()
           {
             throw BadFileFormat(sx.file_queue->name);
           }
-          
+
         dataptr = input_buf;
       }
     else if(sx.buffer_queue != NULL)
@@ -1167,23 +1167,23 @@ StationConnection::DeliveryResult StationConnection::do_deliver()
             sx.active = false;
             --sx.cx.stations_active;
           }
-        
+
         if(sx.cx.stations_active == 0)
             sx.cx.send("END", 3);
 
         return Ok;
       }
-        
+
     if(sx.bufpos == 0)
       {
         sx.monitor->check_seq(sx.seq);
         if(sx.monitor->match_packet(dataptr, MAX_HEADER_LEN))
           {
             sx.monitor->count_packet();
-            
+
             ostringstream sseqstr;
             sseqstr << SIGNATURE << sx.seq;
-        
+
             string seqstr = sseqstr.str();
             if(sx.cx.send(seqstr.c_str(), seqstr.length(), false) <= 0)
                 return Fail;
@@ -1204,7 +1204,7 @@ StationConnection::DeliveryResult StationConnection::do_deliver()
     fds.clear_write2(sx.cx.clientfd);
 
     sx.bufpos = (sx.bufpos + size) % (1 << MSEED_RECLEN);
-    
+
     if(sx.bufpos == 0)
       {
         sx.seq.increment();
@@ -1217,11 +1217,11 @@ StationConnection::DeliveryResult StationConnection::do_deliver()
 
     return Ok;
   }
-        
+
 bool StationConnection::deliver()
   {
     int r;
-    
+
     while((r = do_deliver()) == Retry);
     return (r == Fail);
   }
@@ -1230,7 +1230,7 @@ bool StationConnection::deliver()
 // StationIO
 //*****************************************************************************
 
-// There is exactly one StationIO object in the IOSystem per station, so it 
+// There is exactly one StationIO object in the IOSystem per station, so it
 // contains data that does not depend on a particular connection. However,
 // StationIO has access to the conection-dependent data via ConnectionState
 // and StationConnectionState objects (see above).
@@ -1253,7 +1253,7 @@ class StationIO: private BufferStoreImplPartner, private FileStorePartner,
     FileBuffer *curfb;
     LONG seq_long;
     list<StationConnectionState *> attached;
-    
+
     // BufferStoreImpl callbacks
     void new_buffer(BufferImpl *buf);
     void delete_oldest_buffer(BufferImpl *buf);
@@ -1267,7 +1267,7 @@ class StationIO: private BufferStoreImplPartner, private FileStorePartner,
     void detach(list<StationConnectionState *>::iterator &i);
     bool request(StationConnectionState &sx,
       const vector<string> &cmdvec);
-    
+
     bool command_SELECT(StationConnectionState &sx,
       const vector<string> &cmdvec);
     bool command_TIME(StationConnectionState &sx,
@@ -1281,10 +1281,10 @@ class StationIO: private BufferStoreImplPartner, private FileStorePartner,
     bool find_packet_in_bufferstore(StationConnectionState &sx, Sequence n);
     bool find_packet_in_filestore(StationConnectionState &sx, Sequence n);
     bool find_packet(StationConnectionState &sx, Sequence n);
-    
+
   public:
     const string station_key;
-    
+
     StationIO(const string &station_key_init, const string &ident_init,
       bool rlog_init, const string &station_dir_init, int nbufs_init,
       int blank_bufs_init, int filesize_init, int nfiles,
@@ -1293,12 +1293,12 @@ class StationIO: private BufferStoreImplPartner, private FileStorePartner,
     rc_ptr<StationConnection> connection_instance(ConnectionState &cx);
     void save_state();
     void restore_state();
-    
+
     bool ipaccess(unsigned int ipaddr)
       {
         return monitor->ipaccess(ipaddr);
       }
-    
+
     rc_ptr<BufferStore> get_bufs()
       {
         return bufs;
@@ -1320,19 +1320,19 @@ void StationIO::new_buffer(BufferImpl *buf)
         curfb = fils->get_file(seq_long);
         monitor->new_segment();
       }
-      
+
     ++seq_long;
     internal_check(curfb != NULL);
     curfb->store(buf);
 
     monitor->add_packet(buf->sequence(), buf->data(), MAX_HEADER_LEN);
     monitor->set_end_seq(buf->sequence() + 1);
-    
+
     list<StationConnectionState *>::iterator i;
     for(i = attached.begin(); i != attached.end(); ++i)
       {
         if(!(*i)->active) continue;
-        
+
         if((*i)->buffer_queue == NULL)
           {
             if((*i)->monitor->match_packet(buf->data(), MAX_HEADER_LEN))
@@ -1414,7 +1414,7 @@ void StationIO::delete_oldest_segment(FileBuffer *fb)
           }
       }
   }
-    
+
 list<StationConnectionState *>::iterator
 StationIO::attach(StationConnectionState *st)
   {
@@ -1434,7 +1434,7 @@ bool StationIO::command_SELECT(StationConnectionState &sx,
         --sx.cx.stations_active;
         sx.active = false;
       }
-    
+
     if(sx.ready)
       {
         --sx.cx.stations_ready;
@@ -1460,7 +1460,7 @@ bool StationIO::command_SELECT(StationConnectionState &sx,
 
     return false;
   }
-        
+
 bool StationIO::command_TIME(StationConnectionState &sx,
   const vector<string> &cmdvec)
   {
@@ -1469,7 +1469,7 @@ bool StationIO::command_TIME(StationConnectionState &sx,
         --sx.cx.stations_active;
         sx.active = false;
       }
-    
+
     if(sx.ready)
       {
         --sx.cx.stations_ready;
@@ -1481,12 +1481,12 @@ bool StationIO::command_TIME(StationConnectionState &sx,
 
     if((cmdvec.size() != 2 && cmdvec.size() != 3) || !sx.cx.window_extraction)
         return false;
-    
+
     if(cmdvec.size() >= 2)
       {
         int year, month, day, hour, min, sec;
         char c;
-        
+
         if(sscanf(cmdvec[1].c_str(), "%d,%d,%d,%d,%d,%d%c", &year, &month,
           &day, &hour, &min, &sec, &c) != 6)
             return false;
@@ -1499,7 +1499,7 @@ bool StationIO::command_TIME(StationConnectionState &sx,
       {
         int year, month, day, hour, min, sec;
         char c;
-        
+
         if(sscanf(cmdvec[2].c_str(), "%d,%d,%d,%d,%d,%d%c", &year, &month,
           &day, &hour, &min, &sec, &c) != 6)
             return false;
@@ -1549,7 +1549,7 @@ bool StationIO::command_DATA(StationConnectionState &sx,
         --sx.cx.stations_active;
         sx.active = false;
       }
-    
+
     if(sx.ready)
       {
         --sx.cx.stations_ready;
@@ -1562,10 +1562,10 @@ bool StationIO::command_DATA(StationConnectionState &sx,
     if(cmdvec.size() == 1)
       {
         sx.request_ok(cmdvec);
-        
+
         if(sx.cx.multi) sx.cx.response("OK\r\n");
         else sx.cx.handshaking_done = true;
-        
+
         sx.seq = bufs->end_seq();
         sx.monitor->set_begin_seq(sx.seq, true);
         sx.monitor->set_realtime(sx.realtime);
@@ -1592,11 +1592,11 @@ bool StationIO::command_DATA(StationConnectionState &sx,
           {
             int n;
             char *tail;
-    
+
             n = strtoul(cmdvec[1].c_str(), &tail, 16);
             if((n & ~Sequence::mask) || *tail)
                 return false;
-        
+
             sx.request_ok(cmdvec);
             bool valid = find_packet(sx, n);
             sx.monitor->set_begin_seq(n, valid);
@@ -1610,7 +1610,7 @@ bool StationIO::command_DATA(StationConnectionState &sx,
           }
 
         sx.monitor->set_realtime(sx.realtime);
-        
+
         internal_check(!sx.active);
         sx.active = true;
         ++sx.cx.stations_active;
@@ -1631,21 +1631,21 @@ bool StationIO::command_DATA(StationConnectionState &sx,
       {
         int n;
         char *tail;
-    
+
         n = strtoul(cmdvec[1].c_str(), &tail, 16);
         if((n & ~Sequence::mask) || *tail)
             return false;
-      
+
         int year, month, day, hour, min, sec;
         char c;
-        
+
         if(sscanf(cmdvec[2].c_str(), "%d,%d,%d,%d,%d,%d%c", &year, &month,
           &day, &hour, &min, &sec, &c) != 6)
             return false;
 
         if(!sx.monitor->set_begin_time(year, month, day, hour, min, sec, 0, n))
             return false;
-        
+
         sx.request_ok(cmdvec);
 
         if(sx.monitor->get_begin_seq() != -1)
@@ -1660,7 +1660,7 @@ bool StationIO::command_DATA(StationConnectionState &sx,
         internal_check(!sx.ready);
         sx.ready = true;
         ++sx.cx.stations_ready;
-        
+
         if(sx.cx.multi)
           {
             sx.cx.response("OK\r\n");
@@ -1721,7 +1721,7 @@ bool StationIO::request(StationConnectionState &sx,
     sx.cx.response("ERROR\r\n");
     return false;
   }
-            
+
 bool StationIO::find_packet_in_filestore(StationConnectionState &sx, Sequence seq)
   {
     for(FileBuffer* p = fils->first(); p != NULL; p = p->next())
@@ -1769,10 +1769,10 @@ void StationIO::find_oldest_packet(StationConnectionState &sx)
         sx.seq = sx.file_queue->sequence();
         find_packet_in_bufferstore(sx, sx.seq);
       }
-    
+
     DEBUG_MSG(station_key << " : " << "sx.buffer_queue = " << sx.buffer_queue << endl);
     DEBUG_MSG(station_key << " : " << "sx.file_queue = " << sx.file_queue << endl);
-    
+
     if(sx.seq == Sequence::uninitialized)
       {
         sx.logs(LOG_INFO) << "no packets in queue" << endl;
@@ -1791,13 +1791,13 @@ bool StationIO::find_packet(StationConnectionState &sx, Sequence seq)
 
     if(find_packet_in_filestore(sx, seq))
         return true;
-    
+
     if(seq == bufs->end_seq())
       {
         sx.seq = seq;
         return true;
       }
-    
+
     sx.logs(LOG_WARNING) << "packet "  << seq << " not found" << endl;
     find_oldest_packet(sx);
 
@@ -1806,7 +1806,7 @@ bool StationIO::find_packet(StationConnectionState &sx, Sequence seq)
         sx.buffer_queue = NULL;
         sx.file_queue = NULL;
         sx.seq = bufs->end_seq();
-        sx.logs(LOG_WARNING) << "sequence difference " << int(sx.seq - seq) << 
+        sx.logs(LOG_WARNING) << "sequence difference " << int(sx.seq - seq) <<
           " is too large" << endl;
         sx.logs(LOG_WARNING) << "resuming transmission from the next packet"
           " (" << sx.seq << ")" << endl;
@@ -1815,7 +1815,7 @@ bool StationIO::find_packet(StationConnectionState &sx, Sequence seq)
 
     return true;
   }
- 
+
 StationIO::StationIO(const string &station_key_init, const string &ident_init,
   bool rlog_init, const string &station_dir_init, int nbufs_init,
   int blank_bufs_init, int filesize_init, int nfiles, int seq_gap_limit_init,
@@ -1839,7 +1839,7 @@ rc_ptr<StationConnection> StationIO::connection_instance(ConnectionState &cx)
 void StationIO::save_state()
   {
     const string buffer_file = station_dir + "/buffer.xml";
-    
+
     logs(LOG_INFO) << "saving disk buffer description to '" << buffer_file <<
       "'" << endl;
 
@@ -1849,7 +1849,7 @@ void StationIO::save_state()
 void StationIO::do_load_headers()
   {
     char header_buf[MAX_HEADER_LEN];
-    
+
     for(FileBuffer* p = fils->first(); p != NULL; p = p->next())
       {
         int fd;
@@ -1883,13 +1883,13 @@ void StationIO::restore_state()
   {
     const string segments_dir = station_dir + "/segments";
     const string buffer_file = station_dir + "/buffer.xml";
-    
+
     logs(LOG_INFO) << "trying to read disk buffer segments from '" <<
       segments_dir << "/'..." << endl;
 
     seq_long = fils->restore_state();
     curfb = fils->last();
-    
+
     logs(LOG_INFO) << "..." << fils->n_records() << " records in " <<
       fils->n_files() << " files" << endl;
 
@@ -1927,14 +1927,14 @@ void StationIO::restore_state()
 
     if(recover && load_headers)
       {
-        logs(LOG_INFO) << "scanning disk buffer of station " << 
+        logs(LOG_INFO) << "scanning disk buffer of station " <<
           station_key << endl;
         do_load_headers();
       }
-    
+
     logs(LOG_INFO) << "trying to load up to " << nbufs << " most recent "
       "records into memory..." << endl;
-    
+
     Sequence seq = (seq_long - nbufs) & Sequence::mask;
 
     int fd = -1;
@@ -1971,7 +1971,7 @@ void StationIO::restore_state()
 
     logs(LOG_INFO) << "..." << int(bufs->end_seq() - seq) <<
       " records loaded" << endl;
-    
+
     if(!recover) return;
 
     logs(LOG_INFO) << "creating " << blank_bufs << " empty records" << endl;
@@ -2034,7 +2034,7 @@ class Connection
         current_station = requested_stations.insert(make_pair(default_station->station_key,
           default_station->connection_instance(cx))).first;
       }
-      
+
     ~Connection()
       {
         map<string, rc_ptr<StationConnection> >::iterator i;
@@ -2051,7 +2051,7 @@ class Connection
       {
         return cx.host;
       }
-    
+
     bool process();
     void disconnect();
   };
@@ -2062,7 +2062,7 @@ bool Connection::parse_request(const char *cmdstr)
     const char *p = cmdstr;
     int arglen = 0;
 
-    while(p += arglen, p += strspn(p, ": "), arglen = strcspn(p, ": "))
+    while(p += arglen, p += strspn(p, ": "), (arglen = strcspn(p, ": ")))
         cmdvec.push_back(string(p, arglen));
 
     return request(cmdvec);
@@ -2082,13 +2082,13 @@ bool Connection::input_plain()
         disconnect = parse_request(cmdbuf + cmdrp);
         cmdrp += (cmdlen + seplen);
       }
-    
+
     if(cmdlen >= CMDLEN)
       {
         logs(LOG_WARNING) << "command is too long" << endl;
         return true;
       }
-        
+
     memmove(cmdbuf, cmdbuf + cmdrp, cmdwp - cmdrp);
     cmdwp -= cmdrp;
 
@@ -2196,7 +2196,7 @@ bool Connection::input()
 bool Connection::command_STATION(const vector<string> &cmdvec)
   {
     StationDescriptor sd;
-    
+
     if(cmdvec.size() == 2)
         sd = StationDescriptor(default_network_id, cmdvec[1]);
     else if(cmdvec.size() == 3)
@@ -2222,14 +2222,14 @@ bool Connection::command_STATION(const vector<string> &cmdvec)
 
     invalid = false;
     cx.response("OK\r\n");
-    
+
     if(!cx.multi)
       {
         DEBUG_MSG("deleting default station " << current_station->second->station_key() << " (ready = " << current_station->second->ready() << ")" << endl);
         if(current_station->second->ready()) --cx.stations_ready;
         requested_stations.erase(current_station);
       }
-    
+
     map<string, rc_ptr<StationConnection> >::iterator i_requested;
     if((i_requested = requested_stations.find(i_all->second->station_key)) !=
       requested_stations.end())
@@ -2252,7 +2252,7 @@ bool Connection::command_STATION(const vector<string> &cmdvec)
 bool Connection::command_CAT(const vector<string> &cmdvec)
   {
     if(cmdvec.size() != 1) return false;
-    
+
     monitor->cat_out(msg_bufs, ipaddr);
     cx.request_ok(cmdvec);
     fds.set_write2(cx.clientfd);
@@ -2289,7 +2289,7 @@ bool Connection::request(const vector<string> &cmdvec)
   {
     msg_bufs.clear();
     info_bufs.clear();
-    
+
     if(ws_handshaking)
       {
         if(cmdvec.size() == 0)
@@ -2407,7 +2407,7 @@ bool Connection::deliver()
       {
         if(cx.send_response() <= 0)
             return true;
-        
+
 //        map<StationDescriptor, rc_ptr<StationConnection> >::iterator i;
 //        for(i = requested_stations.begin(); i != requested_stations.end(); ++i)
 //            i->second->reset();
@@ -2415,32 +2415,32 @@ bool Connection::deliver()
         cx.handshaking_done = false;
         return false;
       }
-    
+
     // Assume that (1 << MSEED_RECLEN) < IOSIZE (which is in fact the case),
     // then we don't have to split the packets.
-    
+
     if(!msg_bufs.empty())
       {
         rc_ptr<MessageBuffer> buf = msg_bufs.front();
         msg_bufs.pop_front();
-    
+
         if(cx.send(buf->data(), buf->size()) <= 0)
             return true;
 
         if(msg_bufs.empty() && cx.send("END", 3) <= 0)
             return true;
-        
+
         return false;
       }
-            
+
     if(!info_bufs.empty())
       {
         rc_ptr<InfoBuffer> buf = info_bufs.front();
         info_bufs.pop_front();
-    
+
         ostringstream sseqstr;
         sseqstr << SIGNATURE << "INFO " << (info_bufs.empty() ? " ": "*");
-    
+
         string seqstr = sseqstr.str();
         if(cx.send(seqstr.c_str(), seqstr.length(), false) <= 0)
             return true;
@@ -2450,23 +2450,23 @@ bool Connection::deliver()
 
         return false;
       }
-            
+
     if(!cx.handshaking_done || cx.stations_ready == 0)
       {
         fds.clear_write(cx.clientfd);
         return false;
       }
-    
+
     int loop = 0;
     bool retval = false;
-    
+
     do
       {
         DEBUG_MSG("loop = " << loop << endl);
         internal_check(++loop < 1000000);
         if((++current_station) == requested_stations.end())
             current_station = requested_stations.begin();
-        
+
         if(current_station->second->ready() &&
           (retval = current_station->second->deliver())) break;
       }
@@ -2483,20 +2483,20 @@ bool Connection::process()
     if(fds.isactive_write(cx.clientfd) && deliver()) return true;
     return false;
   }
-    
+
 void Connection::disconnect()
   {
     if(errno != 0 && errno != EPIPE)
         cx.logs(LOG_NOTICE) << "socket error: " << strerror(errno) << endl;
-    
+
     cx.logs(LOG_NOTICE) << "closing connection" << endl;
-    
+
     fds.clear_read(cx.clientfd);
     fds.clear_write(cx.clientfd);
     shutdown(cx.clientfd, SHUT_RDWR);
     close(cx.clientfd);
   }
-    
+
 //*****************************************************************************
 // ConnectionManagerImpl
 //*****************************************************************************
@@ -2536,14 +2536,14 @@ class ConnectionManagerImpl: public ConnectionManager
     void client_disconnect(rc_ptr<Connection> conn);
 
   public:
-    ConnectionManagerImpl(const string &daemon_name_init, 
+    ConnectionManagerImpl(const string &daemon_name_init,
       const string &software_ident_init, const string &default_network_id_init,
       rc_ptr<MasterMonitor> monitor_init, bool rlog_init, int max_conn_init,
       int max_conn_per_ip_init, int trusted_info_level_init,
       int untrusted_info_level_init, bool trusted_window_extraction_init,
       bool untrusted_window_extraction_init, bool trusted_websocket_init,
       bool untrusted_websocket_init, int max_bps, int to_sec, int to_usec);
-      
+
     rc_ptr<BufferStore> register_station(const string &station_key,
       const string &station_name, const string &network_id,
       const string &description, bool rlog, const string &station_dir,
@@ -2555,8 +2555,8 @@ class ConnectionManagerImpl: public ConnectionManager
     void save_state();
     void restore_state();
   };
-    
-ConnectionManagerImpl::ConnectionManagerImpl(const string &daemon_name_init, 
+
+ConnectionManagerImpl::ConnectionManagerImpl(const string &daemon_name_init,
   const string &software_ident_init, const string &default_network_id_init,
   rc_ptr<MasterMonitor> monitor_init, bool rlog_init, int max_conn_init,
   int max_conn_per_ip_init, int trusted_info_level_init,
@@ -2575,13 +2575,13 @@ ConnectionManagerImpl::ConnectionManagerImpl(const string &daemon_name_init,
   listenfd(-1), monitor(monitor_init)
   {
     handler = new ConnectionHandler;
-    
+
     monitor->add_capability("dialup", false);
     monitor->add_capability("multistation", false);
 
     if(untrusted_window_extraction) monitor->add_capability("window-extraction", false);
     else if(trusted_window_extraction) monitor->add_capability("window-extraction", true);
-    
+
     if(untrusted_websocket) monitor->add_capability("websocket", false);
     else if(trusted_websocket) monitor->add_capability("websocket", true);
 
@@ -2600,7 +2600,7 @@ ConnectionManagerImpl::ConnectionManagerImpl(const string &daemon_name_init,
       {
         div_t d_th_sec = div((1 << MSEED_RECLEN) + 8, max_bps);
         throttle.tv_sec = d_th_sec.quot;
-        
+
         div_t d_th_usec = div(d_th_sec.rem * 1000000, max_bps);
         throttle.tv_usec = d_th_usec.quot;
       }
@@ -2612,7 +2612,7 @@ ConnectionManagerImpl::ConnectionManagerImpl(const string &daemon_name_init,
 
     th_timer = Timer(throttle);
   }
-      
+
 void ConnectionManagerImpl::client_connect()
   {
     int clientfd = -1;
@@ -2640,7 +2640,7 @@ void ConnectionManagerImpl::client_connect()
         close(clientfd);
         return;
       }
-    
+
     unsigned int ipaddr = ntohl(inet_addr.sin_addr.s_addr);
     int port = ntohs(inet_addr.sin_port);
 
@@ -2648,9 +2648,9 @@ void ConnectionManagerImpl::client_connect()
     struct request_info req;
     request_init(&req, RQ_DAEMON, daemon_name.c_str(), RQ_FILE, clientfd, 0);
     fromhost(&req);
-    
+
     const char* host = eval_client(&req);
-    
+
     if(!hosts_access(&req))
       {
         logs(LOG_WARNING) << host << ":" << port << " : not allowed" << endl;
@@ -2663,7 +2663,7 @@ void ConnectionManagerImpl::client_connect()
     N(setsockopt(clientfd, SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval)));
     const char* host = inet_ntoa(inet_addr.sin_addr);
 #endif
-    
+
     if(max_conn != 0 && (int)connections.size() >= max_conn)
       {
         logs(LOG_NOTICE) << host << ":" << port << " : maximum number of "
@@ -2672,7 +2672,7 @@ void ConnectionManagerImpl::client_connect()
         close(clientfd);
         return;
       }
-        
+
     map<unsigned int, int>::iterator i;
     if((i = nconn_per_ip.find(ipaddr)) == nconn_per_ip.end())
       {
@@ -2693,10 +2693,10 @@ void ConnectionManagerImpl::client_connect()
             return;
           }
       }
-    
+
     logs(LOG_NOTICE) << string(host) << ":" << port <<
       " : opening connection" << endl;
-    
+
     int info_level;
     bool window_extraction;
     bool websocket;
@@ -2713,7 +2713,7 @@ void ConnectionManagerImpl::client_connect()
         window_extraction = untrusted_window_extraction;
         websocket = untrusted_websocket;
       }
-        
+
     // check for default_station == NULL (no stations registered)...
     rc_ptr<Connection> conn = new Connection(ipaddr, host, port,
       default_station, default_network_id, rlog, info_level,
@@ -2724,7 +2724,7 @@ void ConnectionManagerImpl::client_connect()
     connections.push_back(conn);
     fds.set_read(clientfd);
   }
-    
+
 void ConnectionManagerImpl::client_disconnect(rc_ptr<Connection> conn)
   {
     conn->disconnect();
@@ -2739,7 +2739,7 @@ void ConnectionManagerImpl::client_disconnect(rc_ptr<Connection> conn)
 
         i->second = max_conn_per_ip;
       }
-    
+
     if(--(i->second) == 0)
           nconn_per_ip.erase(i);
   }
@@ -2767,7 +2767,7 @@ rc_ptr<BufferStore> ConnectionManagerImpl::register_station(const string &statio
 
     if(!stations.insert(make_pair(sd, stat)).second)
         return NULL;
-        
+
     return stat->get_bufs();
   }
 
@@ -2799,12 +2799,12 @@ void ConnectionManagerImpl::start(int port)
           timeout.tv_usec > throttle.tv_usec)
             real_tv = throttle;
       }
-    
+
     if(real_tv.tv_sec != 0 || real_tv.tv_usec != 0) ptv = &tv;
     else ptv = NULL;
-    
+
     th_timer.reset();
-    
+
     while((*handler)(fds))
       {
         if(th_timer.expired())
@@ -2816,21 +2816,21 @@ void ConnectionManagerImpl::start(int port)
           {
             fds.sync();
           }
-        
+
         tv = real_tv;
         fds.select(ptv);
-        
+
         if(fds.status() == 0 || (fds.status() < 0 && errno == EINTR)) continue;
 
         if(fds.status() < 0) throw LibraryError("select error");
 
         if(fds.isactive_read(listenfd)) client_connect();
-    
+
         list<rc_ptr<Connection> >::iterator i;
         for(i = connections.begin(); i != connections.end(); ++i)
           {
             if((*i)->process())
-              { 
+              {
                 client_disconnect(*i);
                 connections.erase(i);
                 break;
@@ -2839,7 +2839,7 @@ void ConnectionManagerImpl::start(int port)
       }
 
 //    logs(LOG_NOTICE) << "shutting down" << endl;
-    
+
     errno = 0;
     while(!connections.empty())
       {
