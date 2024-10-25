@@ -187,10 +187,13 @@ class SeedlinkPluginHandler:
 
     # Find out what chain.xml instance to use
     try:
+        net = seedlink.param("sources.chain.network")
+    except: net = seedlink.net
+    try:
         sta = seedlink.param("sources.chain.station")
     except: sta = seedlink.sta
 
-    station_key = seedlink.net + "." + sta
+    station_key = net + "." + sta
 
     chain_instance = 0
     if station_key in self.stations:
