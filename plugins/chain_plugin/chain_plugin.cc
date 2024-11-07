@@ -50,7 +50,7 @@
 
 #include "schedule.h"
 
-#define MYVERSION "2.0 (2021.284)"
+#define MYVERSION "2.1 (2024.298)"
 
 #ifndef CONFIG_FILE
 #define CONFIG_FILE "/home/sysop/config/chain.xml"
@@ -267,14 +267,7 @@ class PluginStationAlreadyDefined: public PluginError
   public:
     PluginStationAlreadyDefined(const StationDescriptor &stad):
       PluginError(string() + "station " + stad.to_string() +
-        " is already defined") {}
-  };
-
-class PluginStationIdAlreadyUsed: public PluginError
-  {
-  public:
-    PluginStationIdAlreadyUsed(const string &id):
-      PluginError(string() + "station ID " + id + " is already in use") {}
+        " is already used in group") {}
   };
 
 class PluginRegexError: public PluginError
@@ -950,6 +943,13 @@ void Station::process_mseed(char *pseed, int packtype, int seq, int size)
 // StationGroup
 //*****************************************************************************
 
+class StationGroup_Partner
+  {
+  public:
+    virtual void process_mseed(char *pseed, int packtype, int size) =0;
+    virtual ~StationGroup_Partner() {};
+  };
+
 class StationGroup
   {
   private:
@@ -973,6 +973,7 @@ class StationGroup
     time_t last_schedule_check;
     string lockfile;
     SLCD *slcd;
+    map<StationDescriptor, rc_ptr<Station> > stations;
 
     static StationGroup *obj;
     static void term_handler(int sig);
@@ -994,10 +995,15 @@ class StationGroup
     ~StationGroup();
 
     void set_schedule(const string &schedule_str);
-    void add_station(const string &net, const string &sta, const string &sel);
+    rc_ptr<Station> new_station(const string &id,
+      const string &in_name, const string &in_network, const string &out_name,
+      const string &out_network, const string &selectors,
+      int default_timing_quality, int overlap_removal);
+
     void shutdown();
     void check();
     bool confirm_shutdown();
+    int process_slpacket(int fd, StationGroup_Partner &partner);
 
     int filedes()
       {
@@ -1078,15 +1084,29 @@ void StationGroup::set_schedule(const string &schedule_str)
     last_schedule_check = sec - tm->tm_sec;
   }
 
-void StationGroup::add_station(const string &sta, const string &net,
-  const string &sel)
+rc_ptr<Station> StationGroup::new_station(const string &id,
+  const string &in_name, const string &in_network,
+  const string &out_name, const string &out_network, const string &selectors,
+  int default_timing_quality, int overlap_removal)
   {
-    const char* csel = ((sel.length() == 0)? NULL: sel.c_str());
+    StationDescriptor stad(in_network, in_name);
+
+    if(stations.find(stad) != stations.end())
+        throw PluginStationAlreadyDefined(stad);
+
+    rc_ptr<Station> station = new Station(id, out_name, out_network,
+      default_timing_quality, overlap_removal);
+
+    stations.insert(make_pair(stad, station));
+
+    const char* csel = ((selectors.length() == 0)? NULL: selectors.c_str());
 
     if(multi)
-        sl_addstream(slcd, net.c_str(), sta.c_str(), csel, -1, NULL);
+        sl_addstream(slcd, in_network.c_str(), in_name.c_str(), csel, -1, NULL);
     else
         sl_setuniparams(slcd, csel, -1, NULL);
+
+    return station;
   }
 
 void StationGroup::runcmd(const string &cmd)
@@ -1407,6 +1427,46 @@ bool StationGroup::confirm_shutdown()
     return false;
   }
     
+int StationGroup::process_slpacket(int fd, StationGroup_Partner &partner)
+  {
+    char buf[SLHEADSIZE + SLRECSIZE];
+    SLpacket* slpack = reinterpret_cast<SLpacket *>(buf);
+    sl_fsdh_s* fsdh = reinterpret_cast<sl_fsdh_s *>(slpack->msrecord);
+
+    int bytes_read;
+    if((bytes_read = readn(fd, buf, SLHEADSIZE + SLRECSIZE)) <= 0)
+        return bytes_read;
+
+    internal_check(bytes_read == SLHEADSIZE + SLRECSIZE);
+
+    int packtype = sl_packettype(slpack);
+
+    if(packtype == SLNUM)
+        logs(LOG_ERR) << "could not determine packet type" << endl;
+
+    if(packtype >= SLNUM)
+        return bytes_read;
+
+    string net, sta, loc, chn;
+    get_id(fsdh, net, sta, loc, chn);
+    StationDescriptor stad(net, sta);
+
+    map<StationDescriptor, rc_ptr<Station> >::iterator sp;
+    if((sp = stations.find(stad)) == stations.end())
+      {
+        logs(LOG_WARNING) << "station " << stad.to_string() <<
+          " received, but not requested" << endl;
+
+        stations.insert(make_pair(stad, new Station()));
+        return bytes_read;
+      }
+
+    sp->second->process_mseed(slpack->msrecord, packtype, sl_sequence(slpack), SLRECSIZE);
+    partner.process_mseed(slpack->msrecord, packtype, SLRECSIZE);
+
+    return bytes_read;
+  }
+
 //*****************************************************************************
 // Extension
 //*****************************************************************************
@@ -1947,17 +2007,16 @@ void Extension::shutdown()
 // Chain
 //*****************************************************************************
 
-class Chain: private Extension_Partner
+class Chain: private Extension_Partner, private StationGroup_Partner
   {
   private:
-    map<StationDescriptor, rc_ptr<Station> > stations;
-    map<string, rc_ptr<Station> > station_id_map;
+    multimap<StationDescriptor, rc_ptr<Station> > stations;
+    multimap<string, rc_ptr<Station> > station_id_map;
     list<rc_ptr<StationGroup> > groups;
     list<rc_ptr<Extension> > extensions;
     time_t last_ext_check;
 
     void extension_request(const string &cmd);
-    int process_slpacket(int fd);
     void setup_timetable(const string &timetable_loader);
 
   public:
@@ -1974,11 +2033,10 @@ class Chain: private Extension_Partner
       int shutdown, int seqsave, const string &seqfile, const string &ifup,
       const string &ifdown, const string &lockfile);
     
-    rc_ptr<Station> new_station(rc_ptr<StationGroup> group, const string &id,
-      const string &in_name, const string &in_network, const string &out_name,
-      const string &out_network, const string &selectors,
-      int default_timing_quality, int overlap_removal);
+    void add_station(const string &id, const string &out_name,
+      const string &out_network, rc_ptr<Station>);
 
+    void process_mseed(char *pseed, int packtype, int size);
     void check();
     void shutdown();
   };
@@ -2017,17 +2075,14 @@ void Chain::extension_request(const string &cmd)
     
     logs(LOG_NOTICE) << cmd << endl;
 
-    map<string, rc_ptr<Station> >::iterator p;
-    if((p = station_id_map.find(station_id)) == station_id_map.end())
+    multimap<string, rc_ptr<Station> >::iterator p;
+    for(p = station_id_map.find(station_id); p != station_id_map.end() && p->first == station_id; ++p)
       {
-        logs(LOG_WARNING) << "station " << station_id << " not found" << endl;
-        return;
+        if(trigger_on)
+            p->second->set_trigger_on(year, month, day, hour, min, sec);
+        else
+            p->second->set_trigger_off(year, month, day, hour, min, sec);
       }
-
-    if(trigger_on)
-        p->second->set_trigger_on(year, month, day, hour, min, sec);
-    else
-        p->second->set_trigger_off(year, month, day, hour, min, sec);
   }
 
 void Chain::setup_timetable(const string &timetable_loader)
@@ -2044,16 +2099,6 @@ void Chain::setup_timetable(const string &timetable_loader)
           timetable_loader << "'" << endl;
         return;
       }
-
-    map<StationDescriptor, rc_ptr<Station> >::iterator p = stations.begin();
-
-    if(p == stations.end())
-      {
-        pclose(fp);
-        return;
-      }
-    
-    StationDescriptor cur_stad = p->first;
 
     char net[3], sta[6], stream[9], *loc, *chn, *stype;
     int type, recno, year, doy, hour, min, sec, usec;
@@ -2094,28 +2139,23 @@ void Chain::setup_timetable(const string &timetable_loader)
 
         free(loc);
 
-        if(stad != cur_stad)
-          {
-            p = stations.find(stad);
-            cur_stad = stad;
-          }
+        logs(LOG_INFO) << stad.to_string() << " " <<
+          strd.to_string() << " " << recno << " " << year << " " <<
+          doy << " " << hour << " " << min << " " << sec << " " <<
+          usec << endl;
 
-        if(p == stations.end())
-            continue;
-
-        try
+        multimap<StationDescriptor, rc_ptr<Station> >::iterator p;
+        for(p = stations.find(stad); p != stations.end() && p->first == stad; ++p)
           {
-            p->second->set_start_time(strd, recno, year, doy, hour,
-              min, sec, usec);
-              
-            logs(LOG_INFO) << stad.to_string() << " " <<
-              strd.to_string() << " " << recno << " " << year << " " <<
-              doy << " " << hour << " " << min << " " << sec << " " <<
-              usec << endl;
-          }
-        catch(PluginError &e)
-          {
-            logs(LOG_WARNING) << e.message << endl;
+            try
+              {
+                p->second->set_start_time(strd, recno, year, doy, hour,
+                  min, sec, usec);
+              }
+            catch(PluginError &e)
+              {
+                logs(LOG_WARNING) << e.message << endl;
+              }
           }
       }
 
@@ -2129,51 +2169,9 @@ void Chain::setup_timetable(const string &timetable_loader)
       
     logs(LOG_INFO) << "loading timetable failed" << endl;
 
+    multimap<StationDescriptor, rc_ptr<Station> >::iterator p;
     for(p = stations.begin(); p != stations.end(); ++p)
         p->second->clear_timetable();
-  }
-
-int Chain::process_slpacket(int fd)
-  {
-    char buf[SLHEADSIZE + SLRECSIZE];
-    SLpacket* slpack = reinterpret_cast<SLpacket *>(buf);
-    sl_fsdh_s* fsdh = reinterpret_cast<sl_fsdh_s *>(slpack->msrecord);
-
-    int bytes_read;
-    if((bytes_read = readn(fd, buf, SLHEADSIZE + SLRECSIZE)) <= 0)
-        return bytes_read;
-
-    internal_check(bytes_read == SLHEADSIZE + SLRECSIZE);
-
-    int packtype = sl_packettype(slpack);
-
-    if(packtype == SLNUM)
-        logs(LOG_ERR) << "could not determine packet type" << endl;
-      
-    if(packtype >= SLNUM)
-        return bytes_read;
-    
-    string net, sta, loc, chn;
-    get_id(fsdh, net, sta, loc, chn);
-    StationDescriptor stad(net, sta);
-
-    map<StationDescriptor, rc_ptr<Station> >::iterator sp;
-    if((sp = stations.find(stad)) == stations.end())
-      {
-        logs(LOG_WARNING) << "station " << stad.to_string() <<
-          " received, but not requested" << endl;
-
-        stations.insert(make_pair(stad, new Station()));
-        return bytes_read;
-      }
-
-    sp->second->process_mseed(slpack->msrecord, packtype, sl_sequence(slpack), SLRECSIZE);
-
-    list<rc_ptr<Extension> >::iterator ep;
-    for(ep = extensions.begin(); ep != extensions.end(); ++ep)
-        (*ep)->feed(slpack->msrecord, packtype, SLRECSIZE);
-
-    return bytes_read;
   }
 
 void Chain::setup(const string &timetable_loader)
@@ -2240,7 +2238,7 @@ void Chain::check()
         int fd = (*gp)->filedes();
         if(fd != -1 && FD_ISSET(fd, &read_set))
           {
-            if((r = process_slpacket(fd)) < 0)
+            if((r = (*gp)->process_slpacket(fd, *this)) < 0)
                 throw PluginCannotReadChild();
           }
 
@@ -2326,28 +2324,19 @@ rc_ptr<StationGroup> Chain::new_group(const string &address,
     return group;
   }
 
-rc_ptr<Station> Chain::new_station(rc_ptr<StationGroup> group,
-  const string &id, const string &in_name, const string &in_network,
-  const string &out_name, const string &out_network, const string &selectors,
-  int default_timing_quality, int overlap_removal)
+void Chain::add_station(const string &id, const string &out_name,
+  const string &out_network, rc_ptr<Station> station)
   {
-    StationDescriptor stad(in_network, in_name);
-
-    if(stations.find(stad) != stations.end())
-        throw PluginStationAlreadyDefined(stad);
-
-    if(station_id_map.find(id) != station_id_map.end())
-        throw PluginStationIdAlreadyUsed(id);
-    
-    group->add_station(in_name, in_network, selectors);
-    
-    rc_ptr<Station> station = new Station(id, out_name, out_network,
-      default_timing_quality, overlap_removal);
-      
+    StationDescriptor stad(out_network, out_name);
     stations.insert(make_pair(stad, station));
     station_id_map.insert(make_pair(id, station));
+  }
 
-    return station;
+void Chain::process_mseed(char *pseed, int packtype, int size)
+  {
+    list<rc_ptr<Extension> >::iterator ep;
+    for(ep = extensions.begin(); ep != extensions.end(); ++ep)
+        (*ep)->feed(pseed, packtype, SLRECSIZE);
   }
 
 Chain chain;
@@ -2693,9 +2682,11 @@ try
         cfglog << "value of overlap_removal should be \"full\", "
           "\"initial\" or \"none\". Using \"none\"." << endl;
     
-    rc_ptr<Station> station = chain.new_station(group, id, in_name,
+    rc_ptr<Station> station = group->new_station(id, in_name,
       in_network, out_name, out_network, selectors, default_timing_quality,
       ovrl);
+
+    chain.add_station(id, out_name, out_network, station);
     
     rc_ptr<CfgElementMap> elms = new CfgElementMap;
     elms->add_item(RenameElement(station));

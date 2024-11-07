@@ -291,12 +291,12 @@ CHAR *string;
 VOID util_tsplit(
     REAL64 dtime, UINT16 *yr, UINT16 *da, UINT16 *hr, UINT16 *mn, UINT16 *sc, UINT16 *ms
 ){
-INT32  ltime;
+time_t  ltime;
 UINT16  imsc;
 REAL64 dmsc;
 struct tm *tiempo;
 
-    ltime = (INT32) dtime;
+    ltime = (time_t) dtime;
     dmsc = ((dtime - (REAL64) ltime)) * (REAL64) 1000.0;
     imsc = (UINT16) dmsc;
     if (dmsc - (REAL64) imsc >= (double) 0.5) imsc++;

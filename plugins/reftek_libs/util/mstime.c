@@ -34,6 +34,7 @@ Revised  :
 
 #include "platform.h"
 #include "mstime.h"
+#include "util.h"
 
 /* Macros ------------------------------------------------------------- */
 /* floor(x/y), where x, y>0 are integers, using integer arithmetic */
