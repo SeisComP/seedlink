@@ -63,7 +63,7 @@ const char *const ident_str    = "SeedLink FS-Plugin v" MYVERSION;
 
 #if defined(__GNU_LIBRARY__) || defined(__GLIBC__)
 const char *const opterr_message = "Try `%s --help' for more information\n";
-const char *const help_message = 
+const char *const help_message =
     "Usage: %s [options] plugin_name\n"
     "\n"
     "'plugin_name' is the section name in config file; it is also used\n"
@@ -131,7 +131,7 @@ class SystemLog
   {
   public:
     enum { msglen = 200 };
-    
+
     int operator()(int priority, const string &msg)
       {
         if(daemon_init)
@@ -141,7 +141,7 @@ class SystemLog
         else
           {
             int verb = 2;
-            
+
             switch(priority)
               {
               case LOG_EMERG:
@@ -186,7 +186,7 @@ class SEEDLog
     int operator()(int priority, const std::string &msg)
       {
         if(!digitime.valid) return msg.length();
-        
+
         std::string msgout;
         int n = 0, msglen, seplen;
         while(msglen = strcspn(msg.c_str() + n, SEED_NEWLINE),
@@ -195,7 +195,7 @@ class SEEDLog
             std::string msgline(msg, n, msglen);
             if(msgout.length() + plugin_name.length() + msgline.length() + 5 > PLUGIN_MAX_MSG_SIZE)
                 break;
-            
+
             msgout += (plugin_name + ": " + msgline + SEED_NEWLINE);
             n += (msglen + seplen);
           }
@@ -235,7 +235,7 @@ class ChannelDef: public CfgElement
     string channel_name;
     string source_id;
     set<string> channels_defined;
-    
+
   public:
     ChannelDef(const string &name): CfgElement(name) {}
     rc_ptr<CfgAttributeMap> start_attributes(ostream &cfglog,
@@ -255,7 +255,7 @@ try
 
     channel_name = name;
     source_id = "";
-    
+
     rc_ptr<CfgAttributeMap> atts = new CfgAttributeMap;
     atts->add_item(StringAttribute("source_id", source_id));
     return atts;
@@ -314,9 +314,9 @@ rc_ptr<CfgAttributeMap> SectionDef::start_attributes(ostream &cfglog,
   const string &name)
   {
     notmysection = strcasecmp(want.c_str(), name.c_str());
-    
+
     if(notmysection) return NULL;
-    
+
     if(found)
       {
         cfglog << "duplicate section '" << name << "'" << endl;
@@ -350,38 +350,38 @@ rc_ptr<CfgAttributeMap> SectionDef::start_attributes(ostream &cfglog,
     atts->add_item(BoolAttribute("move_files", move_files, "yes", "no"));
     atts->add_item(BoolAttribute("delete_files", delete_files, "yes", "no"));
     atts->add_item(BoolAttribute("use_timestamp", use_timestamp, "yes", "no"));
-    
+
     return atts;
   }
 
 void SectionDef::end_attributes(ostream &cfglog)
   {
     if(notmysection) return;
-    
+
 //    if(station_name.length() == 0)
 //      {
 //        cfglog << "station name was not specified" << endl;
 //        return;
 //      }
-    
+
     if(input_type.length() == 0)
       {
         cfglog << "input type was not specified" << endl;
         return;
       }
-    
+
     if(data_format.length() == 0)
       {
         cfglog << "data format was not specified" << endl;
         return;
       }
-    
+
     if(location.length() == 0)
       {
         cfglog << "location was not specified" << endl;
         return;
       }
-    
+
     if((decoder = RegisteredModule<FS_Decoder>::instance(data_format)) == NULL)
       {
         cfglog << "data format '" << data_format << "' is not supported"
@@ -409,7 +409,7 @@ rc_ptr<CfgElementMap> SectionDef::start_children(ostream &cfglog,
     if(dup || decoder == NULL || input == NULL ||
       strcasecmp(want.c_str(), name.c_str()))
       return NULL;
-    
+
     rc_ptr<CfgElementMap> elms = new CfgElementMap;
     elms->add_item(ChannelDef("channel"));
 
@@ -426,7 +426,7 @@ void configure_plugin(const string &config_file)
     logs(LOG_INFO) << "loading configuration from file '" << config_file
       << "'" << endl;
     read_config_ini(config_file, SectionDef(plugin_name, found));
-    
+
     if(!found) throw CfgCannotFindSection(plugin_name, config_file);
   }
 
@@ -451,9 +451,9 @@ string get_progname(char *argv0)
 void load_timestamp()
   {
     if(timestamp_file.length() == 0) return;
-    
+
     FILE *f;
-    
+
     if((f = fopen(timestamp_file.c_str(), "r")) == NULL) return;
 
     unsigned long t1;
@@ -476,9 +476,9 @@ void load_timestamp()
 void save_timestamp()
   {
     if(timestamp_file.length() == 0) return;
-    
+
     FILE *f;
-    
+
     if((f = fopen(timestamp_file.c_str(), "w")) == NULL)
       {
         logs(LOG_WARNING) << "could not open file '" << timestamp_file
@@ -501,7 +501,7 @@ Stream logs = make_stream(SystemLog());
 
 }
 
-namespace PluginModule {
+namespace PluginModule_private {
 
 template<>
 RegisteredModule<FS_Input>* RegisteredModule<FS_Input>::registered = NULL;
@@ -519,7 +519,7 @@ int main(int argc, char **argv)
 try
   {
 #if defined(__GNU_LIBRARY__) || defined(__GLIBC__)
-    struct option ops[] = 
+    struct option ops[] =
       {
         { "verbosity",      required_argument, NULL, 'X' },
         { "daemon",         no_argument,       NULL, 'D' },
@@ -532,7 +532,7 @@ try
 #endif
 
     string config_file = CONFIG_FILE;
-    
+
     int c;
 #if defined(__GNU_LIBRARY__) || defined(__GLIBC__)
     while((c = getopt_long(argc, argv, "vDf:mVh", ops, NULL)) != EOF)
@@ -566,18 +566,18 @@ try
       }
 
     plugin_name = string(argv[optind]);
-    
+
     struct sigaction sa;
     sa.sa_handler = int_handler;
     sa.sa_flags = SA_RESTART;
     N(sigemptyset(&sa.sa_mask));
     N(sigaction(SIGINT, &sa, NULL));
     N(sigaction(SIGTERM, &sa, NULL));
-    
+
     sa.sa_handler = SIG_IGN;
     N(sigaction(SIGHUP, &sa, NULL));
     N(sigaction(SIGPIPE, &sa, NULL));
-    
+
     if(daemon_mode)
       {
         logs(LOG_INFO) << ident_str << " started" << endl;
@@ -592,7 +592,7 @@ try
     redirect_ostream(seed_log, SEEDLog(), 0);
 
     logs(LOG_NOTICE) << ident_str << " started" << endl;
-    
+
     configure_plugin(config_file);
 
     if(input == NULL || decoder == NULL)
@@ -600,7 +600,7 @@ try
         logs(LOG_ERR) << "fatal config errors detected" << endl;
         return 1;
       }
-    
+
     load_timestamp();
     while(!terminate_proc)
       {
@@ -608,7 +608,7 @@ try
         save_timestamp();
         sleep(polltime);
       }
-    
+
     decoder->flush_channels();
     return 0;
   }
@@ -622,4 +622,4 @@ catch(...)
     logs(LOG_ERR) << "unknown exception" << endl;
     return 1;
   }
- 
+
