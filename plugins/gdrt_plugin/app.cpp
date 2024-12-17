@@ -72,7 +72,7 @@ bool Application::init() {
 			networkCode,
 			stationCode,
 			locationCode,
-			Core::Time::GMT());
+			Core::Time::UTC());
 
 		if ( loc ) {
 			try {

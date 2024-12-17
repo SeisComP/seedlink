@@ -39,7 +39,7 @@ class UDPClient {
 		void stop();
 
 	private:
-		boost::asio::io_service _ioService;
+		boost::asio::io_context _ioService;
 		boost::asio::ip::udp::socket _socket{_ioService};
 		boost::asio::ip::udp::endpoint _remoteEndpoint;
 		boost::array<char, 1024> _recvBuffer;
