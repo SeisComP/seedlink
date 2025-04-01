@@ -143,7 +143,7 @@ def main():
         data = np.array(struct.unpack(unpackFormat, message[8:])) \
                 .reshape((header["nPackagesPerMessage"], header["nChannels"]))
 
-        if args.gain != 1.0:
+        if header["dataType"] == "float":
             data *= args.gain
 
         packageData.append(data)

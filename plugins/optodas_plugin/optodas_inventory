@@ -84,7 +84,7 @@ def main():
 
     resp = seiscomp.datamodel.ResponsePAZ_Create()
     resp.setType("A")
-    resp.setGain(args.gain * header["sensitivities"][0]["factor"] / header["dataScale"])
+    resp.setGain(args.gain / header["dataScale"])
     resp.setGainFrequency(0)
     resp.setNormalizationFactor(1)
     resp.setNormalizationFrequency(0)
@@ -93,9 +93,9 @@ def main():
     inv.add(resp)
 
     sensor = seiscomp.datamodel.Sensor_Create()
-    sensor.setName(header["instrument"])
-    sensor.setDescription(header["instrument"])
-    sensor.setUnit(header["sensitivities"][0]["unit"])
+    sensor.setName(header["experiment"])
+    sensor.setDescription(header["measurement"])
+    sensor.setUnit(header["unit"])
     sensor.setResponse(resp.publicID())
     inv.add(sensor)
 
@@ -131,8 +131,8 @@ def main():
             cha = seiscomp.datamodel.Stream_Create()
             cha.setCode(args.channel)
             cha.setStart(net.start())
-            cha.setGain(args.gain * header["sensitivities"][0]["factor"] / header["dataScale"])
-            cha.setGainUnit(header["sensitivities"][0]["unit"])
+            cha.setGain(args.gain / header["dataScale"])
+            cha.setGainUnit(header["unit"])
             cha.setGainFrequency(0)
             cha.setSensor(sensor.publicID())
             cha.setDatalogger(datalogger.publicID())
