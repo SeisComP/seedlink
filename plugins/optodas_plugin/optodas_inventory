@@ -132,7 +132,7 @@ def main():
             cha.setCode(args.channel)
             cha.setStart(net.start())
             cha.setGain(args.gain / header["dataScale"])
-            cha.setGainUnit("")
+            cha.setGainUnit(header["unit"])
             cha.setGainFrequency(0)
             cha.setSensor(sensor.publicID())
             cha.setDatalogger(datalogger.publicID())
