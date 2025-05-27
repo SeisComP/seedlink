@@ -208,9 +208,9 @@ typedef struct stat_s
 /* Logging parameters */
 typedef struct SLlog_s
 {
-  void (*log_print)();
+  void (*log_print)(const char*);
   const char * logprefix;
-  void (*diag_print)();
+  void (*diag_print)(const char*);
   const char * errprefix;
   int  verbosity;
 } SLlog;

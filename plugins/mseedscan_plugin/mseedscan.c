@@ -135,8 +135,8 @@ static char *getoptval (int argcount, char **argvec, int argopt);
 static void  adddir (char *dirname);
 static void  processdirfile (char *filename);
 static int   keycompare (const void *a, const void *b);
-static void  term_handler();
-static void  print_handler();
+static void  term_handler(int);
+static void  print_handler(int);
 static int   lprintf (int level, const char *fmt, ...);
 static void  usage ();
 

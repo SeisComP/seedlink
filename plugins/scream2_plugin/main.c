@@ -60,7 +60,6 @@
 extern  uint8_t      *request_block_tcp_mode ( uint16_t );
 
 
-int                  pthread_create ();
 void                 *listen_to_scream (void *in);
 void                 *distribute_forever (void *in);
 double               get_dtime (void);
