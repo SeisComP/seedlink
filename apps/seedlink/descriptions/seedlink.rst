@@ -1,5 +1,6 @@
-SeedLink is a real-time data acquisition protocol and a client-server software
-that implements this protocol. The SeedLink protocol is based on TCP. All
+SeedLink serves miniSEED data to clients in real times. It is a real-time data
+acquisition protocol and a client-server software that implements this protocol.
+The SeedLink protocol is based on TCP. All
 connections are initiated by the client. During handshaking phase the client can
 subscribe to specific stations and streams using simple commands in ASCII coding.
 When handshaking is completed, a stream of SeedLink "packets" consisting of a
@@ -12,30 +13,42 @@ manufacturers have implemented SeedLink in their digitizer firmware. All
 implementations are generally compatible, but not all of them support the full
 SeedLink protocol. On the other hand IRIS DMC implements some extensions which
 are not supported by other servers. In the following we use "SeedLink" to denote
-the SeedLink implementation used in SeisComP. The data source of a SeedLink
-server can be anything which is supported by a SeedLink plugin - a small program
+the SeedLink implementation used in SeisComP.
+
+The data source of a SeedLink server can be anything which is supported by a
+:ref:`SeedLink plugin <seedlink-sources>` - a small program
 that sends data to the SeedLink server. Plugins are controlled by the SeedLink
 server, e.g., a plugin is automatically restarted if it crashes or a timeout
 occurs. Data supplied by a plugin can be a form of miniSEED packets or just
 raw integer samples with accompanying timing information. In the latter case,
-the SeedLink server uses an inegrated "Stream Processor" to create the desired
+the SeedLink server uses an integrated "Stream Processor" to create the desired
 data streams and assemble miniSEED packets.
 
+.. note::
+
+   SeedLink supports by default miniSEED records with a size of 512 bytes which
+   is hardcoded. For serving records with other sizes, e.g., 4096 bytes,
+   SeedLink must be recompiled with a modified variable *MSEED-RECLEN* located
+   in :file:`seedlink/apps/seedlink/iosystem.h` of the SeedLink repository.
+
+
+.. _seedlink-sources:
 
 Supported data sources
 ----------------------
 
-The table below lists digitizers and data acquisition systems that are supported by
-SeedLink plugins. More plugins (Kinemetrics K2, Lennartz MARS-88, Lennartz PCM
-5800, etc.) have been implemented by various users, but are not (yet) included
-in the package. The included C language plugin interface is described in
-section 5.1.1.5. Antelope, Earthworm and NAQS can also import data from
-SeisComP. In SeisComP the class :ref:`RecordStream <global_recordstream>` is implemented that supports both
+The table below lists digitizers and data acquisition systems and the SeedLink
+plugins supporting these system. More plugins (Kinemetrics K2, Lennartz MARS-88,
+Lennartz PCM 5800, etc.) have been implemented by various users, but are not
+(yet) included in the package. The included C language plugin interface is
+described in section 5.1.1.5. Antelope, Earthworm and NAQS can also import data
+from SeisComP. In SeisComP the class :ref:`RecordStream <global_recordstream>`
+is implemented that supports both
 SeedLink and ArcLink sources; this class is used by all SeisComP modules that
 work with waveform data. On a lower level, SeedLink clients can be implemented
-using the :cite:t:`libslink` software library or its Java counterpart, JSeedLink. Libslink
-supports Linux/UNIX, Windows and MacOS X platforms, and comes with an exhaustive
-documentation in form of UNIX manual pages.
+using the :cite:t:`libslink` software library or its Java counterpart,
+JSeedLink. Libslink supports Linux/UNIX, Windows and MacOS X platforms, and
+comes with an exhaustive documentation in form of UNIX manual pages.
 
 .. csv-table::
    :widths: 2 3 5
@@ -53,15 +66,16 @@ documentation in form of UNIX manual pages.
    :ref:`seedlink-sources-ewexport_pasv-label`,  Earthworm passive export server (TCP/IP), Chad Trabant (IRIS)
    :ref:`seedlink-sources-fs_mseed-label`   ,  miniSEED file plugin, GFZ
    :ref:`seedlink-sources-gdrt-label`       ,  GDRT server, GFZ
+   :ref:`seedlink-sources-gmeteo-label`     ,  GFZ meteo protocol, GFZ
    :ref:`seedlink-sources-hrd24-label`      ,  Nanometrics HRD24, GFZ; Recai Yalgin
    :ref:`seedlink-sources-liss-label`       ,  LISS, Chad Trabant (IRIS)
    :ref:`seedlink-sources-m24-label` *      ,  Lennartz M24, Lennartz Electronic GmbH
    :ref:`seedlink-sources-maram-label`      ,  maRam Weatherstation V1, GFZ
    :ref:`seedlink-sources-minilogger-label` ,  SEP064 USB Seismometer Interface, GFZ; Anthony Lomax
-   :ref:`seedlink-sources-mseedfifo-label`  ,  Generic, GFZ
-   :ref:`seedlink-sources-mseedscan-label`  ,  Transfers miniSEED files from a directory, Chad Trabant (IRIS)
    :ref:`seedlink-sources-mk6-label` *      ,  MK6, Jan Wiszniowski (IGPAS)
    :ref:`seedlink-sources-mppt-label` *     ,  SunSaver MPPT via Modbus TCP/IP, GFZ
+   :ref:`seedlink-sources-mseedfifo-label`  ,  Generic, GFZ
+   :ref:`seedlink-sources-mseedscan-label`  ,  Transfers miniSEED files from a directory, Chad Trabant (IRIS)
    :ref:`seedlink-sources-mws-label`        ,  Reinhardt MWS5/MWS9 Weather Station, GFZ
    :ref:`seedlink-sources-naqs-label`       ,  NAQS, "Chad Trabant (IRIS); based on sample code from Nanometrics, Inc."
    :ref:`seedlink-sources-nmxp-label` *     ,  NAQS, Matteo Quintiliani (INGV)
@@ -255,10 +269,10 @@ In these files the following public functions are defined:
 is used to send a raw packet (array of 32-bit integer samples) to SeedLink. The parameters are:
 
 station
-    station ID, must match one of the defined stations in seedlink.ini. (Up to 10 characters.)
+    station ID, must match one of the defined stations in :file:`seedlink.ini`. (Up to 10 characters.)
 
 channel
-    channel ID, referenced by the "input" element in streams.xml. (Up to 10 characters.)
+    channel ID, referenced by the "input" element in :file:`streams.xml`. (Up to 10 characters.)
 
 pt
     time of the first sample in the array. If NULL then time is calculated relative to the previous send_raw3() call. struct ptime is defined in :file:`plugin.h`.
@@ -267,7 +281,7 @@ usec_correction
     time correction in microseconds to be written in the SEED data header. Can be useful if the digitizer is not phase locked to GPS.
 
 timing_quality
-    timing quality in percent (0-100). The number is directly written into miniSEED header (blockette 1001). Semantics is implementation-defined. Usually 100 means that GPS is in lock and 0 means there never was a GPS lock, so the timing is completely unreliable. When GPS goes out of lock, the value can slowly decrease reflecting a possible timedrift.
+    timing quality in percent (0-100). The number is directly written into miniSEED header (blockette 1001). Semantics is implementation-defined. Usually 100 means that GPS is in lock and 0 means there never was a GPS lock, so the timing is completely unreliable. When GPS goes out of lock, the value can slowly decrease reflecting a possible time drift.
 
 dataptr
     Array of signed 32-bit samples.
