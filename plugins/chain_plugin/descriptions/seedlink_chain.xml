@@ -27,7 +27,7 @@
 	<binding module="seedlink" name="chain" category="sources">
 		<description>Seedlink server (TCP/IP)</description>
 		<configuration>
-			<parameter name="address" type="string" default="geofon.gfz-potsdam.de">
+			<parameter name="address" type="string" default="geofon.gfz.de">
 				<description>
 					Hostname or IP of the Seedlink server.
 				</description>

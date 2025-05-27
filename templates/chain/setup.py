@@ -157,7 +157,7 @@ class SeedlinkPluginHandler:
   def push(self, seedlink):
     try: host = seedlink.param('sources.chain.address')
     except:
-      host = "geofon.gfz-potsdam.de"
+      host = "geofon.gfz.de"
       seedlink.setParam('sources.chain.address', host)
 
     try: port = seedlink.param('sources.chain.port')
