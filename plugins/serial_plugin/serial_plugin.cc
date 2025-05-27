@@ -498,8 +498,8 @@ class ChannelDef: public CfgElement
     ChannelDef(const string &name): CfgElement(name), first(true), scale(-1.0),
       realscale(-1.0), precision(2) {}
 
-    rc_ptr<CfgAttributeMap> start_attributes(ostream &cfglog, const string &name);
-    void end_attributes(ostream &cfglog);
+    rc_ptr<CfgAttributeMap> start_attributes(ostream &cfglog, const string &name) override;
+    void end_attributes(ostream &cfglog) override;
   };
 
 rc_ptr<CfgAttributeMap> ChannelDef::start_attributes(ostream &cfglog, const string &name)

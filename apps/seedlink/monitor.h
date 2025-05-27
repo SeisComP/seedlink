@@ -32,7 +32,7 @@ using namespace std;
 using namespace Utilities;
 
 enum InfoLevel
-  { 
+  {
     IdInfo,
     CapabilityInfo,
     StationInfo,
@@ -62,15 +62,15 @@ class MonitorRegexError: public MonitorError
     MonitorRegexError(const string &errmsg):
       MonitorError(string() + "regex error: " + errmsg) {}
   };
-        
+
 class MonitorConfigError: public MonitorError
   {
   public:
     MonitorConfigError(const string &filename):
-      MonitorError(string() + "error loading configuration from '" + 
+      MonitorError(string() + "error loading configuration from '" +
         filename + "'") {}
   };
-        
+
 //*****************************************************************************
 // InfoBuffer
 //*****************************************************************************
@@ -92,7 +92,7 @@ class InfoBuffer: public Buffer
         if((dataptr = malloc(size)) == NULL) throw bad_alloc();
       }
 
-    void *data() const
+    void *data() const override
       {
         return dataptr;
       }
@@ -154,7 +154,7 @@ class IPACL
   public:
     bool add(const string &ipstr);
     bool check(unsigned int ip) const;
-    
+
     void clear()
       {
         ip_mask_list.clear();

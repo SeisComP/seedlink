@@ -33,29 +33,29 @@ class MSEEDDataRecord : public DataRecord {
 	public:
 		MSEEDDataRecord();
 
-		virtual const char *formatName() const;
+		virtual const char *formatName() const override;
 
 		virtual void readMetaData(std::streambuf &buf, int size,
 		                          Header &header,
 		                          Time &startTime,
-		                          Time &endTime);
+		                          Time &endTime) override;
 
-		virtual const Header *header() const;
-		virtual Time startTime() const;
-		virtual Time endTime() const;
+		virtual const Header *header() const override;
+		virtual Time startTime() const override;
+		virtual Time endTime() const override;
 
-		virtual size_t dataSize(bool withHeader) const;
+		virtual size_t dataSize(bool withHeader) const override;
 
 		virtual ReadStatus get(std::streambuf &buf, int size,
 		                       const Time &start = Time(),
 		                       const Time &end = Time(),
-		                       int maxSize = -1);
+		                       int maxSize = -1) override;
 
 		/**
 		 * @brief Returns the packet type
 		 * @return The packet type
 		 */
-		PacketType packetType() const { return MSEEDPacket; }
+		PacketType packetType() const override { return MSEEDPacket; }
 
 		/**
 		 * @brief Initializes the internal data vector from the given buffer

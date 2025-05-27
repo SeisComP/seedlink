@@ -300,7 +300,7 @@ class BufferImpl: public Buffer
         return nextptr;
       }
 
-    void *data() const
+    void *data() const override
       {
         return dataptr;
       }
@@ -379,18 +379,18 @@ class BufferStoreImpl: public BufferStore
     BufferStoreImpl(BufferStoreImplPartner &partner_init, int bufsize_init,
       int nbufs_init);
     ~BufferStoreImpl();
-    Buffer *get_buffer();
-    void queue_buffer(Buffer *buf1);
+    Buffer *get_buffer() override;
+    void queue_buffer(Buffer *buf1) override;
     void load_buffers(int fd);
     void create_blank_buffers(int n);
-    void enlarge(int newsize);
+    void enlarge(int newsize) override;
 
     BufferImpl *first() const
       {
         return buf_first;
       }
 
-    int size() const
+    int size() const override
       {
         return nbufs;
       }
@@ -1255,18 +1255,18 @@ class StationIO: private BufferStoreImplPartner, private FileStorePartner,
     list<StationConnectionState *> attached;
 
     // BufferStoreImpl callbacks
-    void new_buffer(BufferImpl *buf);
-    void delete_oldest_buffer(BufferImpl *buf);
+    void new_buffer(BufferImpl *buf) override;
+    void delete_oldest_buffer(BufferImpl *buf) override;
 
     // FileStore callback
-    void delete_oldest_segment(FileBuffer *buf);
+    void delete_oldest_segment(FileBuffer *buf) override;
 
     // StationConnection callbacks
     list<StationConnectionState *>::iterator
-      attach(StationConnectionState *sx);
-    void detach(list<StationConnectionState *>::iterator &i);
+      attach(StationConnectionState *sx) override;
+    void detach(list<StationConnectionState *>::iterator &i) override;
     bool request(StationConnectionState &sx,
-      const vector<string> &cmdvec);
+      const vector<string> &cmdvec) override;
 
     bool command_SELECT(StationConnectionState &sx,
       const vector<string> &cmdvec);
@@ -2549,11 +2549,11 @@ class ConnectionManagerImpl: public ConnectionManager
       const string &description, bool rlog, const string &station_dir,
       int nbufs, int blank_bufs, int filesize, int nfiles, int seq_gap_limit,
       bool stream_check, const string &gap_check_pattern, int gap_treshold,
-      const IPACL &ip_access);
+      const IPACL &ip_access) override;
 
-    void start(int port);
-    void save_state();
-    void restore_state();
+    void start(int port) override;
+    void save_state() override;
+    void restore_state() override;
   };
 
 ConnectionManagerImpl::ConnectionManagerImpl(const string &daemon_name_init,

@@ -47,11 +47,11 @@ namespace {
     const unsigned char DATA_HEADER[]  = {
 	0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89,
 	0x8a, 0x8b, 0x8c, 0x8d, 0x8e, 0x8f, 0x90, 0x91 };
-    
+
 /* **************************************************************************
  * Data Structures
  * **************************************************************************/
-    
+
     // Header of the data segments
     struct SegmentHeader
     {
@@ -86,7 +86,7 @@ namespace {
 /* ***************************************************************************
  * SADCdataProtocol
  * ***************************************************************************/
-    
+
     class SADCdataProtocol: public Proto
     {
     public:
@@ -99,21 +99,21 @@ namespace {
 	    {
 		memset(&_segmentId, 0, _segmentHeaderSize);
 	    }
-	
+
 	~SADCdataProtocol()
 	    {
 		if (_timeSegment != NULL) free(_timeSegment);
 		if (_dataSegment != NULL) free(_dataSegment);
 	    }
-	
+
 	void attach_output_channel(const string &source_id,
 				   const string &channel_name, const string &station_name,
 				   double scale, double realscale, double realoffset,
-				   const string &realunit, int precision);
-	void flush_channels();
-	
-	void start();
-	
+				   const string &realunit, int precision) override;
+	void flush_channels() override;
+
+	void start() override;
+
     private:
 	const int                      _countdownInitVal;
 	int                            _countdown;
@@ -130,13 +130,13 @@ namespace {
 	int                            _timeSegmentSize;
 	int                            _dataSegmentSize;
 	vector<rc_ptr<OutputChannel> > _sadcChannels;
-	
+
 	/** Pointer to member functions */
 	int (SADCdataProtocol::*decodeData)(void *);
 	string (SADCdataProtocol::*decodeTime)(void *);
 	void (SADCdataProtocol::*setTimeFromGPS)(const void *);
 	void (SADCdataProtocol::*statusMessage)(const void *);
-		
+
 	void   init();
 	void   initSegments();
 	void   do_start();
@@ -165,7 +165,7 @@ namespace {
 	    return true;
 	}
     };
-    
+
     /**************************************************************************
      * public definition
      **************************************************************************/
@@ -178,13 +178,13 @@ namespace {
 	char *tail;
 
 	n = strtoul(source_id.c_str(), &tail, 10);
-    
+
 	if(*tail || n >= NCHAN)
 	    throw PluginADInvalid(source_id, channel_name);
 
 	if(_sadcChannels[n] != NULL)
 	    throw PluginADInUse(source_id, _sadcChannels[n]->channel_name);
-	
+
 	_sadcChannels[n] = new OutputChannel(channel_name, station_name,
 					     dconf.zero_sample_limit, scale);
     }
@@ -226,14 +226,14 @@ namespace {
 	// allocate time segment
 	if ((_timeSegment = malloc(_timeSegmentSize)) == NULL)
 	    throw bad_alloc();
-	memset(_timeSegment, 0, _timeSegmentSize);	    
-	
+	memset(_timeSegment, 0, _timeSegmentSize);
+
 	// allocate data segment
 	if ((_dataSegment = malloc(_dataSegmentSize)) == NULL)
 	    throw bad_alloc();
 	memset(_dataSegment, 0, _dataSegmentSize);
     }
-    
+
     /**
      * Configures the plugin in correspondence to the firmaware version.
      */
@@ -244,11 +244,11 @@ namespace {
 	logs(LOG_INFO) << "Firmware version: " << _digitizerVersion << endl;
 
 	// We are using a gps time source, so no GMT corection is
-	// necessary. 
+	// necessary.
 	setGMT(0);
-	
+
 	setCrystalErrorCompensationTrim();
-	    
+
         time_t t = time(NULL);
         tm *ptm = gmtime(&t);
         EXT_TIME et;
@@ -262,7 +262,7 @@ namespace {
         et.usec = 0;
         et.doy = mdy_to_doy(et.month, et.day, et.year);
         digitime.it = ext_to_int(et);
-        
+
 	if(dconf.use_pctime_if_no_gps)
         {
 	    setTime(et.hour, et.minute, et.second);
@@ -282,17 +282,17 @@ namespace {
             digitime.valid = false;
             digitime.exact = true;
         }
-        
+
 	if (_digitizerVersion == "V300")
 	{
 	    _currentNrOfChannels = 16;
-	    
+
 	    // setting up pointers to member functions
 	    decodeData = &SADCdataProtocol::decodeData16Bit;
 	    decodeTime = &SADCdataProtocol::decodeTimeFull;
 	    setTimeFromGPS = &SADCdataProtocol::setTimeFromGPSFull;
 	    statusMessage = &SADCdataProtocol::statusMessageTimeFull;
-	    
+
 	    // set segment sizes
 	    _segmentHeaderSize = sizeof(SegmentHeader);
 	    _timeSegmentSize = sizeof(TimeSegmentFull);
@@ -303,26 +303,26 @@ namespace {
 	}
 /*	else if (_digitizerVersion == "V200")   MMS previous code*/
 	else if (_digitizerVersion == "V200" ||   /* MMS new code */
-					 _digitizerVersion == "V201" || 
-					 _digitizerVersion == "V202" || 
+					 _digitizerVersion == "V201" ||
+					 _digitizerVersion == "V202" ||
 					 _digitizerVersion == "V203" ||
 					 _digitizerVersion == "V204" ||
 			  /* _digitizerVersion == "V205" ||    version 2.05 is capable to sample at 600Hz and has different data packets */
 					 _digitizerVersion == "V206")   // new code
 	{
 	    _currentNrOfChannels = 3;
-	    
+
 	    // setting up pointers to member functions
 	    decodeData = &SADCdataProtocol::decodeData24Bit;
 	    decodeTime = &SADCdataProtocol::decodeTimeFull;
 	    setTimeFromGPS = &SADCdataProtocol::setTimeFromGPSFull;
 	    statusMessage = &SADCdataProtocol::statusMessageTimeFull;
-	    	    
+
 	    // set segment sizes
 	    _segmentHeaderSize = sizeof(SegmentHeader);
 	    _timeSegmentSize = sizeof(TimeSegmentFull);
 	    _dataSegmentSize = sizeof(DataSegment24Bit);
-	    	    
+
 	    _samplingRate = 100;
 	    setSamplingRate3Channels(_samplingRate);
 	}
@@ -335,7 +335,7 @@ namespace {
 	    decodeTime = &SADCdataProtocol::decodeTimeFull;
 	    setTimeFromGPS = &SADCdataProtocol::setTimeFromGPSFull;
 	    statusMessage = &SADCdataProtocol::statusMessageTimeFull;
-	    
+
 	    // set segment sizes
 	    _segmentHeaderSize = sizeof(SegmentHeader);
 	    _timeSegmentSize = sizeof(TimeSegmentFull);
@@ -352,13 +352,13 @@ namespace {
 	else if (_digitizerVersion == "V162")
 	{
 	    _currentNrOfChannels = 4;
-	    
+
 	    // setting up pointers to member functions
 	    decodeData = &SADCdataProtocol::decodeData16Bit;
 	    decodeTime = &SADCdataProtocol::decodeTimeFull;
 	    setTimeFromGPS = &SADCdataProtocol::setTimeFromGPSFull;
 	    statusMessage = &SADCdataProtocol::statusMessageTimeFull;
-	    
+
 	    // set segment sizes
 	    _segmentHeaderSize = sizeof(SegmentHeader);
 	    _timeSegmentSize = sizeof(TimeSegmentFull);
@@ -377,7 +377,7 @@ namespace {
 	    logs(LOG_ERR) << "Digitizerversion " << _digitizerVersion << "is _NOT_ supported" << endl;
 	    exit(0);
 	}
-	    
+
 	initSegments();
 
 	seed_log << ident_str << SEED_NEWLINE
@@ -398,7 +398,7 @@ namespace {
 	         << "Sample rate: " << _samplingRate << endl;
 	}
     }
-    
+
     bool SADCdataProtocol::readReturnStatus(const unsigned char acknowledgeByte)
     {
 	int size = sizeof(acknowledgeByte);
@@ -406,14 +406,14 @@ namespace {
 	bool success = false;
  	time_t startTime = 0, currentTime = 0, *status = NULL;
  	startTime = time(status);
-		
+
 	while (!terminate_proc)
 	{
 	    currentTime = time(status);
 
 	    // cout << "diffTime: " << difftime(currentTime, startTime) << endl;
 	    if (difftime(currentTime, startTime) >= _timeOut) break;
-	    
+
 	    if(read_port(_fd, &returnStatus, size) == 0) continue;
 	    if (returnStatus != acknowledgeByte) continue;
 
@@ -422,18 +422,18 @@ namespace {
 	}
 	return success;
     }
-    
+
     string SADCdataProtocol::getFirmwareVersion()
     {
 	int commandSize = 6;
 	const unsigned char command[] =
 	    { 0x81, 0x00, 0x00, 0x00, 0x00, 0x00 };
 	char answer[4];
-	
+
 	while (!terminate_proc)
 	{
 	    write(_fd, command, commandSize);
-	    
+
 	    if (read_port(_fd, answer, 1) == 0) continue;
 	    if (answer[0] != 'V') continue;
 	    if (read_port(_fd, &(answer[1]), 3) == 0) continue;
@@ -442,14 +442,14 @@ namespace {
 // MMS. Old code
 /*	    if(ret == "V300" || ret == "V200" || ret == "V181" ||
 		ret == "V180" || ret == "V162" || ret == "V161" ||
-		ret == "V150") 
+		ret == "V150")
 		return ret;  */
 
 // MMS new code
-	    if( ret == "V300" || ret == "V200" || ret == "V201" || 
-	    	  ret == "V202" || ret == "V203" || ret == "V204" || 
-	    	  ret == "V206" || ret == "V181" || ret == "V180" || 
-	    	  ret == "V162" || ret == "V161" || ret == "V150") 
+	    if( ret == "V300" || ret == "V200" || ret == "V201" ||
+	    	  ret == "V202" || ret == "V203" || ret == "V204" ||
+	    	  ret == "V206" || ret == "V181" || ret == "V180" ||
+	    	  ret == "V162" || ret == "V161" || ret == "V150")
 							return ret;
 	}
 
@@ -461,7 +461,7 @@ namespace {
     {
 	const TimeSegmentFull *timeSegment = static_cast<const TimeSegmentFull*>(timeSegmentFull);
 	EXT_TIME et;
-	
+
 	// In the versions 2.00, 2.01, 2.02, and 2.04
 	// exists a bug in the a/d firmware which is manifested very rarely
 	// if happen it happen at the first second of the new day.
@@ -477,8 +477,8 @@ namespace {
 	// if the clock passed the midnight AND the day is the day before
 	// the date can be corrected to the new day
 	//
-	
-	
+
+
 	et.year = timeSegment->year + 2000;
 	et.month = timeSegment->month;
 	et.day = timeSegment->day;
@@ -494,7 +494,7 @@ namespace {
     {
 	logs(LOG_WARNING) << "setTimeFromGPSPartial() NOT IMPLEMENTED YET" << endl;
     }
-    
+
     /**
      * Decodes data from the 24 bit digitizer (V200)
      *
@@ -507,10 +507,10 @@ namespace {
     int SADCdataProtocol::decodeData24Bit(void *ptr)
     {
 	DataSegment24Bit* data = static_cast<DataSegment24Bit*>(ptr);
-	
+
 	data->low = data->low + ((data->end & 1)  << 7);
 	data->middle = data->middle + ((data->end & 2)  << 6);
-	
+
   	int tmp = 0;
 	int value = 0;
   	tmp = ((data->high << 16) + (data->middle << 8 ) + data->low);
@@ -518,7 +518,7 @@ namespace {
 	    value = -8388608 + tmp;
  	else
   	    value = tmp;
-	
+
   	return value;
     }
 
@@ -537,17 +537,17 @@ namespace {
 
 	data->low = data->low + ((data->end & 1)  << 7);
 	data->high = data->high + ((data->end & 2)  << 6);
-	
+
 	int value = (data->high << 8) + data->low;
-	
-	if (data->end & 4) 
+
+	if (data->end & 4)
 	    value += 65536;
-	if (data->end & 8) 
+	if (data->end & 8)
 	    value += -131072;
-		
+
 	return value;
     }
-    
+
     /**
      * Decodes data from the 16 bit digitizer (V162/161)
      *
@@ -560,7 +560,7 @@ namespace {
     int SADCdataProtocol::decodeData16Bit(void* ptr)
     {
 	DataSegment18and16Bit *data = static_cast<DataSegment18and16Bit*>(ptr);
-	
+
 	if (data->end == 253)
 	    data->low += 128;
 	else if (data->end == 254)
@@ -571,10 +571,10 @@ namespace {
 	    data->high += 128;
 	}
 	short value = (data->high << 8) + data->low;
-	
+
 	return value;
     }
-    
+
     /**
      * Decodes the time and date.
      *
@@ -597,14 +597,14 @@ namespace {
 
 	return string(timeStr);
     }
-    
+
     void SADCdataProtocol::setGMT(unsigned char GMT = 0x00)
     {
 	unsigned char acknowledgeByte = 0xF8;
 	unsigned char commandGMT[] =
 	    { 0x82, GMT, 0x00, 0x00, 0x00, 0x00 };
 	int commandSize = 6;
-	
+
 	while(!terminate_proc)
 	{
 	    if (write(_fd, commandGMT, commandSize) == -1 )
@@ -631,7 +631,7 @@ namespace {
 	unsigned char timeCmd[] =
 	    { 0x83, sec, min, hour, 0x00, 0x00 };
 	int cmdSize = 6;
-	
+
 	while(!terminate_proc)
 	{
 	    if (write(_fd, timeCmd, cmdSize) == -1)
@@ -657,7 +657,7 @@ namespace {
 	unsigned char dateCmd[] =
 	    { 0x87, year, month, day, 0x00, 0x00 };
 	int cmdSize = 6;
-	
+
 	while(!terminate_proc)
 	{
 	    if (write(_fd, dateCmd, cmdSize) == -1 )
@@ -677,7 +677,7 @@ namespace {
  	    }
 	}
     }
-    
+
 	void SADCdataProtocol::setCrystalErrorCompensationTrim(unsigned char lowTrim,
 	                                                       unsigned char medTrim,
 	                                                       unsigned char highTrim,
@@ -687,7 +687,7 @@ namespace {
 	unsigned char dateCmd[] =
 	    { 0x85, lowTrim, medTrim, highTrim, dirTrim, 0x00 };
 	int cmdSize = 6;
-	
+
 	while(!terminate_proc)
 	{
 	    if (write(_fd, dateCmd, cmdSize) == -1 )
@@ -708,7 +708,7 @@ namespace {
 	    }
 	}
     }
-    
+
     void SADCdataProtocol::setSamplingRate16Channels(int samplingRate,
 						     unsigned char channelsLow,
 						     unsigned char channelsHigh)
@@ -719,7 +719,7 @@ namespace {
 		                  << _maxSamplingRate << " and 0" << endl;
  	    return;
 	}
-	
+
 	unsigned char spsX = 0x00;
 	if (samplingRate > 0)
 	    spsX = static_cast<unsigned char>(_maxSamplingRate / samplingRate);
@@ -727,12 +727,12 @@ namespace {
 	int commandSize = 6;
 	unsigned char samplingCommand[] =
 	    { 0x84, spsX, channelsLow, channelsHigh, 0x00, 0x00 };
-	
+
 	if (write(_fd, samplingCommand, commandSize) == -1 )
 	    logs(LOG_WARNING) << "Could not write to filedescriptor (setSamplingRate)"
 			      << " - ERROR: " << strerror(errno) << endl;
     }
-    
+
     void SADCdataProtocol::setSamplingRate4Channels(int samplingRate)
     {
 	if (samplingRate > _maxSamplingRate || samplingRate < 0)
@@ -740,7 +740,7 @@ namespace {
 	    logs(LOG_WARNING) << "sample rate has to be between " << _maxSamplingRate << " and 0" << endl;
 	    return;
 	}
-	
+
 	unsigned char spsX = 0x00;
 	if (samplingRate > 0)
 	    spsX = static_cast<unsigned char>(_maxSamplingRate / samplingRate);
@@ -748,7 +748,7 @@ namespace {
 	int commandSize = 6;
 	unsigned char samplingCommand[] =
 	    { 0x84, spsX, spsX, spsX, spsX, 0x00 };
-	
+
 	if (write(_fd, samplingCommand, commandSize) == -1 )
 	    logs(LOG_WARNING) << "Could not write to filedescriptor (setSamplingRate)"
 		 << " - ERROR: " << strerror(errno) << endl;
@@ -761,7 +761,7 @@ namespace {
 	    logs(LOG_WARNING) << "sample rate has to be between " << _maxSamplingRate << " and 0" << endl;
 	    return;
 	}
-	
+
 	unsigned char spsX = 0x00;
 	if (samplingRate > 0)
 	    spsX = static_cast<unsigned char>(_maxSamplingRate / samplingRate);
@@ -769,12 +769,12 @@ namespace {
 	int commandSize = 6;
 	unsigned char samplingCommand[] =
 	    { 0x84, spsX, spsX, spsX, 0x00, 0x00 };
-	
+
 	if (write(_fd, samplingCommand, commandSize) == -1 )
 	    logs(LOG_WARNING) << "Could not write to filedescriptor (setSamplingRate)"
 		 << " - ERROR: " << strerror(errno) << endl;
     }
-    
+
     /**
      * do_start() reads the data from the digitatizer, does the
      * processing and sends the results to the SeisComp server.
@@ -782,17 +782,17 @@ namespace {
     void SADCdataProtocol::do_start()
     {
 	bool GPSlock = false;
-	
+
 	// Initialize the plugin according to the firmware version.
        	init();
-	
+
 	while (!terminate_proc)
  	{
 	    // Read the segment header (command)
 	    //
 	    if (read_port(_fd, &_segmentId, _segmentHeaderSize) == 0)
 		continue;
-	    
+
 	    // Time command
 	    if (_segmentId.commandId == 0x81)
  	    {
@@ -803,7 +803,7 @@ namespace {
 		    logs(LOG_WARNING) << "read timeout for TimeSegment" << endl;
 		    continue;
 		}
-		
+
 		if (!sanityCheck((unsigned char *)_timeSegment, _timeSegmentSize))
 		{
 		    logs(LOG_WARNING) << "sanity check for time segment failed: timeSgmentSize: "
@@ -818,7 +818,7 @@ namespace {
                     logs(LOG_INFO) << "Got time segment" << endl;
                     digitime.valid = true;
                 }
-				
+
 	        for(int n = 0; n < NCHAN; ++n)
 	        {
 	            if(_sadcChannels[n] == NULL) continue;
@@ -828,14 +828,14 @@ namespace {
 		logs(LOG_DEBUG) << "TIME: " << (this->*decodeTime)(_timeSegment) << endl;
 		// Send status message every full hour
 		(this->*statusMessage)(_timeSegment);
-				
+
 		// Check wether we have a GPS lock. Otherwise we
 		// should do the time calculation on our own.
 		//
 		if (((char *)_timeSegment)[_timeSegmentSize - 2] & 32 && !GPSlock)
 		{
 		    logs(LOG_INFO) << "[ TIME ] " << (this->*decodeTime)(_timeSegment) << ", GPS _IS_ locked" << endl;
-		    
+
 		    GPSlock = true;
 		    digitime.quality = 100;
 		    _countdown = _countdownInitVal;
@@ -855,17 +855,17 @@ namespace {
 	    {
 		// Calculate channels index
 		int i = static_cast<int>(_segmentId.commandId - DATA_HEADER[0]);
-		
+
 		if (i >= _currentNrOfChannels || i < 0) // invalid index
 		{
 		    logs(LOG_WARNING) << "UNKNOWN HEADER: " << hex << "0x"
 		    		      << static_cast<int>(_segmentId.commandId)
 				      << " for CHANNEL: " << dec << i << endl;
 		}
-		else 
+		else
 		{
 		    if (read_port(_fd, _dataSegment, _dataSegmentSize) == 0)
-		    { 
+		    {
 			logs(LOG_WARNING) << "read timeout for channel: " << i << endl;
 			continue;
 		    }
@@ -874,7 +874,7 @@ namespace {
 			logs(LOG_WARNING) << "sanity check for data segment failed - CHANNEL: " << i << endl;
 			continue;
 		    }
-                    
+
 		    int sample = (this->*decodeData)(_dataSegment);
 		    logs(LOG_DEBUG) << "CHANNEL[" << i << "]: " << sample << endl;
 		    _sadcChannels[i]->put_sample(sample);
@@ -882,8 +882,8 @@ namespace {
 	    }
 	}
     }
-    
+
     RegisterProto<SADCdataProtocol> proto("sadc");
-	
+
 } // unnamed namespace
-    
+

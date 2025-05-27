@@ -99,31 +99,31 @@ class Node: public Input
     Input(freqn, freqd, backfill_capacity), filter(filter_init), cbuf(cbsize) {}
 
     void set_time(const INT_TIME &it, int usec_correction,
-      int timing_quality);
-    void add_ticks(int n, int usec_correction, int timing_quality);
-    void send_data(const int32_t *data, int len);
-    void flush();
-    void reset();
+      int timing_quality) override;
+    void add_ticks(int n, int usec_correction, int timing_quality) override;
+    void send_data(const int32_t *data, int len) override;
+    void flush() override;
+    void reset() override;
     void attach_node(rc_ptr<Node> node);
     void attach_encoder(rc_ptr<Encoder> enc);
 
-    double time_gap()
+    double time_gap() override
       {
         return clk.time_gap();
       }
   };
- 
+
 void Node::sync_time(const Node &parent)
   {
     clk.sync_time(parent.clk, parent.cbuf.used(inp), filter->shift());
-      
+
     if(encoder != NULL) encoder->sync_time(clk);
 
     list<rc_ptr<Node> >::iterator p;
     for(p = children.begin(); p != children.end(); ++p)
         (*p)->sync_time(*this);
   }
-  
+
 void Node::process_data(const Node &parent)
   {
     if(parent.cbuf.used(inp) < filter->length()) return;
@@ -143,7 +143,7 @@ void Node::set_time(const INT_TIME &it, int usec_correction,
   int timing_quality)
   {
     clk.set_time(it, usec_correction, timing_quality);
-    
+
     if(encoder != NULL) encoder->sync_time(clk);
 
     list<rc_ptr<Node> >::iterator p;
@@ -154,7 +154,7 @@ void Node::set_time(const INT_TIME &it, int usec_correction,
 void Node::add_ticks(int n, int usec_correction, int timing_quality)
   {
     clk.add_ticks(n, usec_correction, timing_quality);
-    
+
     if(encoder != NULL) encoder->sync_time(clk);
 
     list<rc_ptr<Node> >::iterator p;
@@ -165,18 +165,18 @@ void Node::add_ticks(int n, int usec_correction, int timing_quality)
 void Node::send_data(const int32_t *data, int len)
   {
     list<rc_ptr<Node> >::iterator p;
-    
+
     for(int i = 0; i < len; ++i)
       {
         if(encoder != NULL) encoder->send_data(data[i]);
         cbuf.write(data[i]);
         clk.tick();
-        
+
         for(p = children.begin(); p != children.end(); ++p)
            (*p)->process_data(*this);
       }
   }
-  
+
 void Node::flush()
   {
     if(encoder != NULL) encoder->flush();
@@ -217,7 +217,7 @@ void Node::attach_encoder(rc_ptr<Encoder> enc)
   {
     encoder = enc;
   }
- 
+
 //*****************************************************************************
 // DummyFilter
 //*****************************************************************************
@@ -230,12 +230,12 @@ class DummyFilter: public Filter
         len = 1;
       }
 
-    double apply(CircularBuffer<double>::iterator p)
+    double apply(CircularBuffer<double>::iterator p) override
       {
         return *p;
       }
 
-    double shift()
+    double shift() override
       {
         return 0;
       }
@@ -267,7 +267,7 @@ class NodeSpec
     void attach(rc_ptr<NodeSpec> child);
     int cbsize_required() const;
     bool remove_unused_child_nodes();
-    
+
     int number_of_streams() const
       {
         return n_streams;
@@ -288,14 +288,14 @@ void NodeSpec::normalize_freq(int &freqn, int &freqd) const
         a = freqd;
         b = freqn;
       }
-    
+
     while(b > 1)
       {
         int tmp = b;
         b = a % b;
         a = tmp;
       }
-        
+
     if(b == 0)
       {
         freqn /= a;
@@ -308,22 +308,22 @@ rc_ptr<Node> NodeSpec::instance(rc_ptr<EncoderSpec> encoder_spec,
   int freqn, int freqd) const
   {
     rc_ptr<Filter> myfilter;
-    
+
     if(filter == NULL) myfilter = new DummyFilter;
     else myfilter = filter;
-    
+
     rc_ptr<Node> node = new Node(myfilter, cbsize, freqn, freqd);
-    
+
     int cfreqn = freqn;
     int cfreqd = freqd * myfilter->decimation();
-    
+
     normalize_freq(cfreqn, cfreqd);
-    
+
     list<rc_ptr<NodeSpec> >::const_iterator p;
     for(p = children.begin(); p != children.end(); ++p)
         node->attach_node((*p)->instance(encoder_spec, channel_name,
         location_id, cfreqn, cfreqd));
-    
+
     if(stream_name.length() != 0)
         node->attach_encoder(encoder_spec->instance(stream_name + channel_name,
           location_id, cfreqn, cfreqd));
@@ -335,7 +335,7 @@ void NodeSpec::attach(rc_ptr<NodeSpec> child)
   {
     if(child->cbsize_required() > cbsize)
         cbsize = child->cbsize_required();
-    
+
     children.push_back(child);
   }
 
@@ -344,7 +344,7 @@ int NodeSpec::cbsize_required() const
     if(filter == NULL) return 0;
 
     int b, n = filter->length();
-    
+
     for(b = 1; b <= MAX_CBSIZE && n >= (1 << b); ++b);
 
     internal_check(b <= MAX_CBSIZE);
@@ -359,7 +359,7 @@ bool NodeSpec::remove_unused_child_nodes()
     if(n_streams < 0)
       {
         n_streams = 0;
-    
+
         while(p != children.end())
           {
             if((*p)->remove_unused_child_nodes())
@@ -375,7 +375,7 @@ bool NodeSpec::remove_unused_child_nodes()
 
         if(stream_name.length() != 0) ++n_streams;
       }
-    
+
     return (n_streams == 0);
   }
 
@@ -390,7 +390,7 @@ class InputSpec
 
   public:
     const string name;
-  
+
     InputSpec(const string &name_init, const string &channel_name_init,
       const string &location_id_init, int freqn_init, int freqd_init,
       rc_ptr<NodeSpec> node_spec_init):
@@ -407,7 +407,7 @@ class InputSpec
       {
         return node_spec->number_of_streams();
       }
-    
+
     rc_ptr<Node> instance(rc_ptr<EncoderSpec> encoder_spec) const
       {
         return node_spec->instance(encoder_spec, channel_name,
@@ -425,14 +425,14 @@ class StreamProcessorImpl: public StreamProcessor
     map<string, rc_ptr<Node> > input_nodes;
 
   public:
-    StreamProcessorImpl(const string &name, 
+    StreamProcessorImpl(const string &name,
       const map<string, rc_ptr<InputSpec> > input_specs, rc_ptr<EncoderSpec> encoder_spec);
-    rc_ptr<Input> get_input(const string &channel_name);
-    void flush();
-    void visit_inputs(InputVisitor &visitor, void *data = NULL);
+    rc_ptr<Input> get_input(const string &channel_name) override;
+    void flush() override;
+    void visit_inputs(InputVisitor &visitor, void *data = NULL) override;
   };
 
-StreamProcessorImpl::StreamProcessorImpl(const string &name, 
+StreamProcessorImpl::StreamProcessorImpl(const string &name,
   const map<string, rc_ptr<InputSpec> > input_specs, rc_ptr<EncoderSpec> encoder_spec):
   StreamProcessor(name)
   {
@@ -470,20 +470,20 @@ class StreamProcessorSpecImpl: public StreamProcessorSpec
   {
   private:
     map<string, rc_ptr<InputSpec> > input_specs;
-    
+
   public:
     StreamProcessorSpecImpl(const string &name,
       const map<string, rc_ptr<InputSpec> > &input_specs_init,
       const list<rc_ptr<StreamProcessorSpecImpl> > &merge);
-    
-    int number_of_streams() const;
 
-    rc_ptr<StreamProcessor> instance(rc_ptr<EncoderSpec> encoder_spec) const
+    int number_of_streams() const override;
+
+    rc_ptr<StreamProcessor> instance(rc_ptr<EncoderSpec> encoder_spec) const override
       {
         return new StreamProcessorImpl(name, input_specs, encoder_spec);
       }
   };
-    
+
 StreamProcessorSpecImpl::StreamProcessorSpecImpl(const string &name,
   const map<string, rc_ptr<InputSpec> > &input_specs_init,
   const list<rc_ptr<StreamProcessorSpecImpl> > &merge):
@@ -503,10 +503,10 @@ int StreamProcessorSpecImpl::number_of_streams() const
 
     for(p = input_specs.begin(); p != input_specs.end(); ++p)
         n_streams += p->second->number_of_streams();
-    
+
     return n_streams;
   }
- 
+
 //*****************************************************************************
 // FreqAttribute -- config parameter for sample rate
 //*****************************************************************************
@@ -521,7 +521,7 @@ class FreqAttribute: public CfgAttribute
     FreqAttribute(const string &name, int &freqn_init, int &freqd_init, int range_init):
       CfgAttribute(name), freqn(freqn_init), freqd(freqd_init), range(range_init) {}
 
-    bool assign(ostream &cfglog, const string &value);
+    bool assign(ostream &cfglog, const string &value) override;
   };
 
 bool FreqAttribute::assign(ostream &cfglog, const string &value)
@@ -530,7 +530,7 @@ bool FreqAttribute::assign(ostream &cfglog, const string &value)
     char *tail;
 
     arg = strtoul(value.c_str(), &tail, 0);
-    
+
     if(*tail == 0)
       {
         freqn = arg;
@@ -539,12 +539,12 @@ bool FreqAttribute::assign(ostream &cfglog, const string &value)
     else if(*tail == '/')
       {
         freqn = arg;
-        
+
         arg = strtoul(tail + 1, &tail, 0);
 
         if(*tail == 0) freqd = arg;
       }
-    
+
     if(*tail || freqn == 0 || freqn > range || freqd == 0 || freqd > range)
       {
         cfglog << "[" << item_name << "] " << value << " is not a valid sample rate" << endl;
@@ -575,14 +575,14 @@ class InputElement: public CfgElement
       root_node(node) {}
 
     rc_ptr<CfgAttributeMap> start_attributes(ostream &cfglog,
-      const string &)
+      const string &) override
       {
         input_name = "";
         channel_name = "";
         location_id = "";
         freqn = 0;
         freqd = 0;
-        
+
         rc_ptr<CfgAttributeMap> atts = new CfgAttributeMap;
         atts->add_item(StringAttribute("name", input_name));
         atts->add_item(StringAttribute("channel", channel_name));
@@ -591,7 +591,7 @@ class InputElement: public CfgElement
         return atts;
       }
 
-    void end_attributes(ostream &cfglog)
+    void end_attributes(ostream &cfglog) override
       {
         if(input_name.length() == 0)
           {
@@ -625,11 +625,11 @@ class NodeElement: public CfgElement
       CfgElement("node"), filters(filters_init), parent_node(node) {}
 
     rc_ptr<CfgAttributeMap> start_attributes(ostream &cfglog,
-      const string &)
+      const string &) override
       {
         filter_name = "";
         stream_name = "";
-        
+
         rc_ptr<CfgAttributeMap> atts = new CfgAttributeMap;
         atts->add_item(StringAttribute("filter", filter_name));
         atts->add_item(StringAttribute("stream", stream_name));
@@ -637,7 +637,7 @@ class NodeElement: public CfgElement
       }
 
     rc_ptr<CfgElementMap> start_children(ostream &cfglog,
-      const string &)
+      const string &) override
       {
         rc_ptr<Filter> filter;
         if((filter_name.length() != 0) &&
@@ -646,15 +646,15 @@ class NodeElement: public CfgElement
             cfglog << "filter '" << filter_name << "' is not defined" << endl;
             return NULL;
           }
-        
+
         this_node = new NodeSpec(stream_name, filter);
 
         rc_ptr<CfgElementMap> elms = new CfgElementMap;
         elms->add_item(NodeElement(this_node, filters));
         return elms;
       }
-    
-    void end_children(ostream &cfglog)
+
+    void end_children(ostream &cfglog) override
       {
         parent_node->attach(this_node);
       }
@@ -673,10 +673,10 @@ class TreeElement: public CfgElement
       CfgElement("tree"), filters(filters_init), input_specs(input_specs_init) {}
 
     rc_ptr<CfgElementMap> start_children(ostream &cfglog,
-      const string &)
+      const string &) override
       {
         root_node = new NodeSpec(string(), NULL);
-        
+
         rc_ptr<CfgElementMap> elms = new CfgElementMap;
         elms->add_item(InputElement(input_specs, root_node));
         elms->add_item(NodeElement(root_node, filters));
@@ -697,7 +697,7 @@ class UsingElement: public CfgElement
       CfgElement("using"), proc_specs(proc_specs_init), merge(merge_init) {}
 
     rc_ptr<CfgAttributeMap> start_attributes(ostream &cfglog,
-      const string &)
+      const string &) override
       {
         proc_name = "";
 
@@ -706,7 +706,7 @@ class UsingElement: public CfgElement
         return atts;
       }
 
-    void end_attributes(ostream &cfglog)
+    void end_attributes(ostream &cfglog) override
       {
         if(proc_name.length() == 0)
           {
@@ -733,14 +733,14 @@ class ProcElement: public CfgElement
     map<string, rc_ptr<InputSpec> > input_specs;
     const map<string, rc_ptr<Filter> > &filters;
     map<string, rc_ptr<StreamProcessorSpec> > &proc_specs;
-  
+
   public:
     ProcElement(const map<string, rc_ptr<Filter> > &filters_init,
       map<string, rc_ptr<StreamProcessorSpec> > &proc_specs_init):
       CfgElement("proc"), filters(filters_init), proc_specs(proc_specs_init) {}
 
     rc_ptr<CfgAttributeMap> start_attributes(ostream &cfglog,
-      const string &)
+      const string &) override
       {
         proc_name = "";
         merge.clear();
@@ -752,7 +752,7 @@ class ProcElement: public CfgElement
       }
 
     rc_ptr<CfgElementMap> start_children(ostream &cfglog,
-      const string &)
+      const string &) override
       {
         if(proc_name.length() == 0)
           {
@@ -772,7 +772,7 @@ class ProcElement: public CfgElement
         return elms;
       }
 
-    void end_children(ostream &cfglog)
+    void end_children(ostream &cfglog) override
       {
         map<string, rc_ptr<InputSpec> >::iterator p = input_specs.begin();
 
@@ -781,7 +781,7 @@ class ProcElement: public CfgElement
             if(p->second->remove_unused_child_nodes()) input_specs.erase(p++);
             else ++p;
           }
-    
+
         insert_object<StreamProcessorSpec>(proc_specs, new StreamProcessorSpecImpl(proc_name,
           input_specs, merge));
       }

@@ -266,7 +266,7 @@ class ConnectionHandlerAdapter: public ConnectionHandler
   public:
     ConnectionHandlerAdapter(const T &rep_init): rep(rep_init) {}
 
-    bool operator()(Fdset &fds)
+    bool operator()(Fdset &fds) override
       {
         return rep(fds);
       }

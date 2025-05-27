@@ -72,7 +72,7 @@ class miscSerialProtocol: public miscStringProtocol
     bool stop_clock_thread=false;
 
     static miscSerialProtocol *obj;
-   
+
     // Private methods
     void do_start();
     ssize_t read_port3(int fd, char* ptr, size_t n);
@@ -84,7 +84,7 @@ class miscSerialProtocol: public miscStringProtocol
     miscSerialProtocol(const string &myname);
 
     // Implementation of virtual methods from Proto class (cf serial_plugin.h)
-    void start();
+    void start() override;
   };
 
 miscSerialProtocol *miscSerialProtocol::obj;
@@ -104,7 +104,7 @@ miscSerialProtocol::miscSerialProtocol(const string &myname):miscStringProtocol(
 	recvbuf[RECVBUFSIZE]='\0'; //
         end_buffer=recvbuf+RECVBUFSIZE;
 
-        obj = this; 
+        obj = this;
       }
 
 //########## start ##########
@@ -138,7 +138,7 @@ void miscSerialProtocol::start()
 // Get data from serial port and look for frames
 
 void miscSerialProtocol::do_start()
-  {  
+  {
     char frame[MAXFRAMELENGTH];
     char* frame_start;
     char* frame_end;
@@ -153,7 +153,7 @@ void miscSerialProtocol::do_start()
     N(sigemptyset(&sa.sa_mask));
     N(sigaction(SIGALRM, &sa, NULL));
 
-    //interruption every second (unblock select() in read_port3) 
+    //interruption every second (unblock select() in read_port3)
     struct itimerval itv;
     itv.it_interval.tv_sec = 1;
     itv.it_interval.tv_usec = 0;
@@ -167,8 +167,8 @@ void miscSerialProtocol::do_start()
       {
 	 //Get data from serial port
          write_ptr+=read_port3(fd, write_ptr, end_buffer-write_ptr);
-	 
-         while(true){ 
+
+         while(true){
 	 	//Look for beginning and end of frame
 	 	frame_start=strchr(recvbuf,10); //first LF in the buffer
 	 	if (frame_start == NULL) break ;
@@ -182,8 +182,8 @@ void miscSerialProtocol::do_start()
 
 	 	//slide buffer
 	 	strcpy(recvbuf,frame_end);
-	 	write_ptr-=frame_end-recvbuf; 
-		
+	 	write_ptr-=frame_end-recvbuf;
+
          	handle_response(frame); //process the frame with handle_response()
 	 }
       }
@@ -209,12 +209,12 @@ void miscSerialProtocol::serial_clock()
 		gettimeofday(&tv_now,NULL);
 		tv_nextRun.tv_sec=((tv_now.tv_sec/SERIAL_CLOCK_PERIOD)+1)*SERIAL_CLOCK_PERIOD;
 		usleep((tv_nextRun.tv_sec-tv_now.tv_sec)*1000000-tv_now.tv_usec);
-		
+
 		//steps from tv_now to text
 		time_t_now = tv_now.tv_sec;
 		tm_now = localtime(&time_t_now);
 		strftime(time_str,sizeof(time_str)-1, "%Y-%m-%d %H:%M:%S\n",tm_now);
-		
+
 		//print result
 		write(fd,time_str,strlen(time_str));
 	}
@@ -260,7 +260,7 @@ ssize_t miscSerialProtocol::read_port3(int fd, char* ptr, size_t n)
 
     if(nread < 0) throw PluginReadError(dconf.port_name, strerror(errno));
     else if(nread == 0) throw PluginReadError(dconf.port_name);
-    
+
     return(nread);
   }
 

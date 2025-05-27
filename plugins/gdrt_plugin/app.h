@@ -30,12 +30,12 @@ class Application : public Client::Application {
 
 
 	protected:
-		bool init();
-		bool run();
-		void done();
-		void exit(int returnCode);
+		bool init() override;
+		bool run() override;
+		void done() override;
+		void exit(int returnCode) override;
 
-		const char *version() {
+		const char *version() override {
 			return GDRT_VERSION_NAME;
 		}
 

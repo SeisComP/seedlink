@@ -62,7 +62,7 @@ class Steim2Encoder: public Encoder
     void init_packet();
     void finish_packet();
     void update_packet();
-    
+
     int number_of_frames(const Packet<Steim2Frame> &pckt)
       {
         return (pckt.datalen >> 6);
@@ -84,10 +84,10 @@ class Steim2Encoder: public Encoder
       format(format_init), clk(freqn, freqd), sample_count(0), frame_count(0),
       bp(0), fp(0), spw(4), last_sample(0), nibble_word(0) {}
 
-    void send_data(int32_t sample_val);
-    void flush();
-    
-    void sync_time(const SPClock &otherclk)
+    void send_data(int32_t sample_val) override;
+    void flush() override;
+
+    void sync_time(const SPClock &otherclk) override
       {
         clk.sync_time(otherclk, 0, 0);
       }

@@ -62,15 +62,15 @@ class FS_Decode_MSEED: public FS_Decoder
 
   public:
     const string myname;
-    
-    FS_Decode_MSEED(const string &myname_init): myname(myname_init) { }
-    
-    void attach_output_channel(const string &source_id,
-      const string &channel_name);
-      
-    void flush_channels();
 
-    void process_file(const string &file, off_t offset, ssize_t len);
+    FS_Decode_MSEED(const string &myname_init): myname(myname_init) { }
+
+    void attach_output_channel(const string &source_id,
+      const string &channel_name) override;
+
+    void flush_channels() override;
+
+    void process_file(const string &file, off_t offset, ssize_t len) override;
   };
 
 size_t FS_Decode_MSEED::readn(int fd, void *vptr, size_t n)
@@ -78,7 +78,7 @@ size_t FS_Decode_MSEED::readn(int fd, void *vptr, size_t n)
     ssize_t nread;
     size_t nleft = n;
     char* ptr = static_cast<char*>(vptr);
-    
+
     while(nleft > 0)
       {
         nread = read(fd, ptr, nleft);
@@ -196,10 +196,10 @@ int FS_Decode_MSEED::send_mseed_unpack(const string &channel_name,
           ntohs(fsdh->time_correct), timing_quality, msr->datasamples,
           msr->numsamples);
       }
-    
+
     DEBUG_MSG("sent " << r << " bytes of data, station \"" << station <<
       "\", channel \"" << channel << "\"" << endl);
-    
+
     sl_msr_free(&msr);
 
     if(r <= 0) return r;
@@ -265,7 +265,7 @@ void FS_Decode_MSEED::process_file(const string &file, off_t offset,
         logs(LOG_ERR) << "cannot open file '" << file << "'" << endl;
         return;
       }
-    
+
     while(1)
       {
         if(!readn(fd, packet, HEADER_SIZE)) break;

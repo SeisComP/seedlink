@@ -54,15 +54,15 @@ class CfgSectionElement: public CfgElement
       children(children_init), found(found_init) {}
 
     rc_ptr<CfgAttributeMap> start_attributes(ostream &cfglog,
-      const string &name);
+      const string &name) override;
     rc_ptr<CfgElementMap> start_children(ostream &cfglog,
-      const string &name);
+      const string &name) override;
   };
 
 //*****************************************************************************
 // Entry points
 //*****************************************************************************
-      
+
 void read_config_ini_helper(const string &file_name,
   rc_ptr<CfgElementMap> root);
 

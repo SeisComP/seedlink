@@ -84,7 +84,7 @@ typedef map<int, string> Unit2StationMap;
 
 #if defined(__GNU_LIBRARY__) || defined(__GLIBC__)
 const char *const opterr_message = "Try `%s --help' for more information\n";
-const char *const help_message = 
+const char *const help_message =
     "Usage: %s [options] plugin_name\n"
     "\n"
     "'plugin_name' is the section name in config file; it is also used\n"
@@ -173,7 +173,7 @@ class LogFunc
   {
   public:
     enum { msglen = 200 };
-    
+
     int operator()(int priority, const string &msg)
       {
         if(daemon_init)
@@ -183,7 +183,7 @@ class LogFunc
         else
           {
             int verb = 2;
-            
+
             switch(priority)
               {
               case LOG_EMERG:
@@ -243,9 +243,9 @@ class ReftekUnit
       name(name_init), mapped(mapped_init), default_tq(default_tq_init),
       unlock_tq(unlock_tq_init), log_soh(log_soh_init), gps_msg_received(false),
       gps_in_lock(false), gps_phase_error(0), last_recv(0) {}
-    
+
     void proc_pkt(UINT8 *pkt);
-    
+
     time_t last_packet_received()
       {
         return last_recv;
@@ -336,7 +336,7 @@ void ReftekUnit::proc_SH(const struct reftek_sh &sh, const char *msg)
             gps_phase_error = 1000;  /* don't know anything better */
         } /*endif*/
       }
-    
+
     if(log_soh)
       {
         string msgout;
@@ -411,7 +411,7 @@ void ReftekUnit::proc_pkt(UINT8 *pkt)
           << string((char *)pkt, 2) << ")" << endl;
       }
   }
-        
+
 //*****************************************************************************
 // RTPDConnection
 //*****************************************************************************
@@ -483,7 +483,7 @@ void RTPDConnection::rtpd_poll(int tmo)
   {
     UINT8 buf[RTP_MAXMSGLEN];
     INT32 nbytes;
-    
+
     if(!rtp_daspkt(rtp, buf, &nbytes))
         throw PluginRTPDBrokenConnection("error receiving data from RTPD",
           rtp_errno(rtp));
@@ -492,9 +492,9 @@ void RTPDConnection::rtpd_poll(int tmo)
       {
         UINT16 exp, unit, seqno;
         DOUBLE tstamp;
-        
+
         reftek_com(buf, &exp, &unit, &seqno, &tstamp);
-        
+
         map<int, rc_ptr<ReftekUnit> >::iterator p = reftek_units.find(unit);
         if(p == reftek_units.end())
           {
@@ -578,7 +578,7 @@ RTPDConnection::RTPDConnection(const string &host_init, int port_init,
 
             logs(LOG_WARNING) << e.what() << endl;
             rtpd_disconnect();
-            
+
             logs(LOG_INFO) << "[" << host << ":" << port << "] "
               "attempting to reconnect" << endl;
 
@@ -633,7 +633,7 @@ class RetryAttribute: public CfgAttribute
     RetryAttribute(const string &name, int &valref_init):
       CfgAttribute(name), valref(valref_init) {}
 
-    bool assign(ostream &cfglog, const string &value);
+    bool assign(ostream &cfglog, const string &value) override;
   };
 
 bool RetryAttribute::assign(ostream &cfglog, const string &value)
@@ -643,13 +643,13 @@ bool RetryAttribute::assign(ostream &cfglog, const string &value)
         valref = RTP_ERR_NONE;
         return true;
       }
-    
+
     if(!strcasecmp(value.c_str(), "transient"))
       {
         valref = RTP_ERR_TRANSIENT;
         return true;
       }
-    
+
     if(!strcasecmp(value.c_str(), "nonfatal"))
       {
         valref = RTP_ERR_NONFATAL;
@@ -670,7 +670,7 @@ int main(int argc, char **argv)
 try
   {
 #if defined(__GNU_LIBRARY__) || defined(__GLIBC__)
-    struct option ops[] = 
+    struct option ops[] =
       {
         { "verbosity",      required_argument, NULL, 'X' },
         { "daemon",         no_argument,       NULL, 'D' },
@@ -715,18 +715,18 @@ try
       }
 
     plugin_id = string(argv[optind]);
-    
+
     struct sigaction sa;
     sa.sa_handler = int_handler;
     sa.sa_flags = SA_RESTART;
     N(sigemptyset(&sa.sa_mask));
     N(sigaction(SIGINT, &sa, NULL));
     N(sigaction(SIGTERM, &sa, NULL));
-    
+
     sa.sa_handler = SIG_IGN;
     N(sigaction(SIGHUP, &sa, NULL));
     N(sigaction(SIGPIPE, &sa, NULL));
-    
+
     if(daemon_mode)
       {
         logs(LOG_INFO) << ident_str << " started" << endl;
@@ -741,7 +741,7 @@ try
     redirect_ostream(clog, LogFunc(), LOG_ERR);
 
     logs(LOG_NOTICE) << ident_str << " started" << endl;
-    
+
     string host = "localhost";
     int port = RTP_DEFAULT_PORT;
     int retry = RTP_ERR_NONFATAL;
@@ -759,7 +759,7 @@ try
     atts->add_item(IntAttribute("default_tq", default_tq, 0, 100));
     atts->add_item(IntAttribute("unlock_tq", unlock_tq, -1, 100));
     atts->add_item(BoolAttribute("log_soh", log_soh, "true", "false"));
-    
+
     logs(LOG_INFO) << "loading configuration from file '" << config_file << "'"
       << endl;
 
@@ -787,4 +787,4 @@ catch(...)
     logs(LOG_ERR) << "unknown exception" << endl;
     return 1;
   }
- 
+

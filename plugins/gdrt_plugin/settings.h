@@ -43,7 +43,7 @@ struct Settings : System::Application::AbstractSettings {
 		}
 	} plugins;
 
-	virtual void accept(System::Application::SettingsLinker &linker) {
+	virtual void accept(System::Application::SettingsLinker &linker) override {
 		linker
 		& cli(plugins.gdrt.udpport, "Plugin", "udpport",
 		      "UDP port for receiving GDRT messages",

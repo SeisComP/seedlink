@@ -80,7 +80,7 @@ inline void LogDebug(const char *fmt, ...) {
 class FlagCounter: public boost::program_options::untyped_value {
 	public:
 		FlagCounter(unsigned int* count);
-		void xparse(boost::any&, const vector<string>&) const;
+		void xparse(boost::any&, const vector<string>&) const override;
 
 	private:
 		unsigned int* _count;

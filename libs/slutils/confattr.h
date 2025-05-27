@@ -45,7 +45,7 @@ class IntAttribute: public CfgAttribute
       CfgAttribute(name), valref(valref_init),
       min(0), max(0), special(0),
       mincheck(false), maxcheck(false), spcheck(false) {}
-      
+
     IntAttribute(const string &name, int &valref_init, int min_init,
       int max_init):
       CfgAttribute(name), valref(valref_init),
@@ -63,34 +63,34 @@ class IntAttribute: public CfgAttribute
       CfgAttribute(name), valref(valref_init),
       min(min_init), max(0), special(0),
       mincheck(true), maxcheck(false), spcheck(false) {}
-    
+
     IntAttribute(const string &name, int &valref_init, int special_init,
       int min_init, enum lb_check):
       CfgAttribute(name), valref(valref_init),
       min(min_init), max(0), special(special_init),
       mincheck(true), maxcheck(false), spcheck(true) {}
-    
+
     IntAttribute(const string &name, int &valref_init, int max_init,
       enum ub_check):
       CfgAttribute(name), valref(valref_init),
       min(0), max(max_init), special(0),
       mincheck(false), maxcheck(true), spcheck(false) {}
-    
+
     IntAttribute(const string &name, int &valref_init, int special_init,
       int max_init, enum ub_check):
       CfgAttribute(name), valref(valref_init),
       min(0), max(max_init), special(special_init),
       mincheck(false), maxcheck(true), spcheck(true) {}
-    
-    bool assign(ostream &cfglog, const string &value)
+
+    bool assign(ostream &cfglog, const string &value) override
       {
         int arg;
         char *tail;
 
         arg = strtol(value.c_str(), &tail, 10);
-        if(*tail) 
+        if(*tail)
           {
-            
+
             cfglog << "[" << item_name << "] " << value << " is not an integer" << endl;
             return false;
           }
@@ -100,7 +100,7 @@ class IntAttribute: public CfgAttribute
             valref = arg;
             return true;
           }
-        
+
         if(mincheck && arg < min)
           {
             cfglog << "[" << item_name << "] " << arg <<
@@ -140,7 +140,7 @@ class Int64Attribute: public CfgAttribute
       CfgAttribute(name), valref(valref_init),
       min(0), max(0), special(0),
       mincheck(false), maxcheck(false), spcheck(false) {}
-      
+
     Int64Attribute(const string &name, int64_t &valref_init, int64_t min_init,
       int64_t max_init):
       CfgAttribute(name), valref(valref_init),
@@ -158,34 +158,34 @@ class Int64Attribute: public CfgAttribute
       CfgAttribute(name), valref(valref_init),
       min(min_init), max(0), special(0),
       mincheck(true), maxcheck(false), spcheck(false) {}
-    
+
     Int64Attribute(const string &name, int64_t &valref_init, int64_t special_init,
       int64_t min_init, enum lb_check):
       CfgAttribute(name), valref(valref_init),
       min(min_init), max(0), special(special_init),
       mincheck(true), maxcheck(false), spcheck(true) {}
-    
+
     Int64Attribute(const string &name, int64_t &valref_init, int64_t max_init,
       enum ub_check):
       CfgAttribute(name), valref(valref_init),
       min(0), max(max_init), special(0),
       mincheck(false), maxcheck(true), spcheck(false) {}
-    
+
     Int64Attribute(const string &name, int64_t &valref_init, int64_t special_init,
       int64_t max_init, enum ub_check):
       CfgAttribute(name), valref(valref_init),
       min(0), max(max_init), special(special_init),
       mincheck(false), maxcheck(true), spcheck(true) {}
-    
-    bool assign(ostream &cfglog, const string &value)
+
+    bool assign(ostream &cfglog, const string &value) override
       {
         int64_t arg;
         char *tail;
 
         arg = strtol(value.c_str(), &tail, 10);
-        if(*tail) 
+        if(*tail)
           {
-            
+
             cfglog << "[" << item_name << "] " << value << " is not an integer" << endl;
             return false;
           }
@@ -195,7 +195,7 @@ class Int64Attribute: public CfgAttribute
             valref = arg;
             return true;
           }
-        
+
         if(mincheck && arg < min)
           {
             cfglog << "[" << item_name << "] " << arg <<
@@ -235,7 +235,7 @@ class FloatAttribute: public CfgAttribute
       CfgAttribute(name), valref(valref_init),
       min(0), max(0), special(0),
       mincheck(false), maxcheck(false), spcheck(false) {}
-      
+
     FloatAttribute(const string &name, double &valref_init, double min_init,
       double max_init):
       CfgAttribute(name), valref(valref_init),
@@ -253,34 +253,34 @@ class FloatAttribute: public CfgAttribute
       CfgAttribute(name), valref(valref_init),
       min(min_init), max(0), special(0),
       mincheck(true), maxcheck(false), spcheck(false) {}
-    
+
     FloatAttribute(const string &name, double &valref_init, double special_init,
       double min_init, enum lb_check):
       CfgAttribute(name), valref(valref_init),
       min(min_init), max(0), special(special_init),
       mincheck(true), maxcheck(false), spcheck(true) {}
-    
+
     FloatAttribute(const string &name, double &valref_init, double max_init,
       enum ub_check):
       CfgAttribute(name), valref(valref_init),
       min(0), max(max_init), special(0),
       mincheck(false), maxcheck(true), spcheck(false) {}
-    
+
     FloatAttribute(const string &name, double &valref_init, double special_init,
       double max_init, enum ub_check):
       CfgAttribute(name), valref(valref_init),
       min(0), max(max_init), special(special_init),
       mincheck(false), maxcheck(true), spcheck(true) {}
-    
-    bool assign(ostream &cfglog, const string &value)
+
+    bool assign(ostream &cfglog, const string &value) override
       {
         double arg;
         char *tail;
 
         arg = strtod(value.c_str(), &tail);
-        if(*tail) 
+        if(*tail)
           {
-            
+
             cfglog << "[" << item_name << "] " << value << " is not a floating point number" << endl;
             return false;
           }
@@ -290,7 +290,7 @@ class FloatAttribute: public CfgAttribute
             valref = arg;
             return true;
           }
-        
+
         if(mincheck && arg < min)
           {
             cfglog << "[" << item_name << "] " << arg <<
@@ -325,13 +325,13 @@ class StringAttribute: public CfgAttribute
     StringAttribute(const string &name, string &valref_init):
       CfgAttribute(name), valref(valref_init) {}
 
-    bool assign(ostream &cfglog, const string &value)
+    bool assign(ostream &cfglog, const string &value) override
       {
         valref = value;
         return true;
       }
   };
-  
+
 //*****************************************************************************
 // CstringAttribute
 //*****************************************************************************
@@ -345,13 +345,13 @@ class CstringAttribute: public CfgAttribute
     CstringAttribute(const string &name, char * &valref_init):
       CfgAttribute(name), valref(valref_init) {}
 
-    bool assign(ostream &cfglog, const string &value)
+    bool assign(ostream &cfglog, const string &value) override
       {
         if((valref = strdup(value.c_str())) == NULL) throw bad_alloc();
         return true;
       }
   };
-  
+
 //*****************************************************************************
 // CharArrayAttribute
 //*****************************************************************************
@@ -366,14 +366,14 @@ class CharArrayAttribute: public CfgAttribute
     CharArrayAttribute(const string &name, char *valref_init, int len_init):
       CfgAttribute(name), valref(valref_init), len(len_init) {}
 
-    bool assign(ostream &cfglog, const string &value)
+    bool assign(ostream &cfglog, const string &value) override
       {
         strncpy(valref, value.c_str(), len - 1);
         valref[len - 1] = 0;
         return true;
       }
   };
-  
+
 //*****************************************************************************
 // StringListAttribute
 //*****************************************************************************
@@ -389,11 +389,11 @@ class StringListAttribute: public CfgAttribute
       const string &sep_init):
       CfgAttribute(name), valref(valref_init), sep(sep_init) {}
 
-    bool assign(ostream &cfglog, const string &value)
+    bool assign(ostream &cfglog, const string &value) override
       {
         const char *p = value.c_str();
         int len = 0;
-        
+
         while(p += len, p += strspn(p, sep.c_str()), len = strcspn(p, sep.c_str()))
             valref.push_back(string(p, len));
 
@@ -418,7 +418,7 @@ class BoolAttribute: public CfgAttribute
       CfgAttribute(name), valref(valref_init),
       truename(truename_init), falsename(falsename_init) {}
 
-    bool assign(ostream &cfglog, const string &value)
+    bool assign(ostream &cfglog, const string &value) override
       {
         if(!strcasecmp(value.c_str(), truename.c_str()))
           {
@@ -437,7 +437,7 @@ class BoolAttribute: public CfgAttribute
         return false;
       }
   };
- 
+
 //*****************************************************************************
 // RegexAttribute
 //*****************************************************************************
@@ -455,7 +455,7 @@ class RegexAttribute: public CfgAttribute
       int flags_init):
       CfgAttribute(name), rx(rx_init), rx_ok(rx_ok_init), flags(flags_init) {}
 
-    bool assign(ostream &cfglog, const string &value)
+    bool assign(ostream &cfglog, const string &value) override
       {
         int err;
         if((err = regcomp(&rx, value.c_str(), flags)) != 0)
@@ -471,7 +471,7 @@ class RegexAttribute: public CfgAttribute
         return true;
       }
   };
- 
+
 } // namespace CfgParser_private
 
 namespace CfgParser {

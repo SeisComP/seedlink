@@ -118,10 +118,10 @@ class SSLSocket : public Socket {
 		~SSLSocket();
 
 	public:
-		int write(const char *data, int len);
-		int read(char *data, int len);
+		int write(const char *data, int len) override;
+		int read(char *data, int len) override;
 
-		Status connect(const std::string &hostname, uint16_t port);
+		Status connect(const std::string &hostname, uint16_t port) override;
 
 		virtual const unsigned char *sessionID() const;
 		virtual unsigned int sessionIDLength() const;
@@ -188,7 +188,7 @@ class socketbuf : public std::streambuf {
 
 
 	protected:
-		virtual int underflow() {
+		virtual int underflow() override {
 			// No more reads allowed?
 			if ( !_allowed_reads )
 				return traits_type::eof();
@@ -210,7 +210,7 @@ class socketbuf : public std::streambuf {
 			return traits_type::to_int_type(*gptr());
 		}
 
-		virtual int overflow(int c) {
+		virtual int overflow(int c) override {
 			if ( _block_write ) return traits_type::eof();
 
 			if ( pptr() - pbase() == N ) {
@@ -226,7 +226,7 @@ class socketbuf : public std::streambuf {
 			return traits_type::not_eof(c);
 		}
 
-		virtual int sync() {
+		virtual int sync() override {
 			if ( pbase() == pptr() ) return 0;
 
 			int res = _sock->write(pbase(), pptr() - pbase());
@@ -241,7 +241,7 @@ class socketbuf : public std::streambuf {
 		// Only forward seeking is supported
 		virtual std::streampos
 		seekoff(std::streamoff off, std::ios_base::seekdir way,
-		        std::ios_base::openmode which = std::ios_base::in | std::ios_base::out) {
+		        std::ios_base::openmode which = std::ios_base::in | std::ios_base::out) override {
 			if ( way != std::ios_base::cur || which != std::ios_base::in || off < 0 )
 				return -1;
 

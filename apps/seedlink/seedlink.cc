@@ -96,7 +96,7 @@ const char *const ident_str = "SeedLink v" MYVERSION;
 
 #if defined(__GNU_LIBRARY__) || defined(__GLIBC__)
 const char *const opterr_message = "Try `%s --help' for more information\n";
-const char *const help_message = 
+const char *const help_message =
     "Usage: %s [options]\n"
     "\n"
     "-v                            Increase verbosity level\n"
@@ -215,7 +215,7 @@ class LogFunc
   {
   public:
     enum { msglen = 200 };
-    
+
     int operator()(int priority, const string &msg)
       {
         if(daemon_init)
@@ -225,7 +225,7 @@ class LogFunc
         else
           {
             int verb = 2;
-            
+
             switch(priority)
               {
               case LOG_EMERG:
@@ -299,7 +299,7 @@ class Plugin
     bool raw_ignored;
     set<string> missing_inputs;
     rc_ptr<StreamProcessorSpec> spspec;
-     
+
     bool check_child();
     bool read_helper();
 
@@ -314,7 +314,7 @@ class Plugin
 
   public:
     const string name;
-  
+
     Plugin(const string name_init, const string &cmdline_init, int read_timeout,
       int start_retry, int shutdown_wait, rc_ptr<StreamProcessorSpec> spspec_init):
       cmdline(cmdline_init), pid(0), parent_fd(-1), child_active(true),
@@ -328,11 +328,11 @@ class Plugin
       {
         if(parent_fd >= 0) close(parent_fd);
       }
-        
+
     void start();
     bool read(PluginPacketHeader &head, void *data);
     rc_ptr<Input> get_input(const string &input_name, PluginPartner &station);
-    
+
     void shutdown(bool restart = false)
       {
         if(pid > 0)
@@ -371,7 +371,7 @@ void Plugin::start()
 
     if(pipe_fd[0] >= FD_SETSIZE)
       {
-        logs(LOG_ERR) << "cannot start plugin " + name + 
+        logs(LOG_ERR) << "cannot start plugin " + name +
           ": FD_SETSIZE exceeded (" << pipe_fd[0] << ")" << endl;
 
         close(pipe_fd[0]);
@@ -380,13 +380,13 @@ void Plugin::start()
 
     N(pid = fork());
 
-    if(pid) 
+    if(pid)
       {
         close(pipe_fd[1]);
         parent_fd = pipe_fd[0];
         N(fcntl(parent_fd, F_SETFD, FD_CLOEXEC));
         N(fcntl(parent_fd, F_SETFL, O_NONBLOCK));
-        
+
         read_timer.reset();
         read_state = ReadInit;
         sigterm_sent = false;
@@ -397,7 +397,7 @@ void Plugin::start()
       }
 
     close(pipe_fd[0]);
-    
+
     if(pipe_fd[1] != PLUGIN_FD)
       {
         N(dup2(pipe_fd[1], PLUGIN_FD));
@@ -405,7 +405,7 @@ void Plugin::start()
       }
 
     logs(LOG_INFO) << "[" << name << "] starting shell" << endl;
-    
+
     execl(SHELL, SHELL, "-c", (cmdline + " " + name).c_str(), NULL);
 
     logs(LOG_ERR) << string() + "cannot execute shell '" + SHELL + "' "
@@ -446,20 +446,20 @@ bool Plugin::check_child()
     pid = 0;
     return false;
   }
-    
+
 bool Plugin::read_helper()
   {
     int nread;
-    
+
     child_active = false;
-    
+
     if(read_state == ReadInit)
       {
         nleft = sizeof(PluginPacketHeader);
         ptr = reinterpret_cast<char *>(&header_buf);
         read_state = ReadHeader;
       }
-    
+
     nread = ::read(parent_fd, ptr, nleft);
 
     if(nread == 0)
@@ -546,11 +546,11 @@ bool Plugin::read(PluginPacketHeader &head, void *data)
 
         if(pid <= 0) return false;
       }
-    
+
     while(read_helper())
       {
         read_timer.reset();
-    
+
         if(nleft == 0)
           {
             head = header_buf;
@@ -558,7 +558,7 @@ bool Plugin::read(PluginPacketHeader &head, void *data)
             return true;
           }
       }
-    
+
     if(shutdown_requested)
       {
         if(!sigkill_sent && pid > 0 && shutdown_timer.expired())
@@ -579,7 +579,7 @@ bool Plugin::read(PluginPacketHeader &head, void *data)
         logs(LOG_WARNING) << "[" << name << "] timeout" << endl;
         shutdown();
       }
-    
+
     return false;
   }
 
@@ -685,9 +685,9 @@ class Station: public StreamProcessor::InputVisitor, private PluginPartner
 
     INT_TIME pt_to_it(const ptime &pt);
     rc_ptr<StreamProcessor> get_plugin_sproc(const string &plugin_name,
-      rc_ptr<StreamProcessorSpec> spspec);
-    rc_ptr<StreamProcessor> get_station_sproc();
-    void visit(const string &channel_name, rc_ptr<Input> input, void *data);
+      rc_ptr<StreamProcessorSpec> spspec) override;
+    rc_ptr<StreamProcessor> get_station_sproc() override;
+    void visit(const string &channel_name, rc_ptr<Input> input, void *data) override;
 
     rc_ptr<MSEEDBackfilling> get_mseed_backfilling(const char *id)
       {
@@ -969,10 +969,10 @@ void Station::commit_mseed(const void *rec)
 void Station::send_log(const ptime &pt, const char *msg, int msglen)
   {
     if(log_format == NULL) return;
-    
+
     Packet<char> pckt = log_format->get_packet<char>(pt_to_it(pt), 0, -1);
     int msglen1 = min(msglen, PLUGIN_MAX_MSG_SIZE);
-    
+
     memset(pckt.data, 0, pckt.datalen);
     memcpy(pckt.data, msg, msglen1);
     log_format->queue_packet(pckt, msglen1, 0);
@@ -1280,12 +1280,12 @@ class PluginDef: public CfgElement
     int shutdown_wait;
     string sproc_name;
     set<string> plugins_defined;
-    
+
   public:
     PluginDef(const string &name, const map<string, rc_ptr<StreamProcessorSpec> > &sproc_defs_init):
       CfgElement(name), sproc_defs(sproc_defs_init) {}
-    rc_ptr<CfgAttributeMap> start_attributes(ostream &cfglog, const string &name);
-    void end_attributes(ostream &cfglog);
+    rc_ptr<CfgAttributeMap> start_attributes(ostream &cfglog, const string &name) override;
+    void end_attributes(ostream &cfglog) override;
   };
 
 rc_ptr<CfgAttributeMap> PluginDef::start_attributes(ostream &cfglog,
@@ -1302,7 +1302,7 @@ rc_ptr<CfgAttributeMap> PluginDef::start_attributes(ostream &cfglog,
     start_retry = plugin_start_retry;
     shutdown_wait = plugin_shutdown_wait;
     sproc_name = "";
-    
+
     rc_ptr<CfgAttributeMap> atts = new CfgAttributeMap;
     atts->add_item(StringAttribute("cmd", cmd));
     atts->add_item(IntAttribute("timeout", timeout, 0, IntAttribute::lower_bound));
@@ -1319,7 +1319,7 @@ void PluginDef::end_attributes(ostream &cfglog)
         cfglog << "Command was not specified for plugin " << plugin_name << endl;
         return;
       }
-    
+
     rc_ptr<StreamProcessorSpec> spspec;
     if(sproc_name.length() != 0 &&
       (spspec = get_object(sproc_defs, sproc_name)) == NULL)
@@ -1361,15 +1361,15 @@ class StationDef: public CfgElement
     bool request_log;
     bool stream_check;
     list<string> ip_access_str;
-    
+
   public:
     StationDef(const string &name, const map<string, rc_ptr<StreamProcessorSpec> > &sproc_defs_init,
       const IPACL &ip_trusted_init, const IPACL &ip_access_init):
       CfgElement(name), sproc_defs(sproc_defs_init),
       ip_trusted(ip_trusted_init), default_ip_access(ip_access_init) {}
 
-    rc_ptr<CfgAttributeMap> start_attributes(ostream &cfglog, const string &name);
-    void end_attributes(ostream &cfglog);
+    rc_ptr<CfgAttributeMap> start_attributes(ostream &cfglog, const string &name) override;
+    void end_attributes(ostream &cfglog) override;
   };
 
 rc_ptr<CfgAttributeMap> StationDef::start_attributes(ostream &cfglog,
@@ -1394,7 +1394,7 @@ rc_ptr<CfgAttributeMap> StationDef::start_attributes(ostream &cfglog,
     backfill_capacity = ::backfill_capacity;
     stream_check = ::stream_check;
     ip_access_str.clear();
-    
+
     rc_ptr<CfgAttributeMap> atts = new CfgAttributeMap;
     atts->add_item(StringAttribute("name", station_name));
     atts->add_item(StringAttribute("network", network_id));
@@ -1440,19 +1440,19 @@ try
     mkdir(seedlink_dir.c_str(), 0755);
     mkdir(station_dir.c_str(), 0755);
     mkdir(segment_dir.c_str(), 0755);
-    
+
     int fd;
     if((fd = creat(test_file1.c_str(), 0644)) < 0)
         throw SeedlinkCannotCreateFile(test_file1);
-    
+
     close(fd);
     unlink(test_file1.c_str());
     if((fd = creat(test_file2.c_str(), 0644)) < 0)
         throw SeedlinkCannotCreateFile(test_file2);
-    
+
     close(fd);
     unlink(test_file2.c_str());
-    
+
     IPACL ip_access;
     if(ip_access_str.empty())
       {
@@ -1470,7 +1470,7 @@ try
               }
           }
       }
-                
+
     rc_ptr<StreamProcessorSpec> spspec;
     if(sproc_name.length() != 0 &&
       (spspec = get_object(sproc_defs, sproc_name)) == NULL)
@@ -1489,7 +1489,7 @@ try
           trusted_window_extraction, untrusted_window_extraction,
           trusted_websocket, untrusted_websocket, bytespersec, 0, 100000);
       }
-    
+
     rc_ptr<BufferStore> bufs = connectionManager->register_station(station_key,
       station_name, network_id, description, request_log,
       seedlink_dir + "/" + station_key, no_of_buffers, no_of_blanks, segsize,
@@ -1531,15 +1531,15 @@ inline void read_first_in_line(const string &file, ifstream &fs, T &val)
 void load_filters(const string &filter_file, map<string, rc_ptr<Filter> > &filters)
   {
     logs(LOG_INFO) << "loading FIR filters from file '" << filter_file << "'" << endl;
-    
+
     ifstream fs(filter_file.c_str());
     if(fs.fail()) throw SeedlinkCannotOpenFile(filter_file);
 
     int n_filters;
     read_first_in_line(filter_file, fs, n_filters);
-    
+
     logs(LOG_INFO) << n_filters << " filters are defined in file '" << filter_file << "'" << endl;
-    
+
     for(int i = 0; i < n_filters; ++i)
       {
         string filter_name;
@@ -1555,10 +1555,10 @@ void load_filters(const string &filter_file, map<string, rc_ptr<Filter> > &filte
 
         if(filter_length > MAX_FILTER_LENGTH || filter_length < deci)
             throw SeedlinkErrorLoadingFilter(filter_file, filter_name);
-        
+
         FilterImpl::FilterType filter_type;
         int n_points;
-        
+
         if(filter_name.substr(filter_name.length() - 1) == "M")
           {
             filter_type = FilterImpl::MinimumPhase;
@@ -1570,9 +1570,9 @@ void load_filters(const string &filter_file, map<string, rc_ptr<Filter> > &filte
             // handles filters with odd number of coefficients as well
             n_points = filter_length / 2 + filter_length % 2;
           }
-        
+
         points = new double[n_points];
-        
+
         for(int j = 0; j < n_points; ++j)
             if(!(fs >> points[j]).good())
                 throw SeedlinkErrorLoadingFilter(filter_file, filter_name);
@@ -1586,7 +1586,7 @@ void load_filters(const string &filter_file, map<string, rc_ptr<Filter> > &filte
 
         insert_object<Filter>(filters, new FilterImpl(filter_name, filter_type, filter_length,
           deci, gain, points));
-        
+
         logs(LOG_INFO) << "filter " << filter_name << ", length " << filter_length <<
           ", decimation factor " << deci << ", digital gain " << gain << endl;
       }
@@ -1614,7 +1614,7 @@ bool run_check(const string &lockfile)
     int fd, val;
     char buf[10];
     struct flock lock;
-  
+
     if((fd = open(lockfile.c_str(), O_WRONLY | O_CREAT,
       S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) < 0)
         throw SeedlinkCannotOpenFile(lockfile);
@@ -1623,16 +1623,16 @@ bool run_check(const string &lockfile)
     lock.l_start = 0;
     lock.l_whence = SEEK_SET;
     lock.l_len = 0;
-  
+
     if(fcntl(fd, F_SETLK, &lock) < 0)
       {
         if(errno == EACCES || errno == EAGAIN) return 1;
         else throw SeedlinkLibraryError("cannot lock file '" + lockfile + "'");
       }
-  
+
     N(ftruncate(fd, 0));
     sprintf(buf, "%d\n", getpid());
-    
+
     errno = 0;
     if(write(fd, buf, strlen(buf)) != (int) strlen(buf))
         throw SeedlinkLibraryError("cannot write pid to '" + lockfile + "'");
@@ -1653,12 +1653,12 @@ class InfoLevelAttribute: public CfgAttribute
   {
   private:
     int &valref;
-    
+
   public:
     InfoLevelAttribute(const string &name, int &valref_init):
       CfgAttribute(name), valref(valref_init) {}
 
-    bool assign(ostream &cfglog, const string &value);
+    bool assign(ostream &cfglog, const string &value) override;
   };
 
 bool InfoLevelAttribute::assign(ostream &cfglog, const string &value)
@@ -1698,18 +1698,18 @@ class SeedlinkDef: public CfgElement
   public:
     SeedlinkDef(bool &found_init):
       CfgElement("section"), found(found_init), dup(false) {}
-    
+
     rc_ptr<CfgAttributeMap> start_attributes(ostream &cfglog,
-      const string &name);
+      const string &name) override;
     rc_ptr<CfgElementMap> start_children(ostream &cfglog,
-      const string &name);
+      const string &name) override;
   };
 
 rc_ptr<CfgAttributeMap> SeedlinkDef::start_attributes(ostream &cfglog,
   const string &name)
   {
     if(strcasecmp(daemon_name.c_str(), name.c_str())) return NULL;
-    
+
     if(found)
       {
         cfglog << "duplicate section '" << name << "'" << endl;
@@ -1767,15 +1767,15 @@ rc_ptr<CfgElementMap> SeedlinkDef::start_children(ostream &cfglog,
   const string &name)
   {
     if(dup || strcasecmp(daemon_name.c_str(), name.c_str())) return NULL;
-    
+
     if(lockfile.length() != 0 && run_check(lockfile))
       {
         logs(LOG_ERR) << "already running" << endl;
         exit(1);
       }
-    
+
     list<string>::iterator p;
-    
+
     IPACL ip_trusted;
     for(p = ip_trusted_str.begin(); p != ip_trusted_str.end(); ++p)
       {
@@ -1785,7 +1785,7 @@ rc_ptr<CfgElementMap> SeedlinkDef::start_children(ostream &cfglog,
             return NULL;
           }
       }
-        
+
     IPACL ip_access;
     for(p = ip_access_str.begin(); p != ip_access_str.end(); ++p)
       {
@@ -1795,14 +1795,14 @@ rc_ptr<CfgElementMap> SeedlinkDef::start_children(ostream &cfglog,
             return NULL;
           }
       }
-    
+
     if(strcasecmp(seed_encoding.c_str(), "steim1") &&
       strcasecmp(seed_encoding.c_str(), "steim2"))
       {
         cfglog << "unsupported encoding '" << seed_encoding << "'" << endl;
         return NULL;
       }
-    
+
     map<string, rc_ptr<StreamProcessorSpec> > sproc_defs;
 
     if(!stream_files.empty())
@@ -1814,19 +1814,19 @@ rc_ptr<CfgElementMap> SeedlinkDef::start_children(ostream &cfglog,
             for(p = filter_files.begin(); p != filter_files.end(); ++p)
                 load_filters(*p, filters);
           }
-    
+
         list<string>::const_iterator p;
         for(p = stream_files.begin(); p != stream_files.end(); ++p)
             load_streams(*p, filters, sproc_defs);
       }
-    
+
     rc_ptr<CfgElementMap> elms = new CfgElementMap;
     elms->add_item(PluginDef("plugin", sproc_defs));
     elms->add_item(StationDef("station", sproc_defs, ip_trusted, ip_access));
 
     return elms;
   }
-    
+
 //*****************************************************************************
 // Loading config files
 //*****************************************************************************
@@ -1863,7 +1863,7 @@ class IOHandler
   private:
     bool terminating;
     time_t last_plugin_check;
-  
+
   public:
     IOHandler(): terminating(false), last_plugin_check(0) {}
     bool operator()(Fdset &fds);
@@ -1893,9 +1893,9 @@ bool IOHandler::operator()(Fdset &fds)
         // Set back restart_proc to avoid restarting in the next call
         if ( restart_proc ) restart_proc = 0;
       }
-    
+
     time_t curtime = time(NULL);
-    
+
     for(p = plugins.begin(); p != plugins.end(); ++p)
       {
         if(!fds.isactive_read((*p)->fd()) && last_plugin_check == curtime)
@@ -1904,7 +1904,7 @@ bool IOHandler::operator()(Fdset &fds)
         while((*p)->read(head, data_buf))
           {
             string station_key(head.station, 0, PLUGIN_SIDLEN);
-            
+
             if((st = get_object(stations, station_key)) == NULL)
               {
                 logs(LOG_ERR) << "[" << (*p)->name << "]"
@@ -1913,7 +1913,7 @@ bool IOHandler::operator()(Fdset &fds)
                 st = new Station(station_key);
                 insert_object(stations, st);
               }
-            
+
             switch(head.packtype)
               {
               case PluginMSEEDPacket:
@@ -1972,24 +1972,24 @@ bool IOHandler::operator()(Fdset &fds)
 
         if((*p)->active()) fds.set_read((*p)->fd());
         else fds.clear_read((*p)->fd());
-        
+
         if(terminating && !(*p)->running()) shutdown_list.push_back(p);
       }
 
     last_plugin_check = curtime;
-        
+
     while(!shutdown_list.empty())
       {
         plugins.erase(shutdown_list.front());
         shutdown_list.pop_front();
       }
-    
+
     if(plugins.size() == 0)
       {
         map<string, rc_ptr<Station> >::iterator s;
         for(s = stations.begin(); s != stations.end(); ++s)
             s->second->flush();
-        
+
         return false;
       }
 
@@ -2003,11 +2003,11 @@ bool IOHandler::operator()(Fdset &fds)
 void start_plugins()
   {
     list<rc_ptr<Plugin> >::iterator p;
-    
+
     for(p = plugins.begin(); p != plugins.end(); ++p)
         (*p)->start();
   }
-    
+
 string get_progname(char *argv0)
   {
     string::size_type pos;
@@ -2038,7 +2038,7 @@ try
     setegid(getgid());
 
 #if defined(__GNU_LIBRARY__) || defined(__GLIBC__)
-    struct option ops[] = 
+    struct option ops[] =
       {
         { "verbosity",      required_argument, NULL, 'X' },
         { "daemon",         no_argument,       NULL, 'D' },
@@ -2050,9 +2050,9 @@ try
 #endif
 
     daemon_name = get_progname(argv[0]);
-    
+
     string config_file = CONFIG_FILE;
-    
+
     int c;
 #if defined(__GNU_LIBRARY__) || defined(__GLIBC__)
     while((c = getopt_long(argc, argv, "vDf:Vh", ops, NULL)) != EOF)
@@ -2071,7 +2071,7 @@ try
           case '?': fprintf(stderr, opterr_message, daemon_name.c_str()); exit(0);
           }
       }
-    
+
     struct sigaction sa;
     sa.sa_handler = int_handler;
     sa.sa_flags = SA_RESTART;
@@ -2086,7 +2086,7 @@ try
 
     sa.sa_handler = SIG_IGN;
     N(sigaction(SIGPIPE, &sa, NULL));
-    
+
     if(daemon_mode)
       {
         int pid;
@@ -2104,20 +2104,20 @@ try
     redirect_ostream(clog, LogFunc(), LOG_ERR);
 
     logs(LOG_NOTICE) << ident_str << " started" << endl;
-    
+
     configure_seedlink(config_file);
     if(stations.size() == 0)
       {
         logs(LOG_ERR) << "no seedlink stations defined" << endl;
         exit(1);
       }
-    
+
     if(plugins.size() == 0)
       {
         logs(LOG_ERR) << "no plugins defined" << endl;
         exit(1);
       }
- 
+
     if(tcp_port == 0)
       {
         logs(LOG_ERR) << "TCP port not specified" << endl;
@@ -2125,7 +2125,7 @@ try
       }
 
     start_plugins();
-    
+
     connectionManager->set_handler(IOHandler());
     connectionManager->restore_state();
     connectionManager->start(tcp_port);
@@ -2143,4 +2143,4 @@ catch(...)
     logs(LOG_ERR) << "unknown exception" << endl;
     return 1;
   }
- 
+

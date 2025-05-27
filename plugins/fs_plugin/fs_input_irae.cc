@@ -51,7 +51,7 @@ class Directory
     Directory(const string &name_init, const Timestamp &tstmp_init):
       name(name_init), tstmp(tstmp_init) {}
   };
-    
+
 class FS_Input_IRAE: public FS_Input
   {
   private:
@@ -61,44 +61,44 @@ class FS_Input_IRAE: public FS_Input
 
     void read_files(const string &path, const string &file_pattern,
       map<string, rc_ptr<File> > &file_map);
-      
-    void read_dirs(const string &path, const string &file_pattern, 
+
+    void read_dirs(const string &path, const string &file_pattern,
       map<string, rc_ptr<Directory> > &dir_map);
-      
+
     void process_files(const string &path,
       const map<string, rc_ptr<File> > &file_map);
-      
+
     void process_dirs(const string &path,
       const map<string, rc_ptr<Directory> > &dir_map);
 
   public:
     const string myname;
-    
+
     FS_Input_IRAE(const string &myname_init): myname(myname_init) {}
 
-    void init(rc_ptr<FS_Decoder> cvt_init)
+    void init(rc_ptr<FS_Decoder> cvt_init) override
       {
         cvt = cvt_init;
       }
-      
-    void check_for_new_data(const string &path, const string &file_pattern);
-    Timestamp get_timestamp();
-    void set_timestamp(const Timestamp &tstmp);
+
+    void check_for_new_data(const string &path, const string &file_pattern) override;
+    Timestamp get_timestamp() override;
+    void set_timestamp(const Timestamp &tstmp) override;
   };
-    
+
 void FS_Input_IRAE::read_files(const string &path, const string &file_pattern,
   map<string, rc_ptr<File> > &file_map)
   {
     static regex_t *fnregex = NULL;
-    
+
     // Allocate and compile regular expression "pattern" if specified
     if (file_pattern.length() != 0 && fnregex == NULL)
       {
 	fnregex = (regex_t *) malloc (sizeof (regex_t));
-	
+
 	if ( regcomp(fnregex, file_pattern.c_str(), REG_EXTENDED|REG_NOSUB ) != 0)
 	  {
-            logs(LOG_WARNING) << "cannot compile regular expression '" << 
+            logs(LOG_WARNING) << "cannot compile regular expression '" <<
 	      file_pattern << "'" << endl;
 	  }
       }
@@ -108,13 +108,13 @@ void FS_Input_IRAE::read_files(const string &path, const string &file_pattern,
     if (dir == NULL) return;
     while((de = readdir(dir)) != NULL)
       {
-        if(de->d_name[0] == '.' && 
+        if(de->d_name[0] == '.' &&
           (de->d_name[1] == '.' || de->d_name[1] == 0)) continue;
-        
+
         if((file_pattern.length() != 0 && fnregex != NULL) &&
 	   (regexec ( fnregex, de->d_name, (size_t) 0, NULL, 0) != 0))
 	  continue;
-        
+
         struct stat st;
         if(stat((path + "/" + de->d_name).c_str(), &st) < 0)
           {
@@ -142,20 +142,20 @@ void FS_Input_IRAE::read_files(const string &path, const string &file_pattern,
 
     closedir(dir);
   }
-    
+
 void FS_Input_IRAE::read_dirs(const string &path, const string &file_pattern,
-  map<string, rc_ptr<Directory> > &dir_map) 
+  map<string, rc_ptr<Directory> > &dir_map)
   {
     DIR *dir;
     dirent *de;
-    
+
     if((dir = opendir(path.c_str())) == NULL) return;
 
     while((de = readdir(dir)) != NULL)
       {
-        if(de->d_name[0] == '.' && 
+        if(de->d_name[0] == '.' &&
           (de->d_name[1] == '.' || de->d_name[1] == 0)) continue;
-        
+
         struct stat st;
         if(stat((path + "/" + de->d_name).c_str(), &st) < 0)
           {
@@ -200,7 +200,7 @@ void FS_Input_IRAE::process_files(const string &path,
             last_file_time = p->second->tstmp;
       }
   }
- 
+
 void FS_Input_IRAE::process_dirs(const string &path,
   const map<string, rc_ptr<Directory> > &dir_map)
   {
@@ -208,7 +208,7 @@ void FS_Input_IRAE::process_dirs(const string &path,
     for(p = dir_map.begin(); p != dir_map.end(); ++p)
       {
         process_files(path + "/" + p->second->name, p->second->file_map);
-        
+
         if(p->second->tstmp > last_dir_time)
             last_dir_time = p->second->tstmp;
       }

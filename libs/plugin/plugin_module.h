@@ -44,7 +44,7 @@ template<class T, class U>
 class ModuleSpecImpl: public ModuleSpec<T>
   {
   public:
-    rc_ptr<T> instance(const string &name) const
+    rc_ptr<T> instance(const string &name) const override
       {
         return new U(name);
       }
@@ -61,7 +61,7 @@ class RegisteredModule
     static RegisteredModule<T> *registered;
     RegisteredModule<T> *next;
     const PluginModule_private::ModuleSpec<T> *const spec;
-    
+
   public:
     const string name;
 
@@ -72,7 +72,7 @@ class RegisteredModule
         next = registered;
         registered = this;
       }
-    
+
     static list<string> list_modules();
     static Utilities::rc_ptr<T> instance(const string &name);
   };

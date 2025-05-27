@@ -74,7 +74,7 @@ INT_TIME get_real_time()
     N(gettimeofday(&tv, NULL));
     time_t t = tv.tv_sec;
     tm* ptm = gmtime(&t);
-    
+
     EXT_TIME et;
     et.year = ptm->tm_year + 1900;
     et.month = ptm->tm_mon + 1;
@@ -87,7 +87,7 @@ INT_TIME get_real_time()
 
     return ext_to_int(et);
   }
-    
+
 //*****************************************************************************
 // InfoStore
 //*****************************************************************************
@@ -99,12 +99,12 @@ class InfoStore: public BufferStore
     const int bufsize;
 
   public:
-    InfoStore(list<rc_ptr<InfoBuffer> > &buffer_list_init, 
+    InfoStore(list<rc_ptr<InfoBuffer> > &buffer_list_init,
       int bufsize_init):
       buffer_list(buffer_list_init), bufsize(bufsize_init) {}
 
-    Buffer *get_buffer();
-    void queue_buffer(Buffer *buf);
+    Buffer *get_buffer() override;
+    void queue_buffer(Buffer *buf) override;
   };
 
 Buffer *InfoStore::get_buffer()
@@ -192,11 +192,11 @@ InfoGenerator::~InfoGenerator()
   {
     if(pckt.valid()) msf->queue_packet(pckt, pos, 0);
   }
-    
+
 void InfoGenerator::write_doc(xmlDocPtr doc)
   {
     it = get_real_time();
-    
+
     xmlOutputBufferPtr obuf;
     if((obuf = xmlOutputBufferCreateIO(iowrite_proxy, ioclose_proxy, this, NULL)) == NULL)
         throw bad_alloc();
@@ -252,7 +252,7 @@ class MessageOutput
       msgs(new MessageStore(buffer_list, bufsize)), buf(NULL), pos(0) {}
 
     ~MessageOutput();
-    
+
     int operator()(int priority, const string &msg);
   };
 
@@ -260,7 +260,7 @@ MessageOutput::~MessageOutput()
   {
     if(buf != NULL) msgs->queue_buffer(buf, pos);
   }
-    
+
 int MessageOutput::operator()(int priority, const string &msg)
   {
     const char* p = msg.c_str();
@@ -281,7 +281,7 @@ int MessageOutput::operator()(int priority, const string &msg)
         pos += size;
 
         internal_check(pos <= buf->capacity);
-        
+
         if(pos == buf->capacity)
           {
             msgs->queue_buffer(buf, pos);
@@ -343,7 +343,7 @@ bool IPACL::check(unsigned int ip) const
   {
     if(ip_mask_list.empty())
         return true;
-    
+
     list<ip_mask>::const_iterator p;
     for(p = ip_mask_list.begin(); p != ip_mask_list.end(); ++p)
       {
@@ -402,7 +402,7 @@ double packet_sample_rate(const sl_fsdh_s *fsdh)
 
     return retval;
   }
-    
+
 INT_TIME packet_begin_time(const sl_fsdh_s *fsdh)
   {
     EXT_TIME et;
@@ -423,7 +423,7 @@ INT_TIME packet_end_time(const sl_fsdh_s *fsdh)
     int samprate_fact = (int16_t)ntohs(fsdh->samprate_fact);
     int samprate_mult = (int16_t)ntohs(fsdh->samprate_mult);
     int num_samples = ntohs(fsdh->num_samples);
-    
+
     if(samprate_fact != 0 && samprate_mult != 0)
         return add_dtime(start_time,
           1000000 * num_samples / packet_sample_rate(fsdh));
@@ -435,7 +435,7 @@ int packet_type2int(const char *type)
   {
     if(type == NULL) return SLNUM;
     else if(strlen(type) != 1) return -1;
-    
+
     switch(toupper(*type))
       {
         case 'D': return SLDATA;
@@ -480,7 +480,7 @@ StreamDescriptor make_stream_descriptor(const sl_fsdh_s *fsdh, int size)
             location_id = string(fsdh->location, n);
             break;
           }
-    
+
     string channel_id;
     for(int n = CHLEN; n > 0; --n)
         if(fsdh->channel[n - 1] != ' ')
@@ -488,7 +488,7 @@ StreamDescriptor make_stream_descriptor(const sl_fsdh_s *fsdh, int size)
             channel_id = string(fsdh->channel, n);
             break;
           }
-    
+
     return StreamDescriptor(location_id, channel_id, type);
   }
 
@@ -521,12 +521,12 @@ void xml_error(void *ctx, const char *fmt, ...)
   {
     va_list ap;
     va_start(ap, fmt);
-    
+
     char errbuf[ERR_SIZE];
     vsnprintf(errbuf, ERR_SIZE, fmt, ap);
 
     va_end(ap);
-    
+
     const char* p = errbuf;
     while(*p)
       {
@@ -583,13 +583,13 @@ class StreamSelector
         return string(neg? "!": "") + string(loc, LOCLEN) +
           string(chn, CHLEN) + "." + (typestr == NULL? "?": typestr);
       }
-    
+
     bool negative() const
       {
         return neg;
       }
   };
-    
+
 bool StreamSelector::init(const char *selstr)
   {
     const char* p = selstr;
@@ -599,7 +599,7 @@ bool StreamSelector::init(const char *selstr)
     if(p[len] == '.') pt = &p[len + 1];
 
     neg = false;
-    
+
     if(p[0] == '!')
       {
         neg = true;
@@ -661,7 +661,7 @@ class StreamFilter
   {
   private:
     list<StreamSelector> sels;
-  
+
   public:
     bool add_selector(const string &selstr);
     bool have_selectors() const;
@@ -693,9 +693,9 @@ bool StreamFilter::match(const StreamDescriptor &str_desc) const
   {
     bool default_rule = true, result = false;
     list<StreamSelector>::const_iterator p;
-    
+
     if(!sels.size()) return true;
-    
+
     for(p = sels.begin(); p != sels.end(); ++p)
       {
         if(p->negative())
@@ -708,7 +708,7 @@ bool StreamFilter::match(const StreamDescriptor &str_desc) const
             result |= p->match(str_desc);
           }
       }
-        
+
     return (default_rule || result);
   }
 
@@ -742,26 +742,26 @@ class TimeWindow
     bool valid();
     int time_cmp(INT_TIME it);
     void getinfo(xmlNodePtr parent, int info_level) const;
-    
+
     void set_begin_time(INT_TIME it)
       {
         begin_time = it;
         begin_time_initialized = true;
       }
-    
+
     void set_end_time(INT_TIME it)
       {
         end_time = it;
         end_time_initialized = true;
       }
-    
+
     void reset()
       {
         begin_time_initialized = false;
         end_time_initialized = false;
       }
   };
-    
+
 bool TimeWindow::valid()
   {
     if(!begin_time_initialized) return true;
@@ -841,62 +841,62 @@ class ConnectionMonitorImpl: public ConnectionMonitor
       }
 
     bool set_begin_time(int year, int month, int day,
-      int hour, int minute, int sec, int usec, int seqstart);
+      int hour, int minute, int sec, int usec, int seqstart) override;
     bool set_end_time(int year, int month, int day,
-      int hour, int minute, int sec, int usec);
-    void check_seq(int seq);
-    void count_packet();
-    bool match_packet(const void *head, int size);
-    void getinfo(xmlNodePtr parent, int info_level) const;
+      int hour, int minute, int sec, int usec) override;
+    void check_seq(int seq) override;
+    void count_packet() override;
+    bool match_packet(const void *head, int size) override;
+    void getinfo(xmlNodePtr parent, int info_level) const override;
 
-    bool add_selector(const string &selstr)
+    bool add_selector(const string &selstr) override
       {
         return filter.add_selector(selstr);
       }
-    
-    bool have_selectors() const
+
+    bool have_selectors() const override
       {
         return filter.have_selectors();
       }
-    
-    void clear_selectors()
+
+    void clear_selectors() override
       {
         filter.clear_selectors();
       }
 
-    bool time_valid()
+    bool time_valid() override
       {
         return win.valid();
       }
-    
-    void set_begin_seq(int seq, bool valid)
+
+    void set_begin_seq(int seq, bool valid) override
       {
         begin_seq = seq;
         begin_seq_valid = valid;
         current_seq = (valid? seq: -1);
       }
-    
-    int get_begin_seq()
+
+    int get_begin_seq() override
       {
         return begin_seq;
       }
-    
-    void set_realtime(bool value)
+
+    void set_realtime(bool value) override
       {
         realtime = value;
       }
 
-    void set_eod(bool value)
+    void set_eod(bool value) override
       {
         eod = value;
       }
-    
-    bool end_of_data()
+
+    bool end_of_data() override
       {
         return eod;
       }
 
-    void reset()
+    void reset() override
       {
         win.reset();
         stream_set.clear();
@@ -915,7 +915,7 @@ bool ConnectionMonitorImpl::set_begin_time(int year, int month, int day,
     if(convert_time(it, year, month, day, hour, minute, sec, usec))
       {
         win.set_begin_time(it);
-        
+
         if(partner.time_cmp(it, filter) > 0)
           {
             begin_seq = -1;
@@ -973,7 +973,7 @@ bool ConnectionMonitorImpl::match_packet(const void *head, int size)
 
     if(str_desc.type < 0)
         return false;
-    
+
     if(!filter.match(str_desc) || win.time_cmp(packet_end_time(fsdh)) < 0)
         return false;
 
@@ -1068,7 +1068,7 @@ class StreamMonitor
 
   public:
     const StreamDescriptor name;
-    
+
     StreamMonitor(const StreamDescriptor &name_init, bool gap_check_init,
       int gap_treshold_init, INT_TIME begin_time_init, INT_TIME end_time,
       int begin_recno_init, int end_recno, int begin_seq_init, int end_seq):
@@ -1081,7 +1081,7 @@ class StreamMonitor
         current_segment->end_recno = end_recno;
         current_segment->end_seq = end_seq;
       }
-    
+
     StreamMonitor(const StreamDescriptor &name_init, bool gap_check_init,
       int gap_treshold_init):
       gap_check(gap_check_init), gap_treshold(gap_treshold_init),
@@ -1093,7 +1093,7 @@ class StreamMonitor
         memset(&current_segment->end_time, 0, sizeof(INT_TIME));
         current_segment->end_seq = -1;
       }
-    
+
     void init_segment(INT_TIME end_time, int end_recno, int end_seq);
     void init_gap(INT_TIME begin_time, INT_TIME end_time);
     void add_packet(INT_TIME start_time, int samples, double rate,
@@ -1120,7 +1120,7 @@ void StreamMonitor::init_segment(INT_TIME end_time, int end_recno, int end_seq)
     current_segment = p;
     ++segment_count;
   }
-  
+
 void StreamMonitor::init_gap(INT_TIME begin_time, INT_TIME end_time)
   {
     current_segment->gaps.push_back(DataGap(begin_time, end_time));
@@ -1143,7 +1143,7 @@ void StreamMonitor::add_packet(INT_TIME start_time, int samples, double rate,
             current_segment->gaps.push_back(DataGap(current_segment->end_time,
               start_time));
       }
-    
+
     if(rate_defined)
         current_segment->end_time = add_dtime(start_time,
           1000000 * samples / rate);
@@ -1170,7 +1170,7 @@ int StreamMonitor::time_to_seq(INT_TIME it) const
 int StreamMonitor::time_cmp(INT_TIME it) const
   {
     if(begin_seq < 0) return 0;
-    
+
     if(tdiff(it, begin_time) < 0) return -1;
 
     if(tdiff(it, current_segment->end_time) > 0) return 1;
@@ -1192,7 +1192,7 @@ void StreamMonitor::new_segment()
 void StreamMonitor::delete_oldest_segment(int station_segment_count)
   {
     if(station_segment_count > segment_count) return;
-    
+
     internal_check(!segments.empty());
 
     begin_time = segments.front().end_time;
@@ -1279,7 +1279,7 @@ void StreamMonitor::getstate(xmlNodePtr parent) const
       {
         xmlNodePtr child1 = xml_new_child(child, "segment");
         xml_new_prop(child1, "end_time", time_to_str(p->end_time, MONTHS_FMT));
-        
+
         snprintf(buf, 19, "%06d", p->end_recno);
         xml_new_prop(child1, "end_recno", buf);
 
@@ -1309,13 +1309,13 @@ class StreamTypeAttribute: public CfgAttribute
     StreamTypeAttribute(const string &name, int &valref_init):
       CfgAttribute(name), valref(valref_init) {}
 
-    bool assign(ostream &cfglog, const string &value)
+    bool assign(ostream &cfglog, const string &value) override
       {
         int n;
-        
+
         if((n = packet_type2int(value.c_str())) < 0)
             return false;
-        
+
         valref = n;
         return true;
       }
@@ -1334,11 +1334,11 @@ class SeqAttribute: public CfgAttribute
     SeqAttribute(const string &name, int &valref_init):
       CfgAttribute(name), valref(valref_init) {}
 
-    bool assign(ostream &cfglog, const string &value)
+    bool assign(ostream &cfglog, const string &value) override
       {
         unsigned int n;
         char c;
-        
+
         if(sscanf(value.c_str(), "%X%c", &n, &c) != 1 || (n & ~SEQ_MASK))
             return false;
 
@@ -1360,11 +1360,11 @@ class TimeAttribute: public CfgAttribute
     TimeAttribute(const string &name, INT_TIME &valref_init):
       CfgAttribute(name), valref(valref_init) {}
 
-    bool assign(ostream &cfglog, const string &value)
+    bool assign(ostream &cfglog, const string &value) override
       {
         int year, month, day, hour, min, sec, tms;
         char c;
-        
+
         if(sscanf(value.c_str(), "%d/%d/%d %d:%d:%d.%d%c", &year, &month, &day,
           &hour, &min, &sec, &tms, &c) != 7)
             return false;
@@ -1390,9 +1390,9 @@ class GapElement: public CfgElement
       CfgElement("gap"), strm(strm_init), error(error_init) {}
 
     rc_ptr<CfgAttributeMap> start_attributes(ostream &cfglog,
-      const string &);
+      const string &) override;
 
-    void end_attributes(ostream &cfglog);
+    void end_attributes(ostream &cfglog) override;
   };
 
 rc_ptr<CfgAttributeMap> GapElement::start_attributes(ostream &cfglog,
@@ -1400,7 +1400,7 @@ rc_ptr<CfgAttributeMap> GapElement::start_attributes(ostream &cfglog,
   {
     memset(&begin_time, 0, sizeof(INT_TIME));
     memset(&end_time, 0, sizeof(INT_TIME));
-    
+
     rc_ptr<CfgAttributeMap> atts = new CfgAttributeMap;
     atts->add_item(TimeAttribute("begin_time", begin_time));
     atts->add_item(TimeAttribute("end_time", end_time));
@@ -1414,7 +1414,7 @@ void GapElement::end_attributes(ostream &cfglog)
         cfglog << "begin_time is invalid or unspecified" << endl;
         error = true;
       }
-  
+
     if(end_time.year == 0)
       {
         cfglog << "end_time is invalid or unspecified" << endl;
@@ -1445,12 +1445,12 @@ class SegmentElement: public CfgElement
       CfgElement("segment"), strm(strm_init), error(error_init), first(true) {}
 
     rc_ptr<CfgAttributeMap> start_attributes(ostream &cfglog,
-      const string &);
+      const string &) override;
 
     rc_ptr<CfgElementMap> start_children(ostream &cfglog,
-      const string &);
+      const string &) override;
 
-    void end_attributes(ostream &cfglog);
+    void end_attributes(ostream &cfglog) override;
   };
 
 rc_ptr<CfgAttributeMap> SegmentElement::start_attributes(ostream &cfglog,
@@ -1458,12 +1458,12 @@ rc_ptr<CfgAttributeMap> SegmentElement::start_attributes(ostream &cfglog,
   {
     if(!first && !error)
         strm->init_segment(end_time, end_recno, end_seq);
-    
+
     memset(&end_time, 0, sizeof(INT_TIME));
     end_recno = -1;
     end_seq = -1;
     first = false;
-    
+
     rc_ptr<CfgAttributeMap> atts = new CfgAttributeMap;
     atts->add_item(TimeAttribute("end_time", end_time));
     atts->add_item(IntAttribute("end_recno", end_recno, 0, 999999));
@@ -1478,13 +1478,13 @@ void SegmentElement::end_attributes(ostream &cfglog)
         cfglog << "end_time is invalid or unspecified" << endl;
         error = true;
       }
-  
+
     if(end_recno == -1)
       {
         cfglog << "end_recno is invalid or unspecified" << endl;
         error = true;
       }
-  
+
     if(end_seq == -1)
       {
         cfglog << "end_seq is invalid or unspecified" << endl;
@@ -1496,7 +1496,7 @@ rc_ptr<CfgElementMap> SegmentElement::start_children(ostream &cfglog,
   const string &)
   {
     if(error) return NULL;
-    
+
     rc_ptr<CfgElementMap> elms = new CfgElementMap;
     elms->add_item(GapElement(strm, error));
     return elms;
@@ -1530,12 +1530,12 @@ class StreamElement: public CfgElement
       CfgElement("stream"), stream_map(stream_map_init), error(error_init) {}
 
     rc_ptr<CfgAttributeMap> start_attributes(ostream &cfglog,
-      const string &);
+      const string &) override;
 
     rc_ptr<CfgElementMap> start_children(ostream &cfglog,
-      const string &);
+      const string &) override;
 
-    void end_attributes(ostream &cfglog);
+    void end_attributes(ostream &cfglog) override;
   };
 
 rc_ptr<CfgAttributeMap> StreamElement::start_attributes(ostream &cfglog,
@@ -1552,7 +1552,7 @@ rc_ptr<CfgAttributeMap> StreamElement::start_attributes(ostream &cfglog,
     end_recno = -1;
     begin_seq = -1;
     end_seq = -1;
-    
+
     rc_ptr<CfgAttributeMap> atts = new CfgAttributeMap;
     atts->add_item(StringAttribute("location", location));
     atts->add_item(StringAttribute("seedname", seedname));
@@ -1578,13 +1578,13 @@ void StreamElement::end_attributes(ostream &cfglog)
         cfglog << "location is invalid or unspecified" << endl;
         error = true;
       }
-        
+
     if(seedname.empty() || seedname.length() > 3)
       {
         cfglog << "seedname is invalid or unspecified" << endl;
         error = true;
       }
-    
+
     if(type == -1)
       {
         cfglog << "type is invalid or unspecified" << endl;
@@ -1596,13 +1596,13 @@ void StreamElement::end_attributes(ostream &cfglog)
         cfglog << "begin_time is invalid or unspecified" << endl;
         error = true;
       }
-  
+
     if(end_time.year == 0)
       {
         cfglog << "end_time is invalid or unspecified" << endl;
         error = true;
       }
-  
+
     if(gap_treshold == 0)
       {
         cfglog << "gap_treshold is invalid or unspecified" << endl;
@@ -1634,7 +1634,7 @@ void StreamElement::end_attributes(ostream &cfglog)
       }
 
     if(error) return;
-    
+
     StreamDescriptor str_desc(location, seedname, type);
 
     if(stream_map.find(str_desc) != stream_map.end())
@@ -1655,7 +1655,7 @@ rc_ptr<CfgElementMap> StreamElement::start_children(ostream &cfglog,
   const string &)
   {
     if(error) return NULL;
-    
+
     rc_ptr<CfgElementMap> elms = new CfgElementMap;
     elms->add_item(SegmentElement(strm, error));
     return elms;
@@ -1692,11 +1692,11 @@ class StationMonitorImpl: public StationMonitor, private ConnectionMonitorPartne
     StationMonitorPartner &partner;
     list<StationMonitor *>::iterator sw_link;
 
-    list<ConnectionMonitor *>::iterator attach(ConnectionMonitor *cw);
-    void detach(list<ConnectionMonitor *>::iterator ptr);
-    
-    int time_to_seq(INT_TIME it, int seqstart, const StreamFilter &filter) const;
-    int time_cmp(INT_TIME it, const StreamFilter &filter) const;
+    list<ConnectionMonitor *>::iterator attach(ConnectionMonitor *cw) override;
+    void detach(list<ConnectionMonitor *>::iterator ptr) override;
+
+    int time_to_seq(INT_TIME it, int seqstart, const StreamFilter &filter) const override;
+    int time_cmp(INT_TIME it, const StreamFilter &filter) const override;
 
   public:
     StationMonitorImpl(StationMonitorPartner &partner_init,
@@ -1713,34 +1713,34 @@ class StationMonitorImpl: public StationMonitor, private ConnectionMonitorPartne
     ~StationMonitorImpl();
 
     void configure_stream_check(bool enabled, const string &regex,
-      int treshold);
-    void add_packet(int seq, const void *head, int size);
-    void new_segment();
-    void delete_oldest_segment();
+      int treshold) override;
+    void add_packet(int seq, const void *head, int size) override;
+    void new_segment() override;
+    void delete_oldest_segment() override;
 
-    rc_ptr<ConnectionMonitor> add_connection(const string &address, int port);
+    rc_ptr<ConnectionMonitor> add_connection(const string &address, int port) override;
 
-    void getmsg(ostream &mout, unsigned int ipaddr) const;
-    void getinfo(xmlNodePtr parent, int info_level, unsigned int ipaddr) const;
-    void save_state(const string &filename) const;
-    void restore_state(const string &filename);
+    void getmsg(ostream &mout, unsigned int ipaddr) const override;
+    void getinfo(xmlNodePtr parent, int info_level, unsigned int ipaddr) const override;
+    void save_state(const string &filename) const override;
+    void restore_state(const string &filename) override;
 
-    bool ipaccess(unsigned int ipaddr) const
+    bool ipaccess(unsigned int ipaddr) const override
       {
         return ip_access.check(ipaddr);
       }
 
-    void set_begin_seq(int seq)
+    void set_begin_seq(int seq) override
       {
         begin_seq = (seq & SEQ_MASK);
       }
 
-    void set_end_seq(int seq)
+    void set_end_seq(int seq) override
       {
         end_seq = (seq & SEQ_MASK);
       }
 
-    void reset()
+    void reset() override
       {
         begin_seq = 0;
         end_seq = 0;
@@ -1753,7 +1753,7 @@ class StationMonitorImpl: public StationMonitor, private ConnectionMonitorPartne
 StationMonitorImpl::~StationMonitorImpl()
   {
     if(gap_check_rx_initialized) regfree(&gap_check_rx);
-    
+
     if(!cws.empty())
       {
         // It is better to use plain printf() here, because stream objects
@@ -1792,7 +1792,7 @@ int StationMonitorImpl::time_to_seq(INT_TIME it, int seqstart,
             distance = (end_seq - begin_seq) & SEQ_MASK;
             retval = begin_seq;
           }
-        
+
         int seq = p->second->time_to_seq(it);
         if(((seq - begin_seq) & SEQ_MASK) < distance)
           {
@@ -1804,7 +1804,7 @@ int StationMonitorImpl::time_to_seq(INT_TIME it, int seqstart,
     if(seqstart >=0 &&
       ((end_seq - seqstart) & SEQ_MASK) < ((end_seq - retval) & SEQ_MASK))
         return seqstart;
-    
+
     return retval;
   }
 
@@ -1825,7 +1825,7 @@ int StationMonitorImpl::time_cmp(INT_TIME it, const StreamFilter &filter) const
 
     return retval;
   }
- 
+
 void StationMonitorImpl::configure_stream_check(bool enabled,
   const string &regex, int treshold)
   {
@@ -1843,7 +1843,7 @@ void StationMonitorImpl::configure_stream_check(bool enabled,
 
     if((gap_treshold = treshold) == 0)
         return;
-    
+
     int err = regcomp(&gap_check_rx, regex.c_str(),
       REG_EXTENDED | REG_ICASE | REG_NOSUB);
 
@@ -1860,7 +1860,7 @@ void StationMonitorImpl::configure_stream_check(bool enabled,
 void StationMonitorImpl::add_packet(int seq, const void *head, int size)
   {
     if(!stream_check) return;
-    
+
     if(*(char *)head == 0) // empty packet
         return;
 
@@ -1869,24 +1869,24 @@ void StationMonitorImpl::add_packet(int seq, const void *head, int size)
 
     if(str_desc.type < 0)
         return;
-    
+
     map<StreamDescriptor, rc_ptr<StreamMonitor> >::iterator p;
     if((p = stream_map.find(str_desc)) == stream_map.end())
       {
         bool gap_check = (str_desc.type == SLDATA && gap_check_rx_initialized &&
           regexec(&gap_check_rx, (str_desc.location + str_desc.seedname).c_str(),
           0, NULL, 0) == 0);
-    
+
         p = stream_map.insert(make_pair(str_desc,
           new StreamMonitor(str_desc, gap_check, gap_treshold))).first;
       }
 
     bool rate_defined = ((int16_t)ntohs(fsdh->samprate_fact) != 0 &&
       (int16_t)ntohs(fsdh->samprate_mult) != 0);
-    
+
     int recno;
     sscanf(fsdh->sequence_number, "%6d", &recno);
-    
+
     p->second->add_packet(packet_begin_time(fsdh), ntohs(fsdh->num_samples),
       packet_sample_rate(fsdh), rate_defined, recno, seq);
 
@@ -1936,7 +1936,7 @@ void StationMonitorImpl::getmsg(ostream &mout, unsigned int ipaddr) const
          << setw(5) << left << name << " "
          << description << endl;
   }
- 
+
 void StationMonitorImpl::getinfo(xmlNodePtr parent, int info_level,
   unsigned int ipaddr) const
   {
@@ -1965,7 +1965,7 @@ void StationMonitorImpl::getinfo(xmlNodePtr parent, int info_level,
         for(p = stream_map.begin(); p != stream_map.end(); ++p)
             p->second->getinfo(child, info_level);
       }
-    
+
     if(info_level >= ConnectionInfo)
       {
         list<ConnectionMonitor *>::const_iterator p;
@@ -1977,13 +1977,13 @@ void StationMonitorImpl::getinfo(xmlNodePtr parent, int info_level,
 void StationMonitorImpl::save_state(const string &filename) const
   {
     xmlSetGenericErrorFunc(NULL, xml_error);
-    
+
     char buf[20];
     xmlDocPtr doc;
-    
+
     if((doc = xmlNewDoc((const xmlChar *) "1.0")) == NULL)
         throw bad_alloc();
-        
+
     if((doc->children = xmlNewDocNode(doc, NULL, (const xmlChar *) "buffer", NULL)) == NULL)
         throw bad_alloc();
 
@@ -1997,11 +1997,11 @@ void StationMonitorImpl::save_state(const string &filename) const
     xml_new_prop(doc->children, "segment_count", buf);
 
     xml_new_prop(doc->children, "stream_check", (stream_check ? "enabled": "disabled"));
-    
+
     map<StreamDescriptor, rc_ptr<StreamMonitor> >::const_iterator p;
     for(p = stream_map.begin(); p != stream_map.end(); ++p)
         p->second->getstate(doc->children);
-    
+
     xmlSaveFormatFile(filename.c_str(), doc, 1);
     xmlFreeDoc(doc);
     xmlSetGenericErrorFunc(NULL, NULL);
@@ -2049,11 +2049,11 @@ class MasterMonitorImpl: public MasterMonitor, private StationMonitorPartner
     list<Capability> caps;
     list<StationMonitor *> sws;
 
-    list<StationMonitor *>::iterator attach(StationMonitor *sw);
-    void detach(list<StationMonitor *>::iterator ptr);
-    
+    list<StationMonitor *>::iterator attach(StationMonitor *sw) override;
+    void detach(list<StationMonitor *>::iterator ptr) override;
+
   public:
-    MasterMonitorImpl(int reclen_init, const string &info_streamname_init, 
+    MasterMonitorImpl(int reclen_init, const string &info_streamname_init,
       const string &error_streamname_init, const string &software_init,
       const string &organization_init, const IPACL &ip_trusted_init):
       reclen(reclen_init), info_streamname(info_streamname_init),
@@ -2065,18 +2065,18 @@ class MasterMonitorImpl: public MasterMonitor, private StationMonitorPartner
 
     ~MasterMonitorImpl();
 
-    void add_capability(const string &cap, bool restricted);
+    void add_capability(const string &cap, bool restricted) override;
     rc_ptr<StationMonitor> add_station(const string &name,
       const string &network, const string &description,
-      const IPACL &ip_access);
+      const IPACL &ip_access) override;
 
     void cat_out(list<rc_ptr<MessageBuffer> > &buflist,
-      unsigned int ipaddr) const;
-    void error_out(list<rc_ptr<InfoBuffer> > &buflist) const;
+      unsigned int ipaddr) const override;
+    void error_out(list<rc_ptr<InfoBuffer> > &buflist) const override;
     void info_out(list<rc_ptr<InfoBuffer> > &buflist, int info_level,
-      unsigned int ipaddr) const;
-      
-    bool iptrusted(unsigned int ipaddr) const
+      unsigned int ipaddr) const override;
+
+    bool iptrusted(unsigned int ipaddr) const override
       {
         return ip_trusted.check(ipaddr);
       }
@@ -2121,7 +2121,7 @@ void MasterMonitorImpl::cat_out(list<rc_ptr<MessageBuffer> > &buflist,
   {
     ostream mout(NULL);
     redirect_ostream(mout, MessageOutput(buflist, (1 << reclen)));
-    
+
     list<StationMonitor *>::const_iterator p;
     for(p = sws.begin(); p != sws.end(); ++p)
         (*p)->getmsg(mout, ipaddr);
@@ -2132,11 +2132,11 @@ void MasterMonitorImpl::cat_out(list<rc_ptr<MessageBuffer> > &buflist,
 void MasterMonitorImpl::error_out(list<rc_ptr<InfoBuffer> > &buflist) const
   {
     xmlSetGenericErrorFunc(NULL, xml_error);
-    
+
     xmlDocPtr doc;
     if((doc = xmlNewDoc((const xmlChar *) "1.0")) == NULL)
         throw bad_alloc();
-        
+
     if((doc->children = xmlNewDocNode(doc, NULL, (const xmlChar *) "seedlink", NULL)) == NULL)
         throw bad_alloc();
 
@@ -2155,13 +2155,13 @@ void MasterMonitorImpl::info_out(list<rc_ptr<InfoBuffer> > &buflist,
   int info_level, unsigned int ipaddr) const
   {
     internal_check(info_level >= 0 && info_level < N_InfoLevel);
-    
+
     xmlSetGenericErrorFunc(NULL, xml_error);
-    
+
     xmlDocPtr doc;
     if((doc = xmlNewDoc((const xmlChar *) "1.0")) == NULL)
         throw bad_alloc();
-        
+
     if((doc->children = xmlNewDocNode(doc, NULL, (const xmlChar *) "seedlink", NULL)) == NULL)
         throw bad_alloc();
 
@@ -2175,20 +2175,20 @@ void MasterMonitorImpl::info_out(list<rc_ptr<InfoBuffer> > &buflist,
         for(p = caps.begin(); p != caps.end(); ++p)
           {
             if(p->restricted && !iptrusted(ipaddr)) continue;
-            
+
             xmlNodePtr child;
             child = xml_new_child(doc->children, "capability");
             xml_new_prop(child, "name", p->name.c_str());
           }
       }
-          
+
     if(info_level >= StationInfo)
       {
         list<StationMonitor *>::const_iterator p;
         for(p = sws.begin(); p != sws.end(); ++p)
             (*p)->getinfo(doc->children, info_level, ipaddr);
       }
-        
+
     InfoGenerator xg(reclen, info_streamname, buflist);
 
     xg.write_doc(doc);

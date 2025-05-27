@@ -102,9 +102,9 @@ struct Chunk {
 struct HeadChunk : Chunk {
 	PacketDataHeader data;
 
-	int chunkSize() const;
+	int chunkSize() const override;
 
-	bool get(std::streambuf &input, int size);
+	bool get(std::streambuf &input, int size) override;
 };
 
 
@@ -114,9 +114,9 @@ struct SIDChunk : Chunk {
 	std::string locationCode;
 	std::string channelCode;
 
-	int chunkSize() const;
+	int chunkSize() const override;
 
-	bool get(std::streambuf &input, int size);
+	bool get(std::streambuf &input, int size) override;
 };
 
 
@@ -128,9 +128,9 @@ struct CPtrChunk : Chunk {
 	CPtrChunk(const char* d, int len);
 	virtual ~CPtrChunk() {}
 
-	int chunkSize() const;
+	int chunkSize() const override;
 
-	bool get(std::streambuf &input, int size);
+	bool get(std::streambuf &input, int size) override;
 };
 
 
@@ -145,9 +145,9 @@ struct VectorChunk : Chunk {
 	VectorChunk(std::vector<char> &d, int sampleOfs, int sampleCount);
 	virtual ~VectorChunk() {}
 
-	int chunkSize() const;
+	int chunkSize() const override;
 
-	bool get(std::streambuf &input, int size);
+	bool get(std::streambuf &input, int size) override;
 
 	int startOfs;
 	int len;

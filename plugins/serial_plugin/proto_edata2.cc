@@ -71,7 +71,7 @@ struct SegmentHeader
 struct MOD_seg
   {
     /* MOD Segment */
-    
+
     char device_id[12];
     char version[6];
     char space1;
@@ -192,7 +192,7 @@ class Edata2Protocol: public Proto
         memset(&dathead, 0, sizeof(SegmentHeader));
         memset(&sumhead, 0, sizeof(SegmentHeader));
       }
-      
+
     ~Edata2Protocol()
       {
         if(modseg != NULL) delete modseg;
@@ -200,13 +200,13 @@ class Edata2Protocol: public Proto
         if(sumseg != NULL) delete sumseg;
         if(datseg != NULL) delete datseg;
       }
-    
+
     void attach_output_channel(const string &source_id,
       const string &channel_name, const string &station_name,
       double scale, double realscale, double realoffset,
-      const string &realunit, int precision);
-    void flush_channels();
-    void start();
+      const string &realunit, int precision) override;
+    void flush_channels() override;
+    void start() override;
   };
 
 void Edata2Protocol::attach_output_channel(const string &source_id,
@@ -218,7 +218,7 @@ void Edata2Protocol::attach_output_channel(const string &source_id,
     char *tail;
 
     n = strtoul(source_id.c_str(), &tail, 10);
-    
+
     if(*tail || n >= NCHAN)
         throw PluginADInvalid(source_id, channel_name);
 
@@ -277,13 +277,13 @@ void Edata2Protocol::retransmit(time_t sec)
   {
     char req[20];
     sprintf(req, "$RP%08X0000", (u_int32_t)sec);
-    
+
     int csum = 0;
     for(int i = 0; i < 15; ++i)
         csum += req[i];
 
     sprintf(req + 15, "%X", csum & 0xff);
-    
+
 //  printf("sending: %s\n", req);
 //  fflush(stdout);
 
@@ -295,7 +295,7 @@ void Edata2Protocol::do_start()
     unsigned long sync_value = 0;
     unsigned char c;
     int sync_count = -4;
-    
+
     while(!terminate_proc)
       {
         if(read_port(fd, &c, 1) == 0)
@@ -305,15 +305,15 @@ void Edata2Protocol::do_start()
           }
 
         ++sync_count;
-        
+
         if(((sync_value = (sync_value << 8) | c) & 0xffffffff) != 0x4d4f4400)
             continue;
-        
+
         if(sync_count != 0)
             logs(LOG_INFO) << "sync " << sync_count << " bytes" << endl;
 
         sync_count = -4;
-        
+
         modhead.id[0] = 'M';
         modhead.id[1] = 'O';
         modhead.id[2] = 'D';
@@ -325,7 +325,7 @@ void Edata2Protocol::do_start()
             retransmit_wait = 0;
             continue;
           }
-        
+
         if(modseg == NULL)
           {
             logs(LOG_INFO) << "MOD segment size is " << modhead.size << " bytes" << endl;
@@ -335,19 +335,19 @@ void Edata2Protocol::do_start()
                 logs(LOG_ERR) << "invalid MOD segment size" << endl;
                 continue;
               }
-            
+
             if((modseg = static_cast<MOD_seg *>(malloc(modsize))) == NULL)
                 throw bad_alloc();
             memset(modseg, 0, modsize);
           }
-    
+
         if(read_port(fd, modseg, modsize) == 0)
           {
             logs(LOG_WARNING) << "read timeout" << endl;
             retransmit_wait = 0;
             continue;
           }
-    
+
         if(read_port(fd, &dathead, sizeof(SegmentHeader)) == 0)
           {
             logs(LOG_WARNING) << "read timeout" << endl;
@@ -358,7 +358,7 @@ void Edata2Protocol::do_start()
         if(!strncmp(dathead.id, "MDE", 3))
           {
             mdehead = dathead;
-            
+
             if(mdeseg == NULL)
               {
                 logs(LOG_INFO) << "MDE segment size is " << mdehead.size << " bytes" << endl;
@@ -373,14 +373,14 @@ void Edata2Protocol::do_start()
                     throw bad_alloc();
                 memset(mdeseg, 0, mdesize);
               }
-        
+
             if(read_port(fd, mdeseg, mdesize) == 0)
               {
                 logs(LOG_WARNING) << "read timeout" << endl;
                 retransmit_wait = 0;
                 continue;
               }
-    
+
             if(read_port(fd, &dathead, sizeof(SegmentHeader)) == 0)
               {
                 logs(LOG_WARNING) << "read timeout" << endl;
@@ -388,13 +388,13 @@ void Edata2Protocol::do_start()
                 continue;
               }
           }
-    
+
         if(strncmp(dathead.id, "DAT", 3))
           {
             logs(LOG_WARNING) << "bad DAT segment" << endl;
             continue;
           }
-    
+
         if(datseg == NULL)
           {
             logs(LOG_INFO) << "DAT segment size is " << dathead.size << " bytes" << endl;
@@ -417,20 +417,20 @@ void Edata2Protocol::do_start()
             retransmit_wait = 0;
             continue;
           }
-    
+
         if(read_port(fd, &sumhead, sizeof(SegmentHeader)) == 0)
           {
             logs(LOG_WARNING) << "read timeout" << endl;
             retransmit_wait = 0;
             continue;
           }
-        
+
         if(strncmp(sumhead.id, "SUM", 3))
           {
             logs(LOG_WARNING) << "bad SUM segment" << endl;
             continue;
           }
-        
+
         if(sumseg == NULL)
           {
             logs(LOG_INFO) << "SUM segment size is " << sumhead.size << " bytes" << endl;
@@ -445,16 +445,16 @@ void Edata2Protocol::do_start()
                 throw bad_alloc();
             memset(sumseg, 0, sumsize);
           }
-        
+
         if(read_port(fd, sumseg, sumsize) == 0)
           {
             logs(LOG_WARNING) << "read timeout" << endl;
             retransmit_wait = 0;
             continue;
           }
-        
+
         u_int16_t csum = 0;
-    
+
         for(unsigned int i = 0; i < sizeof(SegmentHeader); ++i)
           {
             csum += ((u_int8_t *)&modhead)[i];
@@ -462,14 +462,14 @@ void Edata2Protocol::do_start()
             csum += ((u_int8_t *)&dathead)[i];
             csum += ((u_int8_t *)&sumhead)[i];
           }
-    
+
         for(unsigned int i = 0; i < modsize; ++i)
             csum += ((u_int8_t *)modseg)[i];
 
         if(mdeseg != NULL)
             for(unsigned int i = 0; i < mdesize; ++i)
                 csum += ((u_int8_t *)mdeseg)[i];
-        
+
         for(unsigned int i = 0; i < datsize; ++i)
             csum += ((u_int8_t *)datseg)[i];
 
@@ -491,7 +491,7 @@ void Edata2Protocol::do_start()
               " is too old" << endl;
             break;
           }
-        
+
 //      INT_TIME it_save = digitime.it;
 //      set_time(modseg->seconds);
 //      printf("seconds: %08X -> time: %s\n", modseg->seconds, time_to_str(digitime.it, MONTHS_FMT));
@@ -504,7 +504,7 @@ void Edata2Protocol::do_start()
             if(modseg->seconds < lastsecond + 1 &&
               modseg->block_count < lastblock + 1)
                 continue;
-            
+
             if(modseg->seconds > lastsecond + 1 &&
               modseg->block_count > lastblock + 1)
               {
@@ -525,12 +525,12 @@ void Edata2Protocol::do_start()
                   }
               }
           }
-                
+
         lastblock = modseg->block_count;
         lastsecond = modseg->seconds;
         retransmit_wait = 0;
         retransmit_retry = 0;
-        
+
         if(lastsecond >= 915148800 && lastsecond < 1546300800) // year 1999..2018 -> add 1024 weeks
           {
             set_time(lastsecond + 619315200);
@@ -564,7 +564,7 @@ void Edata2Protocol::do_start()
                 digitime.exact = false;
               }
           }
-            
+
         GPSData gps;
         if(modseg->gps_message[0] == '$')
             decode_nmea(gps, modseg->gps_message);
@@ -574,7 +574,7 @@ void Edata2Protocol::do_start()
             gps.valid = false;
 
         EXT_TIME et = int_to_ext(digitime.it);
-        
+
         if(et.hour == 0 && et.minute == 0 && et.second == 1)
           {
             startup_messages = true;
@@ -584,7 +584,7 @@ void Edata2Protocol::do_start()
 
         if(dconf.statusinterval && !(digitime.it.second % (dconf.statusinterval * 60)))
             soh_messages = true;
-        
+
         if(startup_messages)
           {
             seed_log << ident_str << endl
@@ -609,14 +609,14 @@ void Edata2Protocol::do_start()
                 seed_log << "Deci10_5: " << mdeseg->deci10_5 << " "
                          << "Deci10_6: " << mdeseg->deci10_6 << " "
                          << "Deci10_7: " << mdeseg->deci10_7 << " ";
-            
+
             seed_log << "Gain: " << string(modseg->gain, 2) << endl
                      << "Program setup: "
                         "protocol=" << dconf.proto_name << " "
                         "lsb=" << dconf.lsb << " "
                         "statusinterval=" << dconf.statusinterval << endl;
           }
-        
+
         if(startup_messages ||
           memcmp(modseg->cal_gain, status.cal_gain1, PRI_DATA_CHANNELS * 4) ||
           (mdeseg != NULL && memcmp(mdeseg->cal_gain, status.cal_gain2, SEC_DATA_CHANNELS * 4)))
@@ -636,7 +636,7 @@ void Edata2Protocol::do_start()
 
             seed_log << endl;
           }
-            
+
         if(startup_messages ||
           memcmp(modseg->offset, status.offset1, PRI_DATA_CHANNELS * 4) ||
           (mdeseg != NULL && memcmp(mdeseg->offset, status.offset2, SEC_DATA_CHANNELS * 4)))
@@ -656,10 +656,10 @@ void Edata2Protocol::do_start()
 
             seed_log << endl;
           }
-        
+
         if(startup_messages)
             seed_log << "16 bit phase error in 1 second pll: " << modseg->plldata << endl;
-        
+
         if(gps_messages && digitime.exact)
           {
             gps_messages = false;
@@ -698,10 +698,10 @@ void Edata2Protocol::do_start()
                                             << double(mdeseg->adc[3]) / 10.0 - 50.0 << "C "
                                             << double(mdeseg->adc[4]) / 10.0 - 50.0 << "C "
                                             << double(mdeseg->adc[5]) / 10.0 - 50.0 << "C";
-             
+
             seed_log << endl;
           }
-        
+
         startup_messages = false;
 
         for(int i = 0; i < NCHAN; ++i)
@@ -717,9 +717,9 @@ void Edata2Protocol::do_start()
             for(int i = 0; i < modseg->ncomps; ++i)
               {
                 if(edata_channels[i] == NULL) continue;
-        
+
                 int32_t sample_val = 0;
-            
+
                 switch(modseg->bytesper)
                   {
                   case 1:
@@ -744,7 +744,7 @@ void Edata2Protocol::do_start()
         for(int i = 0; i < SOH_CHANNELS; ++i)
           {
             if(edata_channels[i + DATA_CHANNELS] == NULL) continue;
-            
+
             if(i < PRI_SOH_CHANNELS)
                 edata_channels[i + DATA_CHANNELS]->put_sample(modseg->adc[i]);
             else if(mdeseg != NULL)
@@ -801,10 +801,10 @@ void Edata2Protocol::decode_taip(GPSData &gps, const char *gpsmsg)
     char buf[TAIP_LENGTH + 1], *pv_ptr, *tm_ptr;
     int r, lat, lon, vel, hd, hour, min, msec, day, month, year, valid;
     div_t d_sec;
-    
+
     strncpy(buf, gpsmsg, TAIP_LENGTH);
     buf[TAIP_LENGTH] = 0;
-    
+
     if((pv_ptr = strstr(buf, ">RPV")) == NULL)
       {
         gps.valid = false;
@@ -864,7 +864,7 @@ void Edata2Protocol::decode_taip(GPSData &gps, const char *gpsmsg)
     gps.magnetic_variation = 0;
     gps.valid = true;
 
-    DEBUG_MSG("hour = " << gps.hour << ", min = " << gps.min << ", sec = " 
+    DEBUG_MSG("hour = " << gps.hour << ", min = " << gps.min << ", sec = "
       << gps.sec << endl
       << "day = " << gps.day << ", month = " << gps.month << ", year = "
       << gps.year << endl

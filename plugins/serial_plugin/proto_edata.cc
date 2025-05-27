@@ -68,7 +68,7 @@ struct SegmentHeader
 struct MOD_seg
   {
     /* MOD Segment */
-    
+
     char device_id[12];
     char version[6];
     char space1;
@@ -174,7 +174,7 @@ class EdataProtocol: public Proto
     void update_status();
     void decode_nmea(GPSData &gps, const char *gpsmsg);
     void decode_taip(GPSData &gps, const char *gpsmsg);
-  
+
   public:
     EdataProtocol(const string &myname):
       startup_messages(true), gps_messages(true), soh_messages(true),
@@ -194,13 +194,13 @@ class EdataProtocol: public Proto
         if(sumseg != NULL) delete sumseg;
         if(datseg != NULL) delete datseg;
       }
-    
+
     void attach_output_channel(const string &source_id,
       const string &channel_name, const string &station_name,
       double scale, double realscale, double realoffset,
-      const string &realunit, int precision);
-    void flush_channels();
-    void start();
+      const string &realunit, int precision) override;
+    void flush_channels() override;
+    void start() override;
   };
 
 void EdataProtocol::attach_output_channel(const string &source_id,
@@ -212,7 +212,7 @@ void EdataProtocol::attach_output_channel(const string &source_id,
     char *tail;
 
     n = strtoul(source_id.c_str(), &tail, 10);
-    
+
     if(*tail || n >= NCHAN)
       throw PluginADInvalid(source_id, channel_name);
 
@@ -302,7 +302,7 @@ void EdataProtocol::do_start()
             sync_data(fd);
             continue;
           }
-    
+
         if(modseg == NULL)
           {
             logs(LOG_INFO) << "MOD segment size is " << modhead.size << " bytes" << endl;
@@ -311,13 +311,13 @@ void EdataProtocol::do_start()
                 throw bad_alloc();
             memset(modseg, 0, modsize);
           }
-    
+
         if(read_port(fd, modseg, modsize) == 0)
           {
             logs(LOG_WARNING) << "read timeout" << endl;
             continue;
           }
-    
+
 #ifdef DEBUG_RAW_PACKETS
         DEBUG_MSG("packet " << modseg->block_count << " received (GPS block " <<
           modseg->gps_block << ")" << endl);
@@ -333,7 +333,7 @@ void EdataProtocol::do_start()
         if(!strncmp(dathead.id, "MDE", 3))
           {
             mdehead = dathead;
-            
+
             if(mdeseg == NULL)
               {
                 logs(LOG_INFO) << "MDE segment size is " << mdehead.size << " bytes" << endl;
@@ -342,13 +342,13 @@ void EdataProtocol::do_start()
                     throw bad_alloc();
                 memset(mdeseg, 0, mdesize);
               }
-        
+
             if(read_port(fd, mdeseg, mdesize) == 0)
               {
                 logs(LOG_WARNING) << "read timeout" << endl;
                 continue;
               }
-    
+
             if(read_port(fd, &dathead, sizeof(SegmentHeader)) == 0)
               {
                 logs(LOG_WARNING) << "read timeout" << endl;
@@ -357,7 +357,7 @@ void EdataProtocol::do_start()
 
             DEBUG_MSG("extended GPS message: " << string(mdeseg->gps_message, TAIP_LENGTH) << endl);
           }
-    
+
         if(strncmp(dathead.id, "DAT", 3))
           {
             logs(LOG_WARNING) << "bad DAT segment" << endl;
@@ -365,7 +365,7 @@ void EdataProtocol::do_start()
             sync_data(fd);
             continue;
           }
-    
+
         if(datseg == NULL)
           {
             logs(LOG_INFO) << "DAT segment size is " << dathead.size << " bytes" << endl;
@@ -381,7 +381,7 @@ void EdataProtocol::do_start()
             logs(LOG_WARNING) << "read timeout" << endl;
             continue;
           }
-    
+
         if(dconf.checksum_used)
           {
             if(read_port(fd, &sumhead, sizeof(SegmentHeader)) == 0)
@@ -389,7 +389,7 @@ void EdataProtocol::do_start()
                 logs(LOG_WARNING) << "read timeout" << endl;
                 continue;
               }
-        
+
             if(strncmp(sumhead.id, "SUM", 3))
               {
                 logs(LOG_WARNING) << "bad SUM segment" << endl;
@@ -397,7 +397,7 @@ void EdataProtocol::do_start()
                 sync_data(fd);
                 continue;
               }
-          
+
             if(sumseg == NULL)
               {
                 logs(LOG_INFO) << "SUM segment size is " << sumhead.size << " bytes" << endl;
@@ -406,15 +406,15 @@ void EdataProtocol::do_start()
                     throw bad_alloc();
                 memset(sumseg, 0, sumsize);
               }
-        
+
             if(read_port(fd, sumseg, sumsize) == 0)
               {
                 logs(LOG_WARNING) << "read timeout" << endl;
                 continue;
               }
-        
+
             u_int16_t csum = 0;
-    
+
             for(unsigned int i = 0; i < sizeof(SegmentHeader); ++i)
               {
                 csum += ((u_int8_t *)&modhead)[i];
@@ -422,14 +422,14 @@ void EdataProtocol::do_start()
                 csum += ((u_int8_t *)&dathead)[i];
                 csum += ((u_int8_t *)&sumhead)[i];
               }
-    
+
             for(unsigned int i = 0; i < modsize; ++i)
                 csum += ((u_int8_t *)modseg)[i];
 
             if(mdeseg != NULL)
                 for(unsigned int i = 0; i < mdesize; ++i)
                     csum += ((u_int8_t *)mdeseg)[i];
-            
+
             for(unsigned int i = 0; i < datsize; ++i)
                 csum += ((u_int8_t *)datseg)[i];
 
@@ -446,9 +446,9 @@ void EdataProtocol::do_start()
             DEBUG_MSG("checksum: " << sumseg->checksum << " (calculated " << csum << ")" << endl);
 #endif
           }
-    
+
         update_status();
-    
+
         if(digitime.valid)
           {
             for(int i = 0; i < NCHAN; ++i)
@@ -464,9 +464,9 @@ void EdataProtocol::do_start()
                 for(int i = 0; i < modseg->ncomps; ++i)
                   {
                     if(edata_channels[i] == NULL) continue;
-            
+
                     int32_t sample_val = 0;
-                
+
                     switch(modseg->bytesper)
                       {
                       case 1:
@@ -491,7 +491,7 @@ void EdataProtocol::do_start()
             for(int i = 0; i < SOH_CHANNELS; ++i)
               {
                 if(edata_channels[i + DATA_CHANNELS] == NULL) continue;
-                
+
                 if(i < PRI_SOH_CHANNELS)
                     edata_channels[i + DATA_CHANNELS]->put_sample(modseg->adc[i]);
                 else if(mdeseg != NULL)
@@ -516,11 +516,11 @@ void EdataProtocol::update_status()
         decode_taip(gps, mdeseg->gps_message);
     else
         gps.valid = false;
-    
+
     if(gps.valid && modseg->block_count == modseg->gps_block)
       {
         set_time_from_gps(gps);
-        
+
         if(!digitime.exact)
           {
             logs(LOG_INFO) << "GPS in lock" << endl;
@@ -533,7 +533,7 @@ void EdataProtocol::update_status()
             td = int(tdiff(digitime.it, status.realtime) / 1000000 + 0.5) - 1;
         else
             td = 0;
-        
+
         if(td != status.td)
           {
             logs(LOG_INFO) << "GPS time shift " << td - status.td << " sec" << endl;
@@ -551,7 +551,7 @@ void EdataProtocol::update_status()
                 logs(LOG_INFO) << "digitizer enabled" << endl;
                 digitime.valid = true;
               }
-            
+
             logs(LOG_INFO) << "using GPS time" << endl;
             status.td = 0;
           }
@@ -564,13 +564,13 @@ void EdataProtocol::update_status()
       {
         digitime.it = add_time(digitime.it, 1, 0);
         digitime.quality = dconf.unlock_tq;
-        
+
         if(digitime.exact)
           {
             logs(LOG_INFO) << "GPS out of lock" << endl;
             digitime.exact = false;
           }
-        
+
         status.realtime = digitime.it;
       }
     else if(dconf.use_pctime_if_no_gps)
@@ -580,9 +580,9 @@ void EdataProtocol::update_status()
       }
     else
         return;
-                
+
     EXT_TIME et = int_to_ext(digitime.it);
-    
+
     if(et.hour == 0 && et.minute == 0 && et.second == 1)
       {
         startup_messages = true;
@@ -592,7 +592,7 @@ void EdataProtocol::update_status()
 
     if(dconf.statusinterval && !(digitime.it.second % (dconf.statusinterval * 60)))
         soh_messages = true;
-    
+
     if(startup_messages)
       {
         seed_log << ident_str << endl
@@ -617,7 +617,7 @@ void EdataProtocol::update_status()
             seed_log << "Deci10_5: " << mdeseg->deci10_5 << " "
                      << "Deci10_6: " << mdeseg->deci10_6 << " "
                      << "Deci10_7: " << mdeseg->deci10_7 << " ";
-        
+
         seed_log << "Gain: " << string(modseg->gain, 2) << endl
                  << "Program setup: "
                     "protocol=" << dconf.proto_name << " "
@@ -626,7 +626,7 @@ void EdataProtocol::update_status()
                     "lsb=" << dconf.lsb << " "
                     "statusinterval=" << dconf.statusinterval << endl;
       }
-    
+
     if(startup_messages ||
       memcmp(modseg->cal_gain, status.cal_gain1, PRI_DATA_CHANNELS * 4) ||
       (mdeseg != NULL && memcmp(mdeseg->cal_gain, status.cal_gain2, SEC_DATA_CHANNELS * 4)))
@@ -646,7 +646,7 @@ void EdataProtocol::update_status()
 
         seed_log << endl;
       }
-        
+
     if(startup_messages ||
       memcmp(modseg->offset, status.offset1, PRI_DATA_CHANNELS * 4) ||
       (mdeseg != NULL && memcmp(mdeseg->offset, status.offset2, SEC_DATA_CHANNELS * 4)))
@@ -666,10 +666,10 @@ void EdataProtocol::update_status()
 
         seed_log << endl;
       }
-    
+
     if(startup_messages)
         seed_log << "16 bit phase error in 1 second pll: " << modseg->plldata << endl;
-    
+
     if(gps_messages && digitime.exact)
       {
         gps_messages = false;
@@ -708,10 +708,10 @@ void EdataProtocol::update_status()
                                         << double(mdeseg->adc[3]) / 10.0 - 50.0 << "C "
                                         << double(mdeseg->adc[4]) / 10.0 - 50.0 << "C "
                                         << double(mdeseg->adc[5]) / 10.0 - 50.0 << "C";
-         
+
         seed_log << endl;
       }
-    
+
     startup_messages = false;
   }
 
@@ -757,10 +757,10 @@ void EdataProtocol::decode_taip(GPSData &gps, const char *gpsmsg)
     char buf[TAIP_LENGTH + 1], *pv_ptr, *tm_ptr;
     int r, lat, lon, vel, hd, hour, min, msec, day, month, year, valid;
     div_t d_sec;
-    
+
     strncpy(buf, gpsmsg, TAIP_LENGTH);
     buf[TAIP_LENGTH] = 0;
-    
+
     if((pv_ptr = strstr(buf, ">RPV")) == NULL)
       {
         gps.valid = false;
@@ -820,7 +820,7 @@ void EdataProtocol::decode_taip(GPSData &gps, const char *gpsmsg)
     gps.magnetic_variation = 0;
     gps.valid = true;
 
-    DEBUG_MSG("hour = " << gps.hour << ", min = " << gps.min << ", sec = " 
+    DEBUG_MSG("hour = " << gps.hour << ", min = " << gps.min << ", sec = "
       << gps.sec << endl
       << "day = " << gps.day << ", month = " << gps.month << ", year = "
       << gps.year << endl

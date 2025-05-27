@@ -97,7 +97,7 @@ struct PacketHeader
     le_u_int32_t oldest_packet;
 
     // Packet Header Bundle
-    
+
     u_int8_t type;
     le_u_int32_t lseconds;
     le_u_int16_t sseconds;
@@ -130,7 +130,7 @@ struct GPSSatelliteStatusBundle
 struct VCXOCalibrationBundle
   {
     u_int8_t type;
-    le_u_int32_t lseconds; 
+    le_u_int32_t lseconds;
     le_u_int16_t vcxo;
     le_u_int16_t time_diff_at_lock;
     le_u_int16_t time_error;
@@ -193,13 +193,13 @@ class HRD24Protocol: public Proto
         for(int i = 0; i < NCHAN; ++i)
             xn[i] = NONVALUE;
       }
-      
+
     void attach_output_channel(const string &source_id,
       const string &channel_name, const string &station_name,
       double scale, double realscale, double realoffset,
-      const string &realunit, int precision);
-    void flush_channels();
-    void start();
+      const string &realunit, int precision) override;
+    void flush_channels() override;
+    void start() override;
   };
 
 void HRD24Protocol::attach_output_channel(const string &source_id,
@@ -211,7 +211,7 @@ void HRD24Protocol::attach_output_channel(const string &source_id,
     char *tail;
 
     n = strtoul(source_id.c_str(), &tail, 10);
-    
+
     if(*tail || n >= NCHAN)
         throw PluginADInvalid(source_id, channel_name);
 
@@ -241,7 +241,7 @@ void HRD24Protocol::start()
     internal_check(sizeof(SlowInternalSOHBundle) == BNDLEN);
     internal_check(sizeof(GPSLocationBundle) == BNDLEN);
     internal_check(dconf.nbundles <= MAX_BUNDLES);
-    
+
     fd = open_port(O_RDONLY);
 
     try
@@ -281,7 +281,7 @@ void HRD24Protocol::process_gps_satellite_status_bundle(const GPSSatelliteStatus
     internal_check(b->type == 15);
 
     int ntracked = 0;
-    
+
     logs(LOG_DEBUG) << "GPS SNR ";
     for(int i = 0; i < 5; ++i)
       {
@@ -302,9 +302,9 @@ void HRD24Protocol::process_gps_satellite_status_bundle(const GPSSatelliteStatus
 
     if(dconf.soh_log_dir.length() == 0)
         return;
-    
+
     tm tnow = *gmtime((time_t *)&b->lseconds);
-    
+
     char datetime[32];
     strftime(datetime, 32, "%Y-%m-%d %H:%M:%S", &tnow);
 
@@ -325,13 +325,13 @@ void HRD24Protocol::process_gps_satellite_status_bundle(const GPSSatelliteStatus
         fprintf(fp, "Gps Channel SOH for Instrument %d\n", instrument_id);
         fprintf(fp, " Time(secs),          Time(date-time),SolnState,FigMerit,NSatForSoln,NSatTracked,Act1,Act2,Act3,Act4,Act5,SNR1,SNR2,SNR3,SNR4,SNR5,PRN1,PRN2,PRN3,PRN4,PRN5\n");
       }
-    
+
     // No information about how to find out "SolnState,FigMerit,NSatForSoln" values
-    
+
     int SolnState = 0;
     int FigureOfMerit = 0;
     int NSatForSoln = 0;
-    
+
     fprintf(fp, "%11u,%25s,%9d,%8d,%11d,%11d,",
       b->lseconds, datetime, SolnState, FigureOfMerit, NSatForSoln, ntracked);
 
@@ -343,9 +343,9 @@ void HRD24Protocol::process_gps_satellite_status_bundle(const GPSSatelliteStatus
 
     for(int i = 0; i < 4; ++i)
         fprintf(fp, "%4d,", b->sat_chan[i] & 0x1f);
-    
+
     fprintf(fp, "%4d\n", b->sat_chan[4] & 0x1f);
-    
+
     fclose(fp);
   }
 
@@ -382,9 +382,9 @@ void HRD24Protocol::process_vcxo_calibration_bundle(const VCXOCalibrationBundle 
 
     if(dconf.soh_log_dir.length() == 0)
         return;
-    
+
     tm tnow = *gmtime((time_t *)&b->lseconds);
-    
+
     char datetime[32];
     strftime(datetime, 32, "%Y-%m-%d %H:%M:%S", &tnow);
 
@@ -405,11 +405,11 @@ void HRD24Protocol::process_vcxo_calibration_bundle(const VCXOCalibrationBundle 
         fprintf(fp, "Vcxo SOH for Instrument %d\n", instrument_id);
         fprintf(fp, " Time(secs),          Time(date-time), VcxoValue, TimeDiffAtLock, TimeError, FreqError, CrystalTemp, PLLStatus, GPSStatus\n");
       }
-    
+
     // In documentation and according to example SOH file "VcxoValue,TimeDiffAtLock,TimeError,FreqError"
     // values should be floating point numbers. However in the packet these are just 2 byte values.
     // The program saves these as integer at the moment.
- 
+
     fprintf(fp, "%11u,%25s,%10.2f,%15.2f,%10.2f,%10.2f,%12d,%10d,%10d\n",
       b->lseconds, datetime, (float)b->vcxo, (float)b->time_diff_at_lock,
       (float)b->time_error, (float)b->frequency_error, b->crystal_temp,
@@ -425,9 +425,9 @@ void HRD24Protocol::process_slow_internal_soh_bundle(const SlowInternalSOHBundle
 
     if(dconf.soh_log_dir.length() == 0)
         return;
-    
+
     tm tnow = *gmtime((time_t *)&b->lseconds);
-    
+
     char datetime[32];
     strftime(datetime, 32, "%Y-%m-%d %H:%M:%S", &tnow);
 
@@ -448,7 +448,7 @@ void HRD24Protocol::process_slow_internal_soh_bundle(const SlowInternalSOHBundle
         fprintf(fp, "HRD Slow Internal SOH for Instrument %d\n", instrument_id);
         fprintf(fp, " Time(secs),          Time(date-time), BattVoltage,    VCXOTemp,    RadioSNR\n");
       }
-    
+
     fprintf(fp, "%11u,%25s,%12.4f,%12.4f,%12.4f\n",
       b->lseconds, datetime, b->batt_voltage, b->vcxo_temp, b->radio_snr);
 
@@ -462,9 +462,9 @@ void HRD24Protocol::process_gps_location_bundle(const GPSLocationBundle *b,
 
     if(dconf.soh_log_dir.length() == 0)
         return;
-    
+
     tm tnow = *gmtime((time_t *)&b->lseconds);
-    
+
     char datetime[32];
     strftime(datetime, 32, "%Y-%m-%d %H:%M:%S", &tnow);
 
@@ -485,7 +485,7 @@ void HRD24Protocol::process_gps_location_bundle(const GPSLocationBundle *b,
         fprintf(fp, "Gps Location SOH for Instrument %d\n", instrument_id);
         fprintf(fp, " Time(secs),          Time(date-time),    Latitude,  Longtitude, Elevation\n");
       }
-    
+
     fprintf(fp, "%11u,%25s,%12.4f,%12.4f,%10.2f\n",
       b->lseconds, datetime, b->latitude, b->longitude, b->elevation);
 
@@ -504,10 +504,10 @@ void HRD24Protocol::process_status_packet(const StatusBundle *b,
             process_vcxo_calibration_bundle((VCXOCalibrationBundle *) &b[bn],
               instrument_id);
             break;
-          
+
           case 9: // null bundle
             return;
-          
+
           case 10:
             logs(LOG_DEBUG) << "found Min-Max1 bundle, t=" << b[bn].lseconds << endl;
             break;
@@ -584,21 +584,21 @@ void HRD24Protocol::process_data_packet(const DataBundle *b,
         logs(LOG_WARNING) << "invalid channel " << chn << endl;
         return;
       }
-    
+
     if(hrd24_channels[chn] == NULL)
         return;
-    
+
     if(xn[chn] != NONVALUE && xn[chn] != smple)
         logs(LOG_WARNING) << "data integrity error in channel " << chn << endl;
-    
+
     hrd24_channels[chn]->set_timemark(digitime.it, 0,
       digitime.quality);
-    
+
     for(int bn = 0; bn < dconf.nbundles; ++bn)
       {
         if(b[bn].desc == 9) // null bundle
             return;
-            
+
         for(int wn = 0; wn < 4; ++wn)
           {
             switch((b[bn].desc >> (6 - (wn << 1))) & 0x3)
@@ -640,22 +640,22 @@ void HRD24Protocol::do_start()
     unsigned char buf[MAX_PACKLEN];
     unsigned short sync_value = 0;
     int sync_count = -2;
-    
+
     while(!terminate_proc)
       {
         if(read_port(fd, buf, 1) == 0)
             continue;
 
         ++sync_count;
-        
+
         if((sync_value = sync_value << 8 | buf[0]) != 0xaabb)
             continue;
-        
+
         if(sync_count != 0)
             logs(LOG_INFO) << "sync " << sync_count << " bytes" << endl;
 
         sync_count = -2;
-        
+
         if(read_port(fd, buf, HEADLEN + BNDLEN * dconf.nbundles + 2) == 0)
           {
             logs(LOG_WARNING) << "read timeout" << endl;
@@ -671,7 +671,7 @@ void HRD24Protocol::do_start()
             logs(LOG_WARNING) << "CRC mismatch" << endl;
             continue;
           }
-        
+
         const PacketHeader* h = (PacketHeader *) buf;
 
         if((h->type & ~0x20) == 9)
@@ -680,11 +680,11 @@ void HRD24Protocol::do_start()
               (int)h->type << endl;
             continue;
           }
-        
+
         int chn = h->rate_chn_x0 & 0x3;
         int smple = h->rate_chn_x0 >> 8;
         set_time(h->lseconds, h->sseconds);
-        
+
         logs(LOG_DEBUG) << "received packet, type = " << (int)h->type <<
           ", channel = " << chn <<
           ", time = " << time_to_str(digitime.it, MONTHS_FMT) << endl;
@@ -694,13 +694,13 @@ void HRD24Protocol::do_start()
             logs(LOG_DEBUG) << "retransmit packet ignored" << endl;
             continue;
           }
-        
+
         switch(h->type)
           {
           case 1:
             process_data_packet((DataBundle *) &buf[HEADLEN], chn, smple);
             break;
-            
+
           case 2:
             process_status_packet((StatusBundle *) &buf[HEADLEN],
               h->serial_no & 0x7ff);

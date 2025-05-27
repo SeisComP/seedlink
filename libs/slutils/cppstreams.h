@@ -60,27 +60,27 @@ class StreambufBase: public basic_streambuf<char>
 
     // No regular copy constructor
     StreambufBase(const StreambufBase &ls);
-     
-    StreambufBase *setbuf(char *p, streamsize n)
+
+    StreambufBase *setbuf(char *p, streamsize n) override
       {
         sync();
-    
+
         if(!buffer_deleted) delete pbase();
         buffer_deleted = true;
         setp(p, p + n);
         return this;
       }
-    
-    int sync()
+
+    int sync() override
       {
         if(pptr() != pbase()) overflow();
         return 0;
       }
-    
-    int_type overflow(int_type c = traits_type::eof())
+
+    int_type overflow(int_type c = traits_type::eof()) override
       {
         string msg = partner.msgprefix();
-    
+
         msg.append(pbase(), pptr() - pbase());
 
         if(c != traits_type::eof())
@@ -90,10 +90,10 @@ class StreambufBase: public basic_streambuf<char>
         int nleft = msg.length() - nwritten;
 
         setp(pbase(), epptr());
-        
+
         if(nwritten == 0)
             return traits_type::eof();
-        
+
         if(nleft > 0)
           {
             memcpy(pbase(), msg.c_str() + nwritten, nleft);
@@ -111,19 +111,19 @@ class StreambufBase: public basic_streambuf<char>
         char *p = new char[outfn->msglen() - 1];
         setp(p, p + outfn->msglen() - 1);
       }
-    
+
     StreambufBase(const StreambufBase &lsb, StreambufBasePartner &partner_init):
       partner(partner_init), outfn(lsb.outfn), priority(0), buffer_deleted(false)
       {
         char *p = new char[lsb.epptr() - lsb.pbase()];
         setp(p, p + (lsb.epptr() - lsb.pbase()));
       }
-    
+
     virtual ~StreambufBase()
       {
         if(!buffer_deleted) delete pbase();
       }
-    
+
     void set_priority(int prio)
       {
         if(priority != prio) sync();
@@ -140,11 +140,11 @@ class Streambuf: public StreambufBase, private StreambufBasePartner
   private:
     string prefix;
 
-    string msgprefix()
+    string msgprefix() override
       {
         return prefix;
       }
-  
+
   public:
     Streambuf(rc_ptr<OutputFunction> outfn, int priority, const string &prefix_init):
       StreambufBase(*this, outfn), prefix(prefix_init)
@@ -158,7 +158,7 @@ class Streambuf: public StreambufBase, private StreambufBasePartner
       {
         set_priority(priority);
       }
-    
+
     Streambuf(const Streambuf &ssbuf):
       StreambufBase(ssbuf, *this), prefix(ssbuf.prefix) {}
   };
@@ -177,7 +177,7 @@ class Stream: private StreambufBasePartner
     StreambufBase *get_sbuf()
       {
         StreambufBase *sbuf;
-        
+
         if(str == NULL)
           {
             sbuf = new StreambufBase(*this, outfn);
@@ -190,23 +190,23 @@ class Stream: private StreambufBasePartner
 
         return sbuf;
       }
-    
-    string msgprefix()
+
+    string msgprefix() override
       {
         return prefix;
       }
-  
+
   public:
     Stream(rc_ptr<OutputFunction> outfn_init, const string &prefix_init):
       outfn(outfn_init), prefix(prefix_init) {}
 
     Stream(const Stream &ls): outfn(ls.outfn), prefix(ls.prefix) {}
-    
+
     ~Stream()
       {
         if(str != NULL) delete str->rdbuf(NULL);
       }
-    
+
     Stream &operator=(const Stream &ls)
       {
         if(this != &ls)
@@ -221,7 +221,7 @@ class Stream: private StreambufBasePartner
     ostream &operator()(int prio)
       {
         StreambufBase *sbuf;
-        
+
         if((sbuf = get_sbuf()) != NULL) sbuf->set_priority(prio);
         return *str;
       }
@@ -235,9 +235,9 @@ class Stream: private StreambufBasePartner
         ls.prefix += add_prefix;
         return ls;
       }
-    
+
     // // buf() can be used to construct ostreams with fixed priority
-    // 
+    //
     // Stream log = make_stream(outfn);
     // ostream errlog(log.buf(LOG_ERR));
     //
@@ -268,7 +268,7 @@ class Stream: private StreambufBasePartner
     Streambuf *buf(int priority = LOG_ERR, const string &add_prefix = "")
       {
         StreambufBase *sbuf;
-        
+
         if((sbuf = get_sbuf()) != NULL)
             return new Streambuf(*sbuf, priority, prefix + add_prefix);
         else
@@ -278,7 +278,7 @@ class Stream: private StreambufBasePartner
     StreambufBase *bufbase(StreambufBasePartner &partner)
       {
         StreambufBase *sbuf;
-        
+
         if((sbuf = get_sbuf()) != NULL)
             return new StreambufBase(*sbuf, partner);
         else
@@ -295,16 +295,16 @@ class OutputFunctionAdapter: public OutputFunction
   {
   private:
     T rep;
-    
+
   public:
     OutputFunctionAdapter(const T &rep_init): rep(rep_init) {}
-    
-    int msglen()
+
+    int msglen() override
       {
         return rep.msglen;
       }
-    
-    int operator()(int priority, const string &msg)
+
+    int operator()(int priority, const string &msg) override
       {
         return rep(priority, msg);
       }

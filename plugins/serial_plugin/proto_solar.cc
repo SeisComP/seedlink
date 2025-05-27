@@ -66,7 +66,7 @@ class SolarProtocol: public Proto
 
     static SolarProtocol *obj;
     static void alarm_handler(int sig);
-    
+
     ssize_t writen(int fd, const void *vptr, size_t n);
     void decode_message(const char *msg);
     void handle_response(const char *msg);
@@ -84,9 +84,9 @@ class SolarProtocol: public Proto
     void attach_output_channel(const string &source_id,
       const string &channel_name, const string &station_name,
       double scale, double realscale, double realoffset,
-      const string &realunit, int precision);
-    void flush_channels();
-    void start();
+      const string &realunit, int precision) override;
+    void flush_channels() override;
+    void start() override;
   };
 
 SolarProtocol *SolarProtocol::obj;
@@ -105,7 +105,7 @@ void SolarProtocol::attach_output_channel(const string &source_id,
     char *tail;
 
     n = strtoul(source_id.c_str(), &tail, 10);
-    
+
     if(*tail || n >= NCHAN)
         throw PluginADInvalid(source_id, channel_name);
 
@@ -148,7 +148,7 @@ ssize_t SolarProtocol::writen(int fd, const void *vptr, size_t n)
   {
     ssize_t nwritten;
     size_t nleft = n;
-    const char *ptr = (const char *) vptr;   
+    const char *ptr = (const char *) vptr;
 
     while (nleft > 0)
       {
@@ -158,7 +158,7 @@ ssize_t SolarProtocol::writen(int fd, const void *vptr, size_t n)
         nleft -= nwritten;
         ptr += nwritten;
       }
-    
+
     return(n);
   }
 
@@ -176,16 +176,16 @@ void SolarProtocol::decode_message(const char *msg)
             logs(LOG_WARNING) << "error parsing '" << msg << "' at: " << (msg + rp) << endl;
             return;
           }
-        
+
         if(solar_channels[n] != NULL)
           {
             solar_channels[n]->set_timemark(digitime.it, 0, digitime.quality);
             solar_channels[n]->put_sample(val);
           }
-        
+
         if(++n == NCHAN)
             break;
-        
+
         rp += (toklen + seplen);
       }
 
@@ -199,7 +199,7 @@ void SolarProtocol::handle_response(const char *msg)
     N(gettimeofday(&tv, NULL));
     time_t t = tv.tv_sec;
     tm* ptm = gmtime(&t);
-    
+
     EXT_TIME et;
     et.year = ptm->tm_year + 1900;
     et.month = ptm->tm_mon + 1;
@@ -211,7 +211,7 @@ void SolarProtocol::handle_response(const char *msg)
     et.doy = mdy_to_doy(et.month, et.day, et.year);
 
     INT_TIME it = ext_to_int(et);
-    
+
     if(!digitime.valid)
       {
         digitime.it = it;
@@ -224,7 +224,7 @@ void SolarProtocol::handle_response(const char *msg)
         double time_diff = tdiff(it, digitime.it);
 
         DEBUG_MSG("time_diff = " << time_diff << endl);
-        
+
         if(time_diff < -MAX_TIME_ERROR || time_diff > MAX_TIME_ERROR)
           {
             logs(LOG_WARNING) << "time diff. " << time_diff / 1000000.0 << " sec" << endl;
@@ -238,7 +238,7 @@ void SolarProtocol::handle_response(const char *msg)
         soh_message = true;
         last_day = digitime.it.second / (24 * 60 * 60);
       }
-    
+
     if(dconf.statusinterval &&
       digitime.it.second / (dconf.statusinterval * 60) != last_soh)
       {
@@ -292,13 +292,13 @@ void SolarProtocol::do_start()
     itv.it_value.tv_usec = 0;
 
     N(setitimer(ITIMER_REAL, &itv, NULL));
-    
+
     while(!terminate_proc)
       {
         fd_set read_set;
         FD_ZERO(&read_set);
         FD_SET(fd, &read_set);
-        
+
         struct timeval tv;
         tv.tv_sec = READ_TIMEOUT;
         tv.tv_usec = 0;
@@ -312,7 +312,7 @@ void SolarProtocol::do_start()
 
         if(r == 0)
             throw PluginError("timeout");
-        
+
         if(FD_ISSET(fd, &read_set))
           {
             int bytes_read;
@@ -321,10 +321,10 @@ void SolarProtocol::do_start()
 
             if(bytes_read == 0)
                 throw PluginError("EOF reading " + dconf.port_name);
- 
+
             wp += bytes_read;
             recvbuf[wp] = 0;
-        
+
             int rp = 0, msglen, seplen;
             while(msglen = strcspn(recvbuf + rp, "\r\n"),
               seplen = strspn(recvbuf + rp + msglen, "\r\n"))
@@ -337,14 +337,14 @@ void SolarProtocol::do_start()
 
                 rp += (msglen + seplen);
               }
-            
+
             if(msglen >= RECVBUFSIZE)
               {
                 logs(LOG_WARNING) << "receive buffer overflow" << endl;
                 wp = rp = 0;
                 continue;
               }
-        
+
             memmove(recvbuf, recvbuf + rp, msglen);
             wp -= rp;
             rp = 0;

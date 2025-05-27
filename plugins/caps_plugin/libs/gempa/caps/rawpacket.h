@@ -52,7 +52,7 @@ class RawDataRecord : public DataRecord {
 	public:
 		RawDataRecord();
 
-		const char *formatName() const;
+		const char *formatName() const override;
 
 		/**
 		 * @brief Reads metadata from data record header
@@ -64,7 +64,7 @@ class RawDataRecord : public DataRecord {
 		 */
 		void readMetaData(std::streambuf &buf, int size,
 		                  Header &header,
-		                  Time &startTime, Time &endTime);
+		                  Time &startTime, Time &endTime) override;
 
 		void setHeader(const Header &header);
 
@@ -72,19 +72,19 @@ class RawDataRecord : public DataRecord {
 		 * @brief Returns the meta information of the data if supported
 		 * @return The data record header
 		 */
-		const Header *header() const;
+		const Header *header() const override;
 
 		/**
 		 * @brief Returns the start time of the record
 		 * @return The start time
 		 */
-		Time startTime() const;
+		Time startTime() const override;
 
 		/**
 		 * @brief Returns the end time of the record
 		 * @return The end time
 		 */
-		Time endTime() const;
+		Time endTime() const override;
 
 		/**
 		 * @brief Returns the data size in bytes if the current state would
@@ -93,7 +93,7 @@ class RawDataRecord : public DataRecord {
 		 * @param withHeader Take header into account
 		 * @return Returns the data size in bytes
 		 */
-		size_t dataSize(bool withHeader) const;
+		size_t dataSize(bool withHeader) const override;
 
 		/**
 		 * @brief Reads the packet data including header from a streambuf
@@ -112,7 +112,7 @@ class RawDataRecord : public DataRecord {
 		ReadStatus get(std::streambuf &buf, int size,
 		               const Time &start = Time(),
 		               const Time &end = Time(),
-		               int maxBytes = -1);
+		               int maxBytes = -1) override;
 
 		/**
 		 * @brief Reads the packet data without header from a streambuf
@@ -137,7 +137,7 @@ class RawDataRecord : public DataRecord {
 		 * @brief Returns the packet type
 		 * @return The packet type
 		 */
-		PacketType packetType() const { return RawDataPacket; }
+		PacketType packetType() const override { return RawDataPacket; }
 
 		/**
 		 * @brief Sets the start time of the record
@@ -175,22 +175,22 @@ class RawDataRecord : public DataRecord {
 
 		mutable Time   _startTime;
 		mutable Time   _endTime;
-	
+
 		mutable bool   _dirty;
 };
 
 
 class FixedRawDataRecord : public RawDataRecord {
 	public:
-		virtual const char *formatName() const;
+		virtual const char *formatName() const override;
 
 		virtual ReadStatus get(std::streambuf &buf, int size,
 		                       const Time &/*start*/, const Time &/*end*/,
-		                       int maxBytes) {
+		                       int maxBytes) override {
 			return RawDataRecord::get(buf, size, Time(), Time(), maxBytes);
 		}
 
-		PacketType packetType() const { return FixedRawDataPacket; }
+		PacketType packetType() const override { return FixedRawDataPacket; }
 };
 
 

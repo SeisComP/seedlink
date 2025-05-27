@@ -67,7 +67,7 @@ class WS_Channel
   public:
     WS_Channel(): lastsecond(-1), lastvalue(0) { }
     virtual ~WS_Channel() { }
-    
+
     int operator()(WS2300Protocol *obj)
       {
         if(lastsecond != digitime.it.second)
@@ -84,7 +84,7 @@ class WS_Channel
 class WS_##name: public WS_Channel \
   { \
   private: \
-    int getvalue(WS2300Protocol *obj); \
+    int getvalue(WS2300Protocol *obj) override; \
   }; \
 WS_##name ws_##name
 
@@ -157,9 +157,9 @@ class WS2300Protocol: public Proto
     void attach_output_channel(const string &source_id,
       const string &channel_name, const string &station_name,
       double scale, double realscale, double realoffset,
-      const string &realunit, int precision);
-    void flush_channels();
-    void start();
+      const string &realunit, int precision) override;
+    void flush_channels() override;
+    void start() override;
   };
 
 void WS2300Protocol::attach_output_channel(const string &source_id,
@@ -171,7 +171,7 @@ void WS2300Protocol::attach_output_channel(const string &source_id,
     char *tail;
 
     n = strtoul(source_id.c_str(), &tail, 10);
-    
+
     if(*tail || n >= NCHAN)
         throw PluginADInvalid(source_id, channel_name);
 
@@ -275,7 +275,7 @@ int WS2300Protocol::get_time_from_ws()
     digitime.it = ext_to_int(et);
     digitime.valid = true;
     digitime.exact = true;
-    
+
     logs(LOG_DEBUG) << "WS time: " << time_to_str(digitime.it, MONTHS_FMT) << endl;
     return et.hour;
   }
@@ -287,7 +287,7 @@ void WS2300Protocol::set_ws_hour(int hour)
 
     data[0] = hour % 10;
     data[1] = hour / 10;
-    
+
     if (write_safe(fd, 0x204, 2, WRITENIB, data, command) != 2)
         throw PluginReadError(dconf.port_name);
   }
@@ -478,12 +478,12 @@ int WS2300Protocol::WS_WindSpeed::getvalue(WS2300Protocol *obj)
   {
     int value = -1;
     int wsd = obj->ws_RawWindSpeedDirection(obj);
-    
+
     if((wsd & 0xff) == 0x00)
         value = (wsd >> 8) & 0xfff;
-        
+
     logs(LOG_DEBUG) << "WindSpeed = ";
-    
+
     if(value == -1)
         logs(LOG_DEBUG) << "N/A" << endl;
     else
@@ -496,12 +496,12 @@ int WS2300Protocol::WS_WindDirection::getvalue(WS2300Protocol *obj)
   {
     int value = -1;
     int wsd = obj->ws_RawWindSpeedDirection(obj);
-    
+
     if((wsd & 0xff) == 0x00)
         value = (wsd >> 20) & 0xf;
-        
+
     logs(LOG_DEBUG) << "WindDirection = ";
-    
+
     if(value == -1)
         logs(LOG_DEBUG) << "N/A" << endl;
     else
@@ -554,7 +554,7 @@ void WS2300Protocol::do_start()
             startup_message = true;
             soh_message = true;
           }
-        
+
         if(dconf.statusinterval &&
           digitime.it.second / (dconf.statusinterval * 60) != last_soh)
           {
@@ -589,7 +589,7 @@ void WS2300Protocol::do_start()
                      << double(ws_Rain1h(this)) / 100 << "mm "
                      << double(ws_Rain24h(this)) / 100 << "mm "
                      << setprecision(1);
-            
+
             int wind_speed = ws_WindSpeed(this);
             if(wind_speed == -1)
                 seed_log << "N/A ";
@@ -601,11 +601,11 @@ void WS2300Protocol::do_start()
                 seed_log << "N/A ";
             else
                 seed_log << double(wind_direction) * 22.5 << "deg ";
-                
+
             seed_log << double(ws_AbsoluteAirPressure(this)) / 10 << "hPa "
                      << "0x" << hex << ws_HFStatus(this) << dec << endl;
           }
-            
+
         int hf_status = ws_HFStatus(this);
         if(hf_status != last_hf_status)
           {
@@ -627,10 +627,10 @@ void WS2300Protocol::do_start()
                 logs(LOG_INFO) << "HF: unknown status 0x" <<
                   hex << hf_status << dec << endl;
               }
-            
+
             last_hf_status = hf_status;
           }
-        
+
         for(int i = 0; i < NCHAN; ++i)
           {
             if(ws2300_channels[i] == NULL)
@@ -644,7 +644,7 @@ void WS2300Protocol::do_start()
         sample_time = add_time(sample_time, SAMPLE_PERIOD, 0);
       }
   }
-    
+
 RegisterProto<WS2300Protocol> proto("ws2300");
 
 } // unnamed namespace

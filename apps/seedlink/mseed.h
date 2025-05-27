@@ -42,9 +42,9 @@ class MSEEDFormat: public Format
     int sequence;
 
     Buffer *get_buffer(const INT_TIME &it, int usec_correction,
-      int timing_quality, void *&dataptr, int &datalen);
-    void queue_buffer(Buffer *buf, int samples, int frames);
-    
+      int timing_quality, void *&dataptr, int &datalen) override;
+    void queue_buffer(Buffer *buf, int samples, int frames) override;
+
   public:
     MSEEDFormat(rc_ptr<BufferStore> bufs_init, int rec_length_init,
       PacketType packtype_init, const string &station_id_init,

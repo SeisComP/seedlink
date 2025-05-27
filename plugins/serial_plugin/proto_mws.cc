@@ -76,9 +76,9 @@ class MWSProtocol: public Proto
     void attach_output_channel(const string &source_id,
       const string &channel_name, const string &station_name,
       double scale, double realscale, double realoffset,
-      const string &realunit, int precision);
-    void flush_channels();
-    void start();
+      const string &realunit, int precision) override;
+    void flush_channels() override;
+    void start() override;
   };
 
 void MWSProtocol::attach_output_channel(const string &source_id,
@@ -137,7 +137,7 @@ void MWSProtocol::decode_message(const char *msg)
             rp += (toklen + seplen);
             continue;
           }
-        
+
         char source_id[3];
         double val;
         if(sscanf(msg + rp, "%2s%lf,", source_id, &val) != 2)
@@ -145,14 +145,14 @@ void MWSProtocol::decode_message(const char *msg)
             logs(LOG_WARNING) << "error parsing '" << msg << "' at: " << (msg + rp) << endl;
             return;
           }
-        
+
         map<string, rc_ptr<OutputChannel> >::iterator it;
         if((it = mws_channels.find(source_id)) != mws_channels.end())
           {
             it->second->set_timemark(digitime.it, 0, digitime.quality);
             it->second->put_sample(val);
           }
-        
+
         rp += (toklen + seplen);
       }
 
@@ -166,7 +166,7 @@ void MWSProtocol::handle_response(const char *msg)
     N(gettimeofday(&tv, NULL));
     time_t t = tv.tv_sec;
     tm* ptm = gmtime(&t);
-    
+
     EXT_TIME et;
     et.year = ptm->tm_year + 1900;
     et.month = ptm->tm_mon + 1;
@@ -178,7 +178,7 @@ void MWSProtocol::handle_response(const char *msg)
     et.doy = mdy_to_doy(et.month, et.day, et.year);
 
     INT_TIME it = ext_to_int(et);
-    
+
     if(!digitime.valid)
       {
         digitime.it = it;
@@ -191,7 +191,7 @@ void MWSProtocol::handle_response(const char *msg)
         double time_diff = tdiff(it, digitime.it);
 
         DEBUG_MSG("time_diff = " << time_diff << endl);
-        
+
         if(time_diff < -MAX_TIME_ERROR || time_diff > MAX_TIME_ERROR)
           {
             logs(LOG_WARNING) << "time diff. " << time_diff / 1000000.0 << " sec" << endl;
@@ -215,7 +215,7 @@ void MWSProtocol::handle_response(const char *msg)
         soh_message = true;
         last_day = digitime.it.second / (24 * 60 * 60);
       }
-    
+
     if(dconf.statusinterval &&
       digitime.it.second / (dconf.statusinterval * 60) != last_soh)
       {
@@ -251,7 +251,7 @@ void MWSProtocol::do_start()
         fd_set read_set;
         FD_ZERO(&read_set);
         FD_SET(fd, &read_set);
-        
+
         struct timeval tv;
         tv.tv_sec = READ_TIMEOUT;
         tv.tv_usec = 0;
@@ -265,7 +265,7 @@ void MWSProtocol::do_start()
 
         if(r == 0)
             throw PluginError("timeout");
-        
+
         if(FD_ISSET(fd, &read_set))
           {
             int bytes_read;
@@ -274,10 +274,10 @@ void MWSProtocol::do_start()
 
             if(bytes_read == 0)
                 throw PluginError("EOF reading " + dconf.port_name);
- 
+
             wp += bytes_read;
             recvbuf[wp] = 0;
-        
+
             int rp = 0, msglen, seplen;
             while(msglen = strcspn(recvbuf + rp, "\x1f\r\n"),
               seplen = strspn(recvbuf + rp + msglen, "\x1f\r\n"))
@@ -290,14 +290,14 @@ void MWSProtocol::do_start()
 
                 rp += (msglen + seplen);
               }
-            
+
             if(msglen >= RECVBUFSIZE)
               {
                 logs(LOG_WARNING) << "receive buffer overflow" << endl;
                 wp = rp = 0;
                 continue;
               }
-        
+
             memmove(recvbuf, recvbuf + rp, msglen);
             wp -= rp;
             rp = 0;

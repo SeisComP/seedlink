@@ -26,12 +26,12 @@ class FilterImpl: public Filter
   {
   public:
     enum FilterType { ZeroPhase, MinimumPhase };
-    
+
   private:
     const FilterType type;
     const double gain;
     const double *const points;
-  
+
   public:
     FilterImpl(const string &name, FilterType type_init, int len_init, int dec,
       double gain_init, const double *points_init):
@@ -44,17 +44,17 @@ class FilterImpl: public Filter
       {
         delete[] points;
       }
-    
-    double apply(CircularBuffer<double>::iterator p)
+
+    double apply(CircularBuffer<double>::iterator p) override
       {
         double acc = 0;
-        
+
         if(type == ZeroPhase)
           {
             for(int i = 0; i < len / 2; ++i)
                 acc += *(p++) * points[i] * gain;
 
-            if (len % 2) 
+            if (len % 2)
                 acc += *(p++) * points[len/2] * gain;
 
             for(int i = len / 2 - 1; i >= 0; --i)
@@ -69,7 +69,7 @@ class FilterImpl: public Filter
         return acc;
       }
 
-    double shift()
+    double shift() override
       {
         return ((type == ZeroPhase) ? (double(len) / 2.0 - 0.5) : 0);
       }

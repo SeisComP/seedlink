@@ -46,14 +46,14 @@ class rc_ptr
 
   public:
     rc_ptr(): ref_count(NULL), ptr(NULL) {}
-    
+
     rc_ptr(T *ptr_init): ref_count(new int(1)), ptr(ptr_init) {}
-    
+
     // According to an example given in Stroustrup (1997), p. 347 (13.6.2,
     // Member Templates), next two helper functions should be redundant for
     // the template contructor, eg. rc_ptr<X> should have access to private
     // members of rc_ptr<Y>
-    
+
     int *_ref_count() const
       {
         return ref_count;
@@ -63,7 +63,7 @@ class rc_ptr
       {
         return ptr;
       }
-    
+
     template<class U>
     rc_ptr(const rc_ptr<U> &p): ref_count(p._ref_count()), ptr(p._ptr())
       {
@@ -74,12 +74,12 @@ class rc_ptr
     // template constructor is never used to generate a copy constructor;
     // without the explicitly declared copy contructor, a default copy
     // constructor will be generated (Stroustrup 1997, p. 348)
-    
+
     rc_ptr(const rc_ptr<T> &p): ref_count(p.ref_count), ptr(p.ptr)
       {
         if(ref_count) ++(*ref_count);
       }
-    
+
     rc_ptr &operator=(const rc_ptr &p)
       {
         if(this != &p)
@@ -87,7 +87,7 @@ class rc_ptr
             this->~rc_ptr();
             new(this) rc_ptr(p);
           }
-        
+
         return *this;
       }
 
@@ -99,7 +99,7 @@ class rc_ptr
             delete ptr;
           }
       }
-    
+
     T &operator*() const
       {
         return *ptr;
@@ -114,17 +114,17 @@ class rc_ptr
       {
         return (ptr == p.ptr);
       }
-    
+
     bool operator==(const T *p) const
       {
         return (ptr == p);
       }
-    
+
     bool operator!=(const rc_ptr<T> &p) const
       {
         return (ptr != p.ptr);
       }
-    
+
     bool operator!=(const T *p) const
       {
         return (ptr != p);
@@ -136,14 +136,14 @@ inline rc_ptr<U> rc_ptr_cast(const rc_ptr<V> &p)
   {
     rc_ptr<U> ru;
     U *u;
-    
+
     if((u = dynamic_cast<U *>(p.ptr)) != NULL)
       {
         ru.ptr = u;
         ru.ref_count = p.ref_count;
         ++(*p.ref_count);
       }
-        
+
     return ru;
   }
 
@@ -173,11 +173,11 @@ template<class T>
 inline rc_ptr<T> get_object(const map<string, rc_ptr<T> > &m, const string &name)
   {
     typename map<string, rc_ptr<T> >::const_iterator p = m.find(name);
-    
+
     if(p == m.end()) return NULL;
     else return p->second;
   }
-    
+
 //*****************************************************************************
 // Replicator
 //*****************************************************************************
@@ -243,7 +243,7 @@ class GenericException: public exception
       subsys(subsys_init), message(message_init) {}
     ~GenericException() throw () {}
 
-    const char *what() const throw()
+    const char *what() const throw() override
       {
         return message.c_str();
       }
@@ -279,7 +279,7 @@ class Timer
 
   public:
     Timer(): iv_sec(0), iv_usec(0) {}
-    
+
     Timer(int interval_sec, int interval_usec):
       iv_sec(interval_sec), iv_usec(interval_usec)
       {
@@ -293,7 +293,7 @@ class Timer
         lasttime.tv_sec = 0;
         lasttime.tv_usec = 0;
       }
-    
+
     Timer &operator=(const Timer &t)
       {
         if(this != &t)
@@ -354,7 +354,7 @@ class CFIFO
       {
         delete cmdbuf;
       }
-    
+
     int check(int fd);
   };
 

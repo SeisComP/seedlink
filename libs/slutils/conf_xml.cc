@@ -74,7 +74,7 @@ class CfgInput
         fd = -1;
         return retval;
       }
-    
+
     int read(char *buffer, int len)
       {
         return ::read(fd, buffer, len);
@@ -95,12 +95,12 @@ class CfgParserXML: public StreambufBasePartner
     CfgStack stack;
     CfgInput input;
 
-    string msgprefix();
+    string msgprefix() override;
     void start_element(const char *ename, const char **atts);
     void end_element();
     void character_data(const char *s, int len);
     void parser_msg(const char *fmt, va_list ap, int err);
-    
+
     static int ioread(void *ctx, char *buffer, int len);
     static int ioclose(void *ctx);
     static void start_element_proxy(void *ctx, const xmlChar *name,
@@ -112,7 +112,7 @@ class CfgParserXML: public StreambufBasePartner
 
   public:
     CfgParserXML(const string &file, rc_ptr<CfgElementMap> root);
-    
+
     ~CfgParserXML();
 
     void doit();
@@ -188,9 +188,9 @@ void CfgParserXML::start_element(const char *ename, const char **atts)
         stack.push(cfglog, NULL);
         return;
       }
-    
+
     rc_ptr<CfgAttributeMap> attributes = el->start_attributes(cfglog);
-    
+
     if(attributes != NULL)
       {
         for(int i = 0; atts && atts[i]; i += 2)
@@ -205,7 +205,7 @@ void CfgParserXML::start_element(const char *ename, const char **atts)
 
         el->end_attributes(cfglog);
       }
-    
+
     stack.push(cfglog, el);
   }
 
@@ -233,7 +233,7 @@ void CfgParserXML::parser_msg(const char *fmt, va_list ap, int err)
 
     if(err) cfglog << "XML parser error: ";
     else cfglog << "XML parser warning: ";
-    
+
     const char* p = buf;
     while(*p)
       {
@@ -254,7 +254,7 @@ void CfgParserXML::parser_msg(const char *fmt, va_list ap, int err)
 void CfgParserXML::doit()
   {
     input.open(file_name);
-    
+
     xmlSAXHandlerPtr sax;
     if((sax = (xmlSAXHandlerPtr) xmlMalloc(sizeof(xmlSAXHandler))) == NULL)
         throw bad_alloc();
@@ -266,16 +266,16 @@ void CfgParserXML::doit()
     sax->warning = warning_proxy;
     sax->error = error_proxy;
     sax->fatalError = error_proxy;
-    
+
     xmlSetGenericErrorFunc(static_cast<void *>(this), error_proxy);
-    
+
     if((ctxt = xmlCreateIOParserCtxt(sax, this, ioread, ioclose, &input,
       XML_CHAR_ENCODING_NONE)) == NULL)
       {
         xmlFree(sax);
         throw bad_alloc();
       }
-    
+
     xmlParseDocument(ctxt);
     xmlFreeParserCtxt(ctxt);
     ctxt = NULL;

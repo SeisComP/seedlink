@@ -87,7 +87,7 @@ const char *const ident_str = "SeedLink Chain Plugin v" MYVERSION;
 
 #if defined(__GNU_LIBRARY__) || defined(__GLIBC__)
 const char *const opterr_message = "Try `%s --help' for more information\n";
-const char *const help_message = 
+const char *const help_message =
     "Usage: %s [options] plugin_name\n"
     "\n"
     "'plugin_name' is used to identify the plugin in log messages\n"
@@ -135,21 +135,21 @@ void get_id(const sl_fsdh_s *fsdh, string &net, string &sta, string &loc,
             net = string(fsdh->network, n);
             break;
           }
-    
+
     for(int n = STATLEN; n > 0; --n)
         if(fsdh->station[n - 1] != ' ')
           {
             sta = string(fsdh->station, n);
             break;
           }
-        
+
     for(int n = LOCLEN; n > 0; --n)
         if(fsdh->location[n - 1] != ' ')
           {
             loc = string(fsdh->location, n);
             break;
           }
-    
+
     for(int n = CHLEN; n > 0; --n)
         if(fsdh->channel[n - 1] != ' ')
           {
@@ -162,7 +162,7 @@ int packet_type2int(const char *type)
   {
     if(type == NULL) return SLNUM;
     else if(strlen(type) != 1) return -1;
-    
+
     switch(toupper(*type))
       {
         case 'D': return SLDATA;
@@ -288,7 +288,7 @@ class LogFunc
   {
   private:
     static int prio;
-    
+
   public:
     enum { msglen = 200 };
 
@@ -297,7 +297,7 @@ class LogFunc
     int operator()(int priority, const string &msg)
       {
         int verb = 2, level = 0;
-        
+
         switch(priority)
           {
           case LOG_EMERG:
@@ -316,7 +316,7 @@ class LogFunc
           case LOG_DEBUG:
             verb = 2; level = 0;
           }
-        
+
         prio = priority;
         sl_log(level, verb, "%s", msg.c_str());
         prio = LIBSLINK_LOGPRIO;
@@ -369,10 +369,10 @@ class StreamRenamer
         init(from, from_loc, from_chn);
         init(to, to_loc, to_chn);
       }
-    
+
     bool hit(sl_fsdh_s *fsdh);
   };
-    
+
 void StreamRenamer::init(const string &pattern, char *loc, char *chn)
   {
     const char* p = pattern.c_str();
@@ -459,13 +459,13 @@ class TriggerBuffer
 
   public:
     const string station_name;
-    
+
     TriggerBuffer(const string station_id_init, int buffer_length_init,
       int pre_seconds_init, int post_seconds_init):
       station_id(station_id_init), buffer_length(buffer_length_init),
       pre_seconds(pre_seconds_init), post_seconds(post_seconds_init),
       trigger_on(false), trigger_off_requested(false) {}
-      
+
     void set_trigger_on(int year, int month, int day,
       int hour, int minute, int second);
 
@@ -508,7 +508,7 @@ void TriggerBuffer::set_trigger_on(int year, int month, int day,
 
         int r = send_mseed(station_id.c_str(), packets.front()->data,
           SLRECSIZE);
-            
+
         if(r < 0) throw PluginBrokenLink(strerror(errno));
         else if(r == 0) throw PluginBrokenLink();
       }
@@ -554,7 +554,7 @@ void TriggerBuffer::push_packet(INT_TIME begin_time, void *pseed)
     if(trigger_on)
       {
         int r = send_mseed(station_id.c_str(), pseed, SLRECSIZE);
-            
+
         if(r < 0) throw PluginBrokenLink(strerror(errno));
         else if(r == 0) throw PluginBrokenLink();
       }
@@ -627,7 +627,7 @@ class Station
       int overlap_removal_init);
 
     Station() {}
-    
+
     void add_renamer(const string &from, const string &to);
     void add_unpack(const string &src, const string &dest, bool double_rate);
     void add_trigger(const string &src, int buffer_length, int pre_seconds,
@@ -635,9 +635,9 @@ class Station
 
     void set_start_time(const StreamDescriptor strd, int recno,
       int year, int doy, int hour, int minute, int second, int usec);
-      
+
     void clear_timetable();
-    
+
     void set_trigger_on(int year, int month, int day, int hour, int minute,
       int second);
 
@@ -650,10 +650,10 @@ class Station
 Station::Station(const string &myid_init, const string &out_name_init,
   const string &out_network_init, int default_timing_quality_init,
   int overlap_removal_init):
-  myid(myid_init), out_name(out_name_init), out_network(out_network_init), 
+  myid(myid_init), out_name(out_name_init), out_network(out_network_init),
   default_timing_quality(default_timing_quality_init),
   overlap_removal(overlap_removal_init) {}
-    
+
 void Station::add_renamer(const string &from, const string &to)
   {
     rename_list.push_back(new StreamRenamer(from, to));
@@ -713,10 +713,10 @@ void Station::set_start_time(const StreamDescriptor strd, int recno,
   {
     if(overlap_removal == OverlapRemoval_None)
         return;
-    
+
     if(stream_start_table.find(strd) != stream_start_table.end())
         throw PluginStreamAlreadyInTable(strd);
-   
+
     if(year   < 1900 || year   >   2099 ||
        doy    <    1 || doy    >    366 ||
        hour   <    0 || hour   >     23 ||
@@ -749,7 +749,7 @@ void Station::rename_streams(sl_fsdh_s *fsdh)
     for(p = rename_list.begin(); p != rename_list.end(); ++p)
         if((*p)->hit(fsdh)) break;
   }
-    
+
 bool Station::check_overlap(const StreamDescriptor &strd, int recno,
   const INT_TIME &it)
   {
@@ -759,7 +759,7 @@ bool Station::check_overlap(const StreamDescriptor &strd, int recno,
       {
         INT_TIME table_it = p->second.it;
         int table_recno = p->second.recno;
-    
+
         double dt = tdiff(it, table_it);
         int ds = recno - table_recno;
 
@@ -796,7 +796,7 @@ void Station::process_mseed(char *pseed, int packtype, int seq, int size)
   {
     if(out_name.length() == 0)
         return;
-    
+
     sl_fsdh_s* fsdh = reinterpret_cast<sl_fsdh_s *>(pseed);
     int n;
 
@@ -813,7 +813,7 @@ void Station::process_mseed(char *pseed, int packtype, int seq, int size)
     string net, sta, loc, chn;
     get_id(fsdh, net, sta, loc, chn);
     StreamDescriptor strd(loc, chn, packtype);
-    
+
     EXT_TIME et;
     et.year = htons(fsdh->start_time.year);
     et.doy = htons(fsdh->start_time.day);
@@ -830,20 +830,20 @@ void Station::process_mseed(char *pseed, int packtype, int seq, int size)
 
     if(check_overlap(strd, recno, hdrtime))
         return;
-    
+
     if(packtype != SLDATA)
       {
         int r = send_mseed2(myid.c_str(), (loc + "_" + chn + "_" + packet_type2string(packtype)).c_str(), seq, pseed, SLRECSIZE);
-            
+
         if(r < 0) throw PluginBrokenLink(strerror(errno));
         else if(r == 0) throw PluginBrokenLink();
 
         return;
       }
-            
+
     char srcname[6];
     sprintf(srcname, "%2.2s%3.3s", loc.c_str(), chn.c_str());
-      
+
     map<string, rc_ptr<TriggerBuffer> >::iterator p;
     if((p = trigger_map.find(srcname)) != trigger_map.end())
       {
@@ -852,7 +852,7 @@ void Station::process_mseed(char *pseed, int packtype, int seq, int size)
     else
       {
         int r = send_mseed2(myid.c_str(), (loc + "_" + chn + "_" + packet_type2string(packtype)).c_str(), seq, pseed, SLRECSIZE);
-        
+
         if(r < 0) throw PluginBrokenLink(strerror(errno));
         else if(r == 0) throw PluginBrokenLink();
       }
@@ -862,7 +862,7 @@ void Station::process_mseed(char *pseed, int packtype, int seq, int size)
       {
         SLMSrecord* msr = sl_msr_new();
         sl_msr_parse(NULL, pseed, &msr, 1, 1);
-        
+
         if(msr == NULL)
           {
             logs(LOG_ERR) << "error decoding Mini-SEED packet " <<
@@ -928,17 +928,17 @@ void Station::process_mseed(char *pseed, int packtype, int seq, int size)
               ntohs(fsdh->time_correct), timing_quality, msr->datasamples,
               msr->numsamples);
           }
-    
+
         sl_msr_free(&msr);
-        
+
         DEBUG_MSG("sent " << r << " bytes of data, station \"" << myid <<
           "\", channel \"" << q->second << "\"" << endl);
-    
+
         if(r < 0) throw PluginBrokenLink(strerror(errno));
         else if(r == 0) throw PluginBrokenLink();
       }
   }
-    
+
 //*****************************************************************************
 // StationGroup
 //*****************************************************************************
@@ -961,7 +961,7 @@ class StationGroup
     Timer uptime_timer;
     Timer standby_timer;
     Timer shutdown_timer;
-    
+
     Timer seqsave_timer;
     string seqfile;
     string ifup_cmd;
@@ -977,7 +977,7 @@ class StationGroup
 
     static StationGroup *obj;
     static void term_handler(int sig);
-    
+
     void open_connection();
     void close_connection();
     void kill_connection();
@@ -1056,7 +1056,7 @@ void StationGroup::set_schedule(const string &schedule_str)
       case SCHED_MINUTE_ERR:
         throw PluginInvalidSchedule("invalid minute in schedule " +
           schedule_str);
-          
+
       case SCHED_HOUR_ERR:
         throw PluginInvalidSchedule("invalid hour in schedule " +
           schedule_str);
@@ -1149,7 +1149,7 @@ void StationGroup::ifdown()
 void StationGroup::lock_wait()
   {
     if(lockfile.length() == 0) return;
-    
+
     int lock_fd;
     if((lock_fd = open(lockfile.c_str(), O_WRONLY | O_CREAT,
       S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) < 0)
@@ -1163,7 +1163,7 @@ void StationGroup::lock_wait()
     lock.l_start = 0;
     lock.l_whence = SEEK_SET;
     lock.l_len = 0;
-  
+
     if(fcntl(lock_fd, F_SETLKW, &lock) < 0)
       {
         logs(LOG_WARNING) << "cannot lock '" << lockfile << "' (" <<
@@ -1184,7 +1184,7 @@ void StationGroup::open_connection()
   {
     internal_check(parent_fd == -1);
     internal_check(pid == -1);
-    
+
     int pipe_fd[2];
     N(pipe(pipe_fd));
 
@@ -1193,7 +1193,7 @@ void StationGroup::open_connection()
     N(sigaddset(&newmask, SIGTERM));
     N(sigaddset(&newmask, SIGINT));
     N(sigprocmask(SIG_BLOCK, &newmask, &oldmask));
-    
+
     N(pid = fork());
 
     if(pid)
@@ -1217,7 +1217,7 @@ void StationGroup::open_connection()
 
         int child_fd = pipe_fd[1];
         N(fcntl(child_fd, F_SETFL, O_NONBLOCK));
-    
+
         struct sigaction sa;
         sa.sa_handler = term_handler;
         sa.sa_flags = 0;                     // SA_RESTART?
@@ -1230,16 +1230,16 @@ void StationGroup::open_connection()
         lock_wait();
 
         ifup();
-    
+
         if(seqfile.length() > 0)
           {
             if(sl_recoverstate(slcd, seqfile.c_str()) < 0)
                 logs(LOG_WARNING) << "could not read connection state from "
                   "file '" << seqfile << "'" << endl;
           }
-    
+
         N(sigprocmask(SIG_UNBLOCK, &newmask, NULL));
-      
+
         seqsave_timer.reset();
 
         int r;
@@ -1272,7 +1272,7 @@ void StationGroup::open_connection()
                 if(stream == NULL)
                     logs(LOG_ERR) << "station " << net << "_" << sta
                       << " not found in stream list" << endl;
-                    
+
                 break;
               }
 
@@ -1290,7 +1290,7 @@ void StationGroup::open_connection()
 
         close(child_fd);
         child_fd = -1;
-    
+
         if(slcd->link != -1)
             sl_disconnect(slcd);
 
@@ -1321,7 +1321,7 @@ void StationGroup::close_connection()
   {
     internal_check(pid > 0);
     internal_check(parent_fd != -1);
-    
+
     kill(pid, SIGTERM);
     sigterm_sent = true;
     shutdown_timer.reset();
@@ -1331,7 +1331,7 @@ void StationGroup::kill_connection()
   {
     internal_check(pid > 0);
     internal_check(parent_fd != -1);
-    
+
     kill(pid, SIGKILL);
     sigkill_sent = true;
   }
@@ -1347,12 +1347,12 @@ void StationGroup::shutdown()
 void StationGroup::check()
   {
     internal_check(pid != 0);
-    
+
     if(pid < 0)
       {
         if(shutdown_requested || parent_fd >= 0)
             return;
-        
+
         time_t curtime = time(NULL);
         if(have_schedule)
           {
@@ -1360,7 +1360,7 @@ void StationGroup::check()
               {
                 if(check_schedule(&schedule, (time_t) curtime))
                     open_connection();
-              
+
                 last_schedule_check += 60;
               }
           }
@@ -1368,7 +1368,7 @@ void StationGroup::check()
           {
             open_connection();
           }
-        
+
         return;
       }
 
@@ -1392,7 +1392,7 @@ void StationGroup::check()
       {
         if(sigterm_sent && !sigkill_sent && shutdown_timer.expired())
             kill_connection();
-            
+
         return;
       }
 
@@ -1423,10 +1423,10 @@ bool StationGroup::confirm_shutdown()
 
         return shutdown_requested;
       }
-    
+
     return false;
   }
-    
+
 int StationGroup::process_slpacket(int fd, StationGroup_Partner &partner)
   {
     char buf[SLHEADSIZE + SLRECSIZE];
@@ -1517,18 +1517,18 @@ class Extension
 
   public:
     const string name;
-    
+
     Extension(Extension_Partner &partner_init, const string &name_init,
       const string &filter_init, const string &cmdline_init, int recv_timeout,
       int send_timeout_init, int start_retry, int shutdown_wait);
 
     ~Extension();
-        
+
     void start();
     void feed(char *pseed, int packtype, int size);
     bool check();
     void shutdown();
-    
+
     pair<int, int> filedes()
       {
         return make_pair(data_input_fd, command_fd);
@@ -1580,7 +1580,7 @@ Extension::~Extension()
 void Extension::check_proc()
   {
     internal_check(pid != 0);
-    
+
     int status, completed;
 
     if(pid < 0) return;
@@ -1626,7 +1626,7 @@ void Extension::check_proc()
 
     start_retry_timer.reset();
   }
-    
+
 bool Extension::read_data()
   {
     if(read_state == ReadInit)
@@ -1635,7 +1635,7 @@ bool Extension::read_data()
         ptr = reinterpret_cast<char *>(&header_buf);
         read_state = ReadHeader;
       }
-    
+
     int nread;
     if((nread = read(data_input_fd, ptr, nleft)) == 0)
       {
@@ -1662,7 +1662,7 @@ bool Extension::read_data()
       }
 
     read_timer.reset();
-    
+
     nleft -= nread;
     ptr += nread;
 
@@ -1703,9 +1703,9 @@ bool Extension::read_data()
 void Extension::forward_packet()
   {
     int r;
-    
+
     r = writen(PLUGIN_FD, &header_buf, sizeof(struct PluginPacketHeader));
-    
+
     if(r < 0) throw PluginBrokenLink(strerror(errno));
     else if(r == 0) throw PluginBrokenLink();
 
@@ -1755,7 +1755,7 @@ void Extension::check_cmds()
       }
 
     read_timer.reset();
-    
+
     reqwp += nread;
     reqbuf[reqwp] = 0;
 
@@ -1767,7 +1767,7 @@ void Extension::check_cmds()
         partner.extension_request(reqbuf + reqrp);
         reqrp += (reqlen + seplen);
       }
-    
+
     if(reqlen >= REQLEN)
       {
         logs(LOG_WARNING) << "[" << name << "] command buffer overflow" << endl;
@@ -1777,7 +1777,7 @@ void Extension::check_cmds()
         command_fd = -1;
         return;
       }
-        
+
     memmove(reqbuf, reqbuf + reqrp, reqlen);
     reqwp -= reqrp;
     reqrp = 0;
@@ -1786,7 +1786,7 @@ void Extension::check_cmds()
 void Extension::kill_proc()
   {
     internal_check(pid > 0);
-    
+
     kill(pid, SIGKILL);
     sigkill_sent = true;
   }
@@ -1794,7 +1794,7 @@ void Extension::kill_proc()
 void Extension::term_proc()
   {
     internal_check(pid > 0);
-    
+
     kill(pid, SIGTERM);
     sigterm_sent = true;
     output_active = false;
@@ -1806,7 +1806,7 @@ void Extension::start()
     internal_check(data_input_fd < 0);
     internal_check(data_output_fd < 0);
     internal_check(command_fd < 0);
-    
+
     int data_input_pipe[2];
     int data_output_pipe[2];
     int command_pipe[2];
@@ -1814,19 +1814,19 @@ void Extension::start()
     N(pipe(data_input_pipe));
     N(pipe(data_output_pipe));
     N(pipe(command_pipe));
-    
+
     N(pid = fork());
 
-    if(pid) 
+    if(pid)
       {
         close(data_input_pipe[1]);
         close(data_output_pipe[0]);
         close(command_pipe[1]);
-        
+
         data_input_fd = data_input_pipe[0];
         data_output_fd = data_output_pipe[1];
         command_fd = command_pipe[0];
-        
+
         N(fcntl(data_input_fd, F_SETFD, FD_CLOEXEC));
         N(fcntl(data_output_fd, F_SETFD, FD_CLOEXEC));
         N(fcntl(command_fd, F_SETFD, FD_CLOEXEC));
@@ -1834,7 +1834,7 @@ void Extension::start()
         N(fcntl(data_input_fd, F_SETFL, O_NONBLOCK));
         N(fcntl(data_output_fd, F_SETFL, O_NONBLOCK));
         N(fcntl(command_fd, F_SETFL, O_NONBLOCK));
-        
+
         read_timer.reset();
         read_state = ReadInit;
         reqwp = 0;
@@ -1848,7 +1848,7 @@ void Extension::start()
     close(data_input_pipe[0]);
     close(data_output_pipe[1]);
     close(command_pipe[0]);
-    
+
     if(data_input_pipe[1] != PLUGIN_FD)
       {
         N(dup2(data_input_pipe[1], PLUGIN_FD));
@@ -1868,7 +1868,7 @@ void Extension::start()
       }
 
     logs(LOG_INFO) << "[" << name << "] starting shell" << endl;
-    
+
     execl(SHELL, SHELL, "-c", (cmdline + " " + name).c_str(), NULL);
 
     logs(LOG_ERR) << string() + "cannot execute shell '" + SHELL + "' "
@@ -1880,9 +1880,9 @@ void Extension::feed(char *pseed, int packtype, int size)
   {
     if(!output_active)
         return;
-    
+
     internal_check(data_output_fd >= 0);
-    
+
     if(have_stream_filter)
       {
         sl_fsdh_s* fsdh = reinterpret_cast<sl_fsdh_s *>(pseed);
@@ -1925,7 +1925,7 @@ bool Extension::check()
 
     if(command_fd >= 0)
         check_cmds();
-    
+
     check_proc();
 
     if(pid < 0)
@@ -1985,7 +1985,7 @@ bool Extension::check()
 
         return false;
       }
-      
+
     if(!sigkill_sent && shutdown_timer.expired())
       {
         logs(LOG_WARNING) << "[" << name << "] shutdown time expired" << endl;
@@ -1999,7 +1999,7 @@ void Extension::shutdown()
   {
     if(!sigterm_sent && pid > 0)
         term_proc();
-    
+
     shutdown_requested = true;
   }
 
@@ -2016,7 +2016,7 @@ class Chain: private Extension_Partner, private StationGroup_Partner
     list<rc_ptr<Extension> > extensions;
     time_t last_ext_check;
 
-    void extension_request(const string &cmd);
+    void extension_request(const string &cmd) override;
     void setup_timetable(const string &timetable_loader);
 
   public:
@@ -2027,16 +2027,16 @@ class Chain: private Extension_Partner, private StationGroup_Partner
     void new_extension(const string &name, const string &filter,
       const string &cmdline, int recv_timeout, int send_timeout,
       int start_retry, int shutdown_wait);
-    
+
     rc_ptr<StationGroup> new_group(const string &address, bool multi, bool batch,
       int netto, int netdly, int keepalive, int uptime, int standby,
       int shutdown, int seqsave, const string &seqfile, const string &ifup,
       const string &ifdown, const string &lockfile);
-    
+
     void add_station(const string &id, const string &out_name,
       const string &out_network, rc_ptr<Station>);
 
-    void process_mseed(char *pseed, int packtype, int size);
+    void process_mseed(char *pseed, int packtype, int size) override;
     void check();
     void shutdown();
   };
@@ -2048,7 +2048,7 @@ void Chain::extension_request(const string &cmd)
         logs(LOG_WARNING) << "invalid command: " << cmd << endl;
         return;
       }
-    
+
     int year, month, day, hour, min, sec;
     char trigger_state[4], station_id[11], c;
     if(sscanf(cmd.c_str(), "%*s %3s %10s %d %d %d %d %d %d%c", trigger_state,
@@ -2072,7 +2072,7 @@ void Chain::extension_request(const string &cmd)
         logs(LOG_WARNING) << "wrong syntax: " << cmd << endl;
         return;
       }
-    
+
     logs(LOG_NOTICE) << cmd << endl;
 
     multimap<string, rc_ptr<Station> >::iterator p;
@@ -2089,9 +2089,9 @@ void Chain::setup_timetable(const string &timetable_loader)
   {
     if(timetable_loader.length() == 0)
         return;
-    
+
     logs(LOG_INFO) << "loading timetable" << endl;
-    
+
     FILE *fp;
     if((fp = popen(timetable_loader.c_str(), "r")) == NULL)
       {
@@ -2102,7 +2102,7 @@ void Chain::setup_timetable(const string &timetable_loader)
 
     char net[3], sta[6], stream[9], *loc, *chn, *stype;
     int type, recno, year, doy, hour, min, sec, usec;
-    
+
     int r;
     while((r = fscanf(fp, "%2s %5s %8s %d %d %d %d %d %d %d\n", net, sta,
       stream, &recno, &year, &doy, &hour, &min, &sec, &usec)) == 10)
@@ -2133,7 +2133,7 @@ void Chain::setup_timetable(const string &timetable_loader)
             free(loc);
             continue;
           }
-            
+
         StationDescriptor stad(net, sta);
         StreamDescriptor strd(loc, chn, type);
 
@@ -2160,13 +2160,13 @@ void Chain::setup_timetable(const string &timetable_loader)
       }
 
     pclose(fp);
-        
+
     if(r == 0 || r == EOF)
       {
         logs(LOG_INFO) << "timetable loaded" << endl;
         return;
       }
-      
+
     logs(LOG_INFO) << "loading timetable failed" << endl;
 
     multimap<StationDescriptor, rc_ptr<Station> >::iterator p;
@@ -2193,9 +2193,9 @@ void Chain::check()
     for(gp = groups.begin(); gp != groups.end(); ++gp)
       {
         (*gp)->check();
-        
+
         int fd = (*gp)->filedes();
-        
+
         if(fd != -1)
             FD_SET(fd, &read_set);
 
@@ -2207,20 +2207,20 @@ void Chain::check()
     for(ep = extensions.begin(); ep != extensions.end(); ++ep)
       {
         pair<int, int> fd = (*ep)->filedes();
-        
+
         if(fd.first  != -1)
             FD_SET(fd.first, &read_set);
 
         if(fd.first > fd_max)
             fd_max = fd.first;
-        
+
         if(fd.second != -1)
             FD_SET(fd.second, &read_set);
 
         if(fd.second > fd_max)
             fd_max = fd.second;
       }
-        
+
     struct timeval tv;
     tv.tv_sec = 1;
     tv.tv_usec = 0;
@@ -2252,7 +2252,7 @@ void Chain::check()
       }
 
     time_t curtime = time(NULL);
-    
+
     ep = extensions.begin();
     while(ep != extensions.end())
       {
@@ -2277,22 +2277,22 @@ void Chain::check()
 
     last_ext_check = curtime;
   }
-        
+
 void Chain::shutdown()
   {
     logs(LOG_INFO) << "shutting down" << endl;
-    
+
     list<rc_ptr<StationGroup> >::iterator gp;
     for(gp = groups.begin(); gp != groups.end(); ++gp)
         (*gp)->shutdown();
-        
+
     while(!groups.empty())
         check();
 
     list<rc_ptr<Extension> >::iterator ep;
     for(ep = extensions.begin(); ep != extensions.end(); ++ep)
         (*ep)->shutdown();
-        
+
     while(!extensions.empty())
         check();
 
@@ -2310,7 +2310,7 @@ void Chain::new_extension(const string &name, const string &filter,
 
     extensions.push_back(extension);
   }
-    
+
 rc_ptr<StationGroup> Chain::new_group(const string &address,
   bool multi, bool batch, int netto, int netdly, int keepalive, int uptime,
   int standby, int shutdown, int seqsave, const string &seqfile,
@@ -2319,7 +2319,7 @@ rc_ptr<StationGroup> Chain::new_group(const string &address,
     rc_ptr<StationGroup> group = new StationGroup(address, multi, batch,
       netto, netdly, keepalive, uptime, standby, shutdown, seqsave, seqfile,
       ifup, ifdown, lockfile);
-    
+
     groups.push_back(group);
     return group;
   }
@@ -2359,10 +2359,10 @@ class ExtensionElement: public CfgElement
 
   public:
     ExtensionElement(): CfgElement("extension") {}
-    rc_ptr<CfgAttributeMap> start_attributes(ostream &cfglog, const string &);
-    void end_attributes(ostream &cfglog);
+    rc_ptr<CfgAttributeMap> start_attributes(ostream &cfglog, const string &) override;
+    void end_attributes(ostream &cfglog) override;
   };
-        
+
 rc_ptr<CfgAttributeMap> ExtensionElement::start_attributes(ostream &cfglog,
   const string &)
   {
@@ -2384,7 +2384,7 @@ rc_ptr<CfgAttributeMap> ExtensionElement::start_attributes(ostream &cfglog,
     atts->add_item(IntAttribute("shutdown_wait", shutdown_wait, 0, IntAttribute::lower_bound));
     return atts;
   }
- 
+
 void ExtensionElement::end_attributes(ostream &cfglog)
 try
   {
@@ -2399,7 +2399,7 @@ try
         cfglog << "extension command is not specified" << endl;
         return;
       }
-        
+
     if(extensions_defined.find(name) != extensions_defined.end())
       {
         cfglog << "extension " << name << " is already defined" << endl;
@@ -2429,17 +2429,17 @@ class RenameElement: public CfgElement
     RenameElement(rc_ptr<Station> station_init): CfgElement("rename"),
       station(station_init) {}
 
-    rc_ptr<CfgAttributeMap> start_attributes(ostream &cfglog, const string &);
+    rc_ptr<CfgAttributeMap> start_attributes(ostream &cfglog, const string &) override;
 
-    void end_attributes(ostream &cfglog);
+    void end_attributes(ostream &cfglog) override;
   };
-        
+
 rc_ptr<CfgAttributeMap> RenameElement::start_attributes(ostream &cfglog,
   const string &)
   {
     from = "";
     to = "";
-    
+
     rc_ptr<CfgAttributeMap> atts = new CfgAttributeMap;
     atts->add_item(StringAttribute("from", from));
     atts->add_item(StringAttribute("to", to));
@@ -2485,18 +2485,18 @@ class UnpackElement: public CfgElement
     UnpackElement(rc_ptr<Station> station_init): CfgElement("unpack"),
       station(station_init) {}
 
-    rc_ptr<CfgAttributeMap> start_attributes(ostream &cfglog, const string &);
+    rc_ptr<CfgAttributeMap> start_attributes(ostream &cfglog, const string &) override;
 
-    void end_attributes(ostream &cfglog);
+    void end_attributes(ostream &cfglog) override;
   };
-        
+
 rc_ptr<CfgAttributeMap> UnpackElement::start_attributes(ostream &cfglog,
   const string &)
   {
     src = "";
     dest = "";
     double_rate = false;
-    
+
     rc_ptr<CfgAttributeMap> atts = new CfgAttributeMap;
     atts->add_item(StringAttribute("src", src));
     atts->add_item(StringAttribute("dest", dest));
@@ -2544,11 +2544,11 @@ class TriggerElement: public CfgElement
     TriggerElement(rc_ptr<Station> station_init): CfgElement("trigger"),
       station(station_init) {}
 
-    rc_ptr<CfgAttributeMap> start_attributes(ostream &cfglog, const string &);
+    rc_ptr<CfgAttributeMap> start_attributes(ostream &cfglog, const string &) override;
 
-    void end_attributes(ostream &cfglog);
+    void end_attributes(ostream &cfglog) override;
   };
-        
+
 rc_ptr<CfgAttributeMap> TriggerElement::start_attributes(ostream &cfglog,
   const string &)
   {
@@ -2556,7 +2556,7 @@ rc_ptr<CfgAttributeMap> TriggerElement::start_attributes(ostream &cfglog,
     buffer_length = 60;
     pre_seconds = 20;
     post_seconds = 20;
-    
+
     rc_ptr<CfgAttributeMap> atts = new CfgAttributeMap;
     atts->add_item(StringAttribute("src", src));
     atts->add_item(IntAttribute("buffer_length", buffer_length, 10, 600));
@@ -2608,12 +2608,12 @@ class StationElement: public CfgElement
       def_overlap_removal(overlap_removal), first(true) {}
 
     rc_ptr<CfgAttributeMap> start_attributes(ostream &cfglog,
-      const string &);
+      const string &) override;
 
     rc_ptr<CfgElementMap> start_children(ostream &cfglog,
-      const string &);
+      const string &) override;
   };
-        
+
 rc_ptr<CfgAttributeMap> StationElement::start_attributes(ostream &cfglog,
   const string &)
   {
@@ -2623,7 +2623,7 @@ rc_ptr<CfgAttributeMap> StationElement::start_attributes(ostream &cfglog,
           "mode" << endl;
         return NULL;
       }
-        
+
     first = false;
 
     id = "";
@@ -2663,13 +2663,13 @@ try
         cfglog << "network code is not specified" << endl;
         return NULL;
       }
-    
+
     if(out_name.length() == 0)
         out_name = in_name;
 
     if(out_network.length() == 0)
         out_network = in_network;
-    
+
     if(id.length() == 0)
         id = out_network + "_" + out_name;
 
@@ -2681,13 +2681,13 @@ try
     else if(strcasecmp(overlap_removal.c_str(), "none"))
         cfglog << "value of overlap_removal should be \"full\", "
           "\"initial\" or \"none\". Using \"none\"." << endl;
-    
+
     rc_ptr<Station> station = group->new_station(id, in_name,
       in_network, out_name, out_network, selectors, default_timing_quality,
       ovrl);
 
     chain.add_station(id, out_name, out_network, station);
-    
+
     rc_ptr<CfgElementMap> elms = new CfgElementMap;
     elms->add_item(RenameElement(station));
     elms->add_item(UnpackElement(station));
@@ -2699,7 +2699,7 @@ catch(PluginError &e)
     cfglog << e.message << endl;
     return NULL;
   }
-        
+
 //*****************************************************************************
 // GroupElement
 //*****************************************************************************
@@ -2739,12 +2739,12 @@ class GroupElement: public CfgElement
       def_seqsave(seqsave), def_overlap_removal(overlap_removal) {}
 
     rc_ptr<CfgAttributeMap> start_attributes(ostream &cfglog,
-      const string &);
+      const string &) override;
 
     rc_ptr<CfgElementMap> start_children(ostream &cfglog,
-      const string &);
+      const string &) override;
   };
-        
+
 rc_ptr<CfgAttributeMap> GroupElement::start_attributes(ostream &cfglog,
   const string &)
   {
@@ -2763,7 +2763,7 @@ rc_ptr<CfgAttributeMap> GroupElement::start_attributes(ostream &cfglog,
     ifdown = "";
     schedule_str = "";
     lockfile = "";
-    
+
     rc_ptr<CfgAttributeMap> atts = new CfgAttributeMap;
     atts->add_item(StringAttribute("address", address));
     atts->add_item(BoolAttribute("multistation", multi, "yes", "no"));
@@ -2807,14 +2807,14 @@ try
           "\"initial\" or \"none\". Using \"none\"." << endl;
         overlap_removal = "none";
       }
-        
+
     rc_ptr<StationGroup> group = chain.new_group(address, multi, batch, netto,
       netdly, keepalive, uptime, standby, SHUTDOWN_WAIT, seqsave, seqfile,
       ifup, ifdown, lockfile);
 
     if(schedule_str.length() != 0)
         group->set_schedule(schedule_str);
-    
+
     rc_ptr<CfgElementMap> elms = new CfgElementMap;
     elms->add_item(StationElement(group, multi, overlap_removal));
     return elms;
@@ -2824,7 +2824,7 @@ catch(PluginError &e)
     cfglog << e.message << endl;
     return NULL;
   }
-        
+
 //*****************************************************************************
 // ChainElement
 //*****************************************************************************
@@ -2848,12 +2848,12 @@ class ChainElement: public CfgElement
       CfgElement("chain"), timetable_loader(timetable_loader_init) {}
 
     rc_ptr<CfgAttributeMap> start_attributes(ostream &cfglog,
-      const string &);
+      const string &) override;
 
-    void end_attributes(ostream &cfglog);
+    void end_attributes(ostream &cfglog) override;
 
     rc_ptr<CfgElementMap> start_children(ostream &cfglog,
-      const string &);
+      const string &) override;
   };
 
 rc_ptr<CfgAttributeMap> ChainElement::start_attributes(ostream &cfglog,
@@ -2868,7 +2868,7 @@ rc_ptr<CfgAttributeMap> ChainElement::start_attributes(ostream &cfglog,
     keepalive = 0;
     standby = 0;
     seqsave = 0;
-    
+
     rc_ptr<CfgAttributeMap> atts = new CfgAttributeMap;
     atts->add_item(StringAttribute("timetable_loader", timetable_loader));
     atts->add_item(StringAttribute("overlap_removal", overlap_removal));
@@ -2886,10 +2886,10 @@ rc_ptr<CfgAttributeMap> ChainElement::start_attributes(ostream &cfglog,
       IntAttribute::lower_bound));
     atts->add_item(IntAttribute("seqsave", seqsave, 10,
       IntAttribute::lower_bound));
-    
+
     return atts;
   }
-    
+
 void ChainElement::end_attributes(ostream &cfglog)
   {
     log_setup(verbosity);
@@ -2906,7 +2906,7 @@ rc_ptr<CfgElementMap> ChainElement::start_children(ostream &cfglog,
           "\"initial\" or \"none\". Using \"none\"." << endl;
         overlap_removal = "none";
       }
-        
+
     rc_ptr<CfgElementMap> elms = new CfgElementMap;
     elms->add_item(ExtensionElement());
     elms->add_item(GroupElement(multi, batch, netto, netdly, keepalive, standby,
@@ -2944,7 +2944,7 @@ int main(int argc, char **argv)
 try
   {
 #if defined(__GNU_LIBRARY__) || defined(__GLIBC__)
-    struct option ops[] = 
+    struct option ops[] =
       {
         { "verbosity",      required_argument, NULL, 'X' },
         { "daemon",         no_argument,       NULL, 'D' },
@@ -2956,9 +2956,9 @@ try
 #endif
 
     log_setup(2); // default verbosity before reading configuration
-    
+
     string config_file = CONFIG_FILE;
-    
+
     int c;
 #if defined(__GNU_LIBRARY__) || defined(__GLIBC__)
     while((c = getopt_long(argc, argv, "vDf:Vh", ops, NULL)) != EOF)
@@ -2988,18 +2988,18 @@ try
       }
 
     plugin_name = string(argv[optind]);
-    
+
     struct sigaction sa;
     sa.sa_handler = int_handler;
     sa.sa_flags = SA_RESTART;
     N(sigemptyset(&sa.sa_mask));
     N(sigaction(SIGINT, &sa, NULL));
     N(sigaction(SIGTERM, &sa, NULL));
-    
+
     sa.sa_handler = SIG_IGN;
     N(sigaction(SIGHUP, &sa, NULL));
     N(sigaction(SIGPIPE, &sa, NULL));
-    
+
     if(daemon_mode)
       {
         logs(LOG_INFO) << ident_str << " started" << endl;
@@ -3013,7 +3013,7 @@ try
     redirect_ostream(clog, LogFunc(), LOG_ERR);
 
     logs(LOG_NOTICE) << ident_str << " started" << endl;
-    
+
     string timetable_loader;
     read_config_xml(config_file, ChainElement(timetable_loader));
 
@@ -3042,4 +3042,4 @@ catch(...)
     logs(LOG_ERR) << "unknown exception" << endl;
     return 1;
   }
- 
+

@@ -111,7 +111,7 @@ class StreamProcessor
   {
   protected:
     StreamProcessor(const string &name_init): name(name_init) {}
-  
+
   public:
     struct InputVisitor
       {
@@ -120,7 +120,7 @@ class StreamProcessor
       };
 
     const string name;
-    
+
     virtual rc_ptr<Input> get_input(const string &channel_name) =0;
     virtual void flush() =0;
     virtual void visit_inputs(InputVisitor &, void *data = NULL) =0;
@@ -139,7 +139,7 @@ class StreamProcessorSpec
   {
   protected:
     StreamProcessorSpec(const string &name_init): name(name_init) {}
-    
+
   public:
     const string name;
 
@@ -173,7 +173,7 @@ rc_ptr<EncoderSpec> make_encoder_spec(rc_ptr<BufferStore> bufs, int rec_length,
           station_id(station_id_init), network_id(network_id_init) {}
 
         rc_ptr<Encoder> instance(const string &stream_name,
-          const string &location_id, int freqn, int freqd) const
+          const string &location_id, int freqn, int freqd) const override
           {
             return new _Encoder(new _Format(bufs, rec_length, packtype, station_id,
               network_id, location_id, stream_name, freqn, freqd), freqn, freqd);

@@ -239,8 +239,8 @@ class ChannelDef: public CfgElement
   public:
     ChannelDef(const string &name): CfgElement(name) {}
     rc_ptr<CfgAttributeMap> start_attributes(ostream &cfglog,
-      const string &name);
-    void end_attributes(ostream &cfglog);
+      const string &name) override;
+    void end_attributes(ostream &cfglog) override;
   };
 
 rc_ptr<CfgAttributeMap> ChannelDef::start_attributes(ostream &cfglog,
@@ -304,10 +304,10 @@ class SectionDef: public CfgElement
       notmysection(false) {}
 
     rc_ptr<CfgAttributeMap> start_attributes(ostream &cfglog,
-      const string &name);
-    void end_attributes(ostream &cfglog);
+      const string &name) override;
+    void end_attributes(ostream &cfglog) override;
     rc_ptr<CfgElementMap> start_children(ostream &cfglog,
-      const string &name);
+      const string &name) override;
   };
 
 rc_ptr<CfgAttributeMap> SectionDef::start_attributes(ostream &cfglog,

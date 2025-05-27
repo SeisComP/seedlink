@@ -76,9 +76,9 @@ class MeteoProtocol: public Proto
     void attach_output_channel(const string &source_id,
       const string &channel_name, const string &station_name,
       double scale, double realscale, double realoffset,
-      const string &realunit, int precision);
-    void flush_channels();
-    void start();
+      const string &realunit, int precision) override;
+    void flush_channels() override;
+    void start() override;
   };
 
 void MeteoProtocol::attach_output_channel(const string &source_id,
@@ -143,7 +143,7 @@ void MeteoProtocol::decode_message(const char *msg)
             it->second->set_timemark(digitime.it, 0, digitime.quality);
             it->second->put_sample(val);
           }
-        
+
         rp += (toklen + seplen);
       }
 
@@ -168,7 +168,7 @@ void MeteoProtocol::handle_response(const char *msg)
       }
 
     tm* ptm = gmtime(&t);
-    
+
     EXT_TIME et;
     et.year = ptm->tm_year + 1900;
     et.month = ptm->tm_mon + 1;
@@ -189,7 +189,7 @@ void MeteoProtocol::handle_response(const char *msg)
         soh_message = true;
         last_day = digitime.it.second / (24 * 60 * 60);
       }
-    
+
     if(dconf.statusinterval &&
       digitime.it.second / (dconf.statusinterval * 60) != last_soh)
       {
@@ -226,7 +226,7 @@ void MeteoProtocol::do_start()
         fd_set read_set;
         FD_ZERO(&read_set);
         FD_SET(fd, &read_set);
-        
+
         struct timeval tv;
         tv.tv_sec = READ_TIMEOUT;
         tv.tv_usec = 0;
@@ -240,7 +240,7 @@ void MeteoProtocol::do_start()
 
         if(r == 0)
             throw PluginError("timeout");
-        
+
         if(FD_ISSET(fd, &read_set))
           {
             int bytes_read;
@@ -249,10 +249,10 @@ void MeteoProtocol::do_start()
 
             if(bytes_read == 0)
                 throw PluginError("EOF reading " + dconf.port_name);
- 
+
             wp += bytes_read;
             recvbuf[wp] = 0;
-        
+
             int rp = 0, msglen, seplen;
             while(msglen = strcspn(recvbuf + rp, "\r\n"),
               seplen = strspn(recvbuf + rp + msglen, "\r\n"))
@@ -265,14 +265,14 @@ void MeteoProtocol::do_start()
 
                 rp += (msglen + seplen);
               }
-            
+
             if(msglen >= RECVBUFSIZE)
               {
                 logs(LOG_WARNING) << "receive buffer overflow" << endl;
                 wp = rp = 0;
                 continue;
               }
-        
+
             memmove(recvbuf, recvbuf + rp, msglen);
             wp -= rp;
             rp = 0;

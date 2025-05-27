@@ -45,7 +45,7 @@ rc_ptr<CfgAttributeMap> CfgSectionElement::start_attributes(ostream &cfglog,
   const string &name)
   {
     if(strcasecmp(want.c_str(), name.c_str())) return NULL;
-    
+
     if(found)
       {
         cfglog << "duplicate section '" << name << "'" << endl;
@@ -60,7 +60,7 @@ rc_ptr<CfgElementMap> CfgSectionElement::start_children(ostream &cfglog,
   const string &name)
   {
     if(strcasecmp(want.c_str(), name.c_str())) return NULL;
-    
+
     return children;
   }
 
@@ -81,9 +81,9 @@ class CfgParserINI: public INIFlexLexer, public StreambufBasePartner
     enum { L_File, L_Section, L_Definition};
     int scope_level;
     int lineno;
-    
-    int yylex();
-    string msgprefix();
+
+    int yylex() override;
+    string msgprefix() override;
     void start_element(const string &keyword, const char *name, int level);
     void set(const string &parmname, const char *value);
 
@@ -179,7 +179,7 @@ lineno = 1;
 
 <RECOVERY>{
 [^\n]+          /* eat up bytes to the end of line */
-\n              SKIPTO(nextstate); yyless(0); 
+\n              SKIPTO(nextstate); yyless(0);
 }
 
 <<EOF>>         cfglog << "unexpected eof" << endl; yyterminate();
@@ -210,12 +210,12 @@ void CfgParserINI::start_element(const string &keyword, const char *name, int le
         stack.pop(cfglog);
         --scope_level;
       }
-    
+
     scope_level = level;
     current_name = name;
     current_element = NULL;
     current_attributes = NULL;
-    
+
     rc_ptr<CfgElementMap> elements = stack.get_elements();
 
     if(elements == NULL) return;
@@ -234,7 +234,7 @@ void CfgParserINI::set(const string &parmname, const char *value)
     if(current_attributes == NULL) return;
 
     rc_ptr<CfgAttribute> at = current_attributes->find_item(parmname);
-    
+
     if(at == NULL)
         cfglog << "parameter '" << parmname << "' is not used" << endl;
     else if(!at->set(cfglog, value))

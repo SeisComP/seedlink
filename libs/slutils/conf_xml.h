@@ -53,14 +53,14 @@ class CfgRootElement: public CfgElement
       found(found_init) {}
 
     rc_ptr<CfgAttributeMap> start_attributes(ostream &cfglog,
-      const string &name)
+      const string &name) override
       {
         found = true;
         return attributes;
       }
 
     rc_ptr<CfgElementMap> start_children(ostream &cfglog,
-      const string &name)
+      const string &name) override
       {
         return children;
       }
@@ -69,7 +69,7 @@ class CfgRootElement: public CfgElement
 //*****************************************************************************
 // Entry points
 //*****************************************************************************
-      
+
 void read_config_xml_helper(const string &file_name,
   rc_ptr<CfgElementMap> root);
 

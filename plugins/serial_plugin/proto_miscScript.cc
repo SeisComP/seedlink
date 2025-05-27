@@ -65,15 +65,15 @@ class miscScriptProtocol: public miscStringProtocol
   private:
     // Attributs
     string SCRIPT_PATH;//configurable with scconfig
-    string SCRIPT_ARGS;//configurable with scconfig    
+    string SCRIPT_ARGS;//configurable with scconfig
 
-    int pipefd_data[2]; //file descriptors to pipe stdout of child 
+    int pipefd_data[2]; //file descriptors to pipe stdout of child
     int pipefd_error[2]; //file descriptors to pipe stderr of child
     pid_t cpid; // child pid
 
     static miscScriptProtocol *obj;
 
-    //Private methods   
+    //Private methods
     void do_start();
     char** prepare_args(string path, string args);
 
@@ -82,7 +82,7 @@ class miscScriptProtocol: public miscStringProtocol
     miscScriptProtocol(const string &myname);
 
     // Implementation of virtual methods from Proto class (cf serial_plugin.h)
-    void start();
+    void start() override;
   };
 
 miscScriptProtocol *miscScriptProtocol::obj;
@@ -96,9 +96,9 @@ miscScriptProtocol *miscScriptProtocol::obj;
 
    miscScriptProtocol::miscScriptProtocol(const string &myname):miscStringProtocol(myname),SCRIPT_PATH(dconf.script_path),SCRIPT_ARGS(dconf.script_args)
       {
-	MAXFRAMELENGTH = 27+12*NCHAN+1; //dd/mm/yyyy HH:MM:SS.uuuuuu," -> 23 caracteres; channel 32 bits (de −2147483648 à 2147483647) -> max 11 caractères + 1 virgule; fin de ligne -> un caractère (\n)	
+	MAXFRAMELENGTH = 27+12*NCHAN+1; //dd/mm/yyyy HH:MM:SS.uuuuuu," -> 23 caracteres; channel 32 bits (de −2147483648 à 2147483647) -> max 11 caractères + 1 virgule; fin de ligne -> un caractère (\n)
 
-        obj = this; 
+        obj = this;
       }
 
 //########## start ##########
@@ -110,11 +110,11 @@ void miscScriptProtocol::start()
 	 if (pipe(pipefd_data) == -1) {
 	     	throw PluginLibraryError("pipe data error");;
 	 }
-	 
+
 	 if (pipe(pipefd_error) == -1) {
 	 	throw PluginLibraryError("pipe error error");
 	 }
-	 
+
 	 ///// Fork /////
 	 cpid = fork();
 	 if (cpid == -1) {
@@ -137,7 +137,7 @@ void miscScriptProtocol::start()
 		//in case of problem with execv :
 		while ((dup2(stdout_orig, STDOUT_FILENO) == -1) && (errno == EINTR)) {} //restore stdout
 		while ((dup2(stderr_orig, STDERR_FILENO) == -1) && (errno == EINTR)) {} //restore stderr
-		logs(LOG_ALERT) << "execv problem : an error occurred while running script" <<endl;//in case of script problem 
+		logs(LOG_ALERT) << "execv problem : an error occurred while running script" <<endl;//in case of script problem
 
        	///// I am Parent /////
     	 }else{
@@ -157,7 +157,7 @@ void miscScriptProtocol::start()
 // Get data from script and look for frames
 
 void miscScriptProtocol::do_start()
-  {  
+  {
     char frameData[MAXFRAMELENGTH];
     char buf_error[MAX_ERROR_MSG_SIZE];
     ssize_t nread;
@@ -173,7 +173,7 @@ void miscScriptProtocol::do_start()
     N(sigemptyset(&sa.sa_mask));
     N(sigaction(SIGALRM, &sa, NULL));
 
-    //interruption every seconds (unblock select()) 
+    //interruption every seconds (unblock select())
     struct itimerval itv;
     itv.it_interval.tv_sec = 1;
     itv.it_interval.tv_usec = 0;
@@ -184,17 +184,17 @@ void miscScriptProtocol::do_start()
 
     // MAIN LOOP STARTS HERE !
     while((!terminate_proc) && (waitpid(cpid, &status, WNOHANG)==0)){
-	 
+
 	//Initialize files descriptors set for select
 	FD_ZERO(&fds);
 	FD_SET(pipefd_data[0], &fds);
 	FD_SET(pipefd_error[0], &fds);
-	
+
 	//timeout definition
 	//Whatever, interruptions already unblock select() every second
 	tv.tv_sec = 10;
 	tv.tv_usec = 0;
-		
+
 	// wait for data or error msg, or timer interruption
 	if (select(max(pipefd_data[0],pipefd_error[0])+1, &fds, NULL, NULL, &tv)<0){
 		if(errno == EINTR){//Si debloqué par timer
@@ -224,7 +224,7 @@ void miscScriptProtocol::do_start()
 
 //########## prepare_args ##########
 //convert script + args to char** (argv[] style)
- 
+
 char** miscScriptProtocol::prepare_args(string path,string args)
 {
  	string buff="";
@@ -235,7 +235,7 @@ char** miscScriptProtocol::prepare_args(string path,string args)
 	//argv[0] contains script path
 	path+='\0';
 	v.push_back(path);
-	
+
 	//Then split args
 	args+=separator;
 	for(unsigned int i=0; i<args.length(); i++){
@@ -250,7 +250,7 @@ char** miscScriptProtocol::prepare_args(string path,string args)
 	}
 
 	// Convert to char**
-	char** argsTab=new char*[v.size()+1];// +1 for the last element (NULL) added at the end	
+	char** argsTab=new char*[v.size()+1];// +1 for the last element (NULL) added at the end
 	int i=0;
 	string str;
 
@@ -263,10 +263,10 @@ char** miscScriptProtocol::prepare_args(string path,string args)
 	//Set last tab element to NULL
 	//argsTab[i]=new char[1];
 	argsTab[i]=(char*)NULL;
-	
+
 	//return resultat;
 	return argsTab;
-}	
+}
 
 //##########
 

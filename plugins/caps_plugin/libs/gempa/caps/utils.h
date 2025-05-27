@@ -60,7 +60,7 @@ class arraybuf : public std::streambuf {
 		}
 
 		virtual pos_type seekoff(off_type ofs, std::ios_base::seekdir dir,
-		                         std::ios_base::openmode mode) {
+		                         std::ios_base::openmode mode) override {
 			if ( mode & std::ios_base::in ) {
 				char *next;
 
@@ -91,7 +91,7 @@ class arraybuf : public std::streambuf {
 			return pos_type(off_type(-1));
 		}
 
-		virtual pos_type seekpos(pos_type pos, std::ios_base::openmode mode) {
+		virtual pos_type seekpos(pos_type pos, std::ios_base::openmode mode) override {
 			if ( mode & std::ios_base::in ) {
 				char *next = eback() + pos;
 				if ( next > egptr() )
@@ -110,7 +110,7 @@ class arraybuf : public std::streambuf {
 			return pos;
 		}
 
-		virtual std::streamsize xsgetn(char* s, std::streamsize n) {
+		virtual std::streamsize xsgetn(char* s, std::streamsize n) override {
 			char *next = gptr() + n;
 			if ( next >= egptr() )
 				n = n - (next - egptr());
