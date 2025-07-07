@@ -782,7 +782,11 @@ void ConnectionStateBase::request_invalid(const vector<string> &cmdvec)
     string full_request = *i;
 
     while((++i) != cmdvec.end()) full_request += (string(" ") + *i);
-    logs(LOG_WARNING) << "invalid request: " << full_request << endl;
+
+    if(full_request.length() > 80)
+        logs(LOG_WARNING) << "invalid request: " << full_request.substr(0, 80) << "..." << endl;
+    else
+        logs(LOG_WARNING) << "invalid request: " << full_request << endl;
   }
 
 //*****************************************************************************
