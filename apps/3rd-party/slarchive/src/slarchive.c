@@ -64,7 +64,8 @@ static void cert_ctx_free (CertCTX *ctx);
 static int  cert_ctx_load (CertCTX *ctx, const char *subject_hash);
 static int  cert_ctx_update(const char *subject_hash);
 
-static int  verify_signature(const X509 *cert, const ECDSA_SIG *signature,
+static int  verify_signature(const X509 *cert,
+                             const unsigned char *sig, size_t nSig,
                              const unsigned char *digest, int digest_len);
 
 static short int verbose         = 0;   /* flag to control general verbosity */
@@ -204,9 +205,8 @@ static int validate_record (SLMSrecord *msr) {
 	char          net[3], sta[6], loc[3], chan[4];
 	const char   *opaque_headers, *subject_hash;
 	char         *tptr;
-	ECDSA_SIG    *signature;
-	const unsigned char *pp;
-	long          pp_len;
+	const unsigned char *sig;
+	long          sig_len;
 	int           i, retVal;
 	const X509   *found_cert;
 
@@ -249,15 +249,14 @@ static int validate_record (SLMSrecord *msr) {
 					EVP_DigestUpdate(mdctx, msr->msrecord + msr->fsdh.begin_data, (1 << msr->Blkt1000->rec_len) - msr->fsdh.begin_data);
 					EVP_DigestFinal_ex(mdctx, (unsigned char*)digest_buffer, &digest_len);
 
-					pp = (const unsigned char *)(msr->msrecord + msr->Blkt2000Ofs + ntohs(msr->Blkt2000->data_offset));
-					pp_len = ntohs(msr->Blkt2000->total_len) - ntohs(msr->Blkt2000->data_offset);
+					sig = (const unsigned char *)(msr->msrecord + msr->Blkt2000Ofs + ntohs(msr->Blkt2000->data_offset));
+					sig_len = ntohs(msr->Blkt2000->total_len) - ntohs(msr->Blkt2000->data_offset);
 
-					signature = d2i_ECDSA_SIG(&static_signature, &pp, pp_len);
 					found_cert = NULL;
 
 					/* First check the last matched certificate if available */
 					if ( certCtx.cert ) {
-						retVal = verify_signature(certCtx.cert, signature, digest_buffer, digest_len);
+						retVal = verify_signature(certCtx.cert, sig, sig_len, digest_buffer, digest_len);
 						if ( !retVal )
 							found_cert = certCtx.cert;
 					}
@@ -267,7 +266,7 @@ static int validate_record (SLMSrecord *msr) {
 							const X509 *cert = certCtx.certs[i];
 							if ( certCtx.cert == cert ) continue;
 
-							retVal = verify_signature(cert, signature, digest_buffer, digest_len);
+							retVal = verify_signature(cert, sig, sig_len, digest_buffer, digest_len);
 							if ( !retVal ) {
 								found_cert = cert;
 								break;
@@ -424,21 +423,32 @@ static int cert_ctx_load(CertCTX *ctx, const char *subject_hash) {
 }
 
 
-static int verify_signature(const X509 *cert, const ECDSA_SIG *signature,
-                            const unsigned char *digest, int digest_len) {
-	EVP_PKEY *pubkey;
-	EC_KEY *ec_key;
-	int retVal;
+static int verify_signature(const X509 *cert,
+                            const unsigned char *sig, size_t nSig,
+                            const unsigned char *digest, int nDigest) {
+	EVP_PKEY *pubkey = NULL;
+	EVP_PKEY_CTX *ctx = NULL;
+	int retVal = 0;
 
 	pubkey = X509_get_pubkey((X509*)cert);
-	if ( pubkey == NULL ) return 1;
+	if ( !pubkey ) {
+		return 1;
+	}
 
-	ec_key = EVP_PKEY_get1_EC_KEY(pubkey);
-	if ( ec_key == NULL ) return 2;
+	ctx = EVP_PKEY_CTX_new(pubkey, NULL);
+	if ( !ctx ) {
+		return 2;
+	}
 
-	retVal = ECDSA_do_verify(digest, (int)digest_len, signature, ec_key);
-	EC_KEY_free(ec_key);
-	return retVal == 1 ? 0 : 3;
+	if ( EVP_PKEY_verify_init(ctx) <= 0 ) {
+		EVP_PKEY_CTX_free(ctx);
+		return 3;
+	}
+
+	retVal = EVP_PKEY_verify(ctx, sig, nSig, digest, nDigest);
+	EVP_PKEY_CTX_free(ctx);
+
+	return retVal == 1 ? 0 : 4;
 }
 
 
