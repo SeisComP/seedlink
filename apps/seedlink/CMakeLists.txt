@@ -22,6 +22,9 @@ SET(OPTIONS -DSYSLOG_FACILITY=LOG_LOCAL0 -DCONFIG_FILE="${CONFIG_FILE}" -DMSEED_
 # This is needed for large servers (number of stations multiplied by
 # the number of simultaneous connections is larger than 1000).
 SET(OPTIONS ${OPTIONS} -DFD_REALLOC)
+IF(LINUX)
+	SET(OPTIONS ${OPTIONS} -DLINUX)
+ENDIF()
 
 ADD_DEFINITIONS(${OPTIONS})
 

@@ -33,6 +33,9 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <sys/resource.h>
+#ifdef LINUX
+#include <sys/prctl.h>
+#endif
 
 #if defined(__GNU_LIBRARY__) || defined(__GLIBC__)
 #include <getopt.h>
@@ -403,6 +406,10 @@ void Plugin::start()
         N(dup2(pipe_fd[1], PLUGIN_FD));
         close(pipe_fd[1]);
       }
+
+#ifdef LINUX
+    prctl(PR_SET_PDEATHSIG, SIGKILL);
+#endif
 
     logs(LOG_INFO) << "[" << name << "] starting shell" << endl;
 
