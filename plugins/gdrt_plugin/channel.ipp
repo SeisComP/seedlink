@@ -17,14 +17,16 @@ Channel<T>::Channel(const std::string &networkCode,
 		    const std::string &channelCode,
 		    double sampleRate)
 : _stationId(networkCode + "." + stationCode) {
-	_msr = msr_init(NULL);
+	_msr = msr3_init(NULL);
+
+	 if ( ms_nslc2sid(_msr->sid, LM_SIDLEN, 0, networkCode.c_str(),
+						   stationCode.c_str(),
+						   locationCode.c_str(),
+						   channelCode.c_str()) < 0 )
+		throw std::logic_error("could not create source identifier");
+
+	_msr->formatversion = 2;
 	_msr->reclen = 512;
-	_msr->dataquality = 'D';
-	_msr->byteorder = 1;
-	strncpy(_msr->network, networkCode.c_str(), 11);
-	strncpy(_msr->station, stationCode.c_str(), 11);
-	strncpy(_msr->location, locationCode.c_str(), 11);
-	strncpy(_msr->channel, channelCode.c_str(), 11);
 	_msr->samprate = sampleRate;
 
 	if ( boost::is_same<T, std::int32_t>::value ) {
@@ -48,7 +50,7 @@ Channel<T>::Channel(const std::string &networkCode,
 template<typename T>
 Channel<T>::~Channel() {
 	flush(true);
-	msr_free(&_msr);
+	msr3_free(&_msr);
 }
 
 
@@ -57,9 +59,9 @@ bool Channel<T>::flush(bool force) {
 	int64_t packedsamples = 0;
 	_msr->datasamples = (void *)_data.data();
 	_msr->numsamples = _data.size();
-	_msr->starttime = MS_EPOCH2HPTIME(double(_time));
+	_msr->starttime = MS_EPOCH2NSTIME(double(_time));
 
-	msr_pack(_msr, [](char *record, int reclen, void *handlerdata) {
+	msr3_pack(_msr, [](char *record, int reclen, void *handlerdata) {
 		Channel* obj = reinterpret_cast<Channel *>(handlerdata);
 		obj->send(record, reclen);
 	}, this, &packedsamples, force, false);

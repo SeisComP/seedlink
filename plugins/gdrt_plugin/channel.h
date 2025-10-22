@@ -44,7 +44,7 @@ class Channel {
 	
 	private:
 		const std::string _stationId;
-		MSRecord* _msr;
+		MS3Record* _msr;
 		Core::Time _time;
 		std::vector<T> _data;
 
