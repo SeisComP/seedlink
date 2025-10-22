@@ -34,8 +34,8 @@
 #define ERROR_FLAG 1
 
 int find_device(char* port_path_hint, int verbose, char** pport_path, int allow_set_interface_attribs);
-long read_next_value(hptime_t *phptime, long timeout);
-hptime_t current_utc_hptime();
+long read_next_value(nstime_t *phptime, long timeout);
+nstime_t current_utc_hptime();
 int logprintf(int is_error, char *fmt, ...);
 void disconnect(int verbose);
 int set_seo064_sample_rate_and_gain(int nominal_sample_rate, int nominal_gain, long timeout, int verbose);
