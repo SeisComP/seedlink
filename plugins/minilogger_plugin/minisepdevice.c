@@ -272,7 +272,7 @@ int inputAvailable(int fn_io) {
 /* function to return the value in the next line in the buffer. Timeouts based on settings.
  * On a timeout or no connection present, returns READ_ERROR.
  */
-long read_next_value(hptime_t *phptime, long timeout) {
+long read_next_value(nstime_t *phptime, long timeout) {
 
 #define MAX_LINE_DATA 32
 
@@ -342,8 +342,8 @@ long read_next_value(hptime_t *phptime, long timeout) {
  */
 int find_device(char* port_path_hint, int verbose, char** pport_path, int allow_set_interface_attribs) {
 
-    hptime_t hptime;
-    hptime_t last_hptime;
+    nstime_t hptime;
+    nstime_t last_hptime;
     double dt, dt_sum;
     int n_dt, n_dt_sum;
 
@@ -443,7 +443,7 @@ int find_device(char* port_path_hint, int verbose, char** pport_path, int allow_
                 break;
             }
             // get dt
-            dt = (double) (hptime - last_hptime) / (double) HPTMODULUS;
+            dt = (double) (hptime - last_hptime) / (double) NSTMODULUS;
             if (verbose > 1) {
                 printf(" dt=%lf", dt);
             }
@@ -610,12 +610,12 @@ void current_utc_time(struct timespec * ts) {
 
 #define NANO 1000000000
 
-hptime_t timespec2hptime(struct timespec* ts) {
+nstime_t timespec2hptime(struct timespec* ts) {
 
     time_t itime_sec = (time_t) ts->tv_sec;
     struct tm* tm_time = gmtime(&itime_sec);
 
-    long hptime_sec_frac = (long) ((double) ts->tv_nsec / ((double) NANO / (double) HPTMODULUS));
+    long hptime_sec_frac = (long) ((double) ts->tv_nsec / ((double) NANO / (double) NSTMODULUS));
     int year = tm_time->tm_year + 1900;
     int month = tm_time->tm_mon + 1;
     int mday = tm_time->tm_mday;
@@ -624,12 +624,12 @@ hptime_t timespec2hptime(struct timespec* ts) {
 
     //printf("DEBUG: timespec2hptime(): %d.%d-%d:%d:%d.(%ld) -> %lld\n",
     //        year, jday, tm_time->tm_hour, tm_time->tm_min, tm_time->tm_sec, hptime_sec_frac,
-    //        ms_time2hptime(year, jday, tm_time->tm_hour, tm_time->tm_min, tm_time->tm_sec, hptime_sec_frac));
-    return (ms_time2hptime(year, jday, tm_time->tm_hour, tm_time->tm_min, tm_time->tm_sec, hptime_sec_frac));
+    //        ms_time2nstime(year, jday, tm_time->tm_hour, tm_time->tm_min, tm_time->tm_sec, hptime_sec_frac));
+    return (ms_time2nstime(year, jday, tm_time->tm_hour, tm_time->tm_min, tm_time->tm_sec, hptime_sec_frac));
 
 }
 
-hptime_t current_utc_hptime() {
+nstime_t current_utc_hptime() {
 
     static struct timespec time_spec;
 

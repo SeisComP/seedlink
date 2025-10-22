@@ -425,7 +425,7 @@ int find_device_and_connect(char *port_path_hint) {
  * Returns a pointer to the resulting string or NULL on error.
  ***************************************************************************/
 char *
-hptime2timestr(hptime_t hptime, char *timestr, flag subseconds, char* datepath) {
+hptime2timestr(nstime_t hptime, char *timestr, flag subseconds, char* datepath) {
     struct tm tms;
     time_t isec;
     int ifract;
@@ -435,20 +435,20 @@ hptime2timestr(hptime_t hptime, char *timestr, flag subseconds, char* datepath) 
         return NULL;
 
     /* Reduce to Unix/POSIX epoch time and fractional seconds */
-    isec = MS_HPTIME2EPOCH(hptime);
-    ifract = (int) (hptime - (isec * HPTMODULUS));
+    isec = MS_NSTIME2EPOCH(hptime);
+    ifract = (int) (hptime - (isec * NSTMODULUS));
 
     /* Adjust for negative epoch times */
     if (hptime < 0 && ifract != 0) {
         isec -= 1;
-        ifract = HPTMODULUS - (-ifract);
+        ifract = NSTMODULUS - (-ifract);
     }
 
     if (!(gmtime_r(&isec, &tms)))
         return NULL;
 
     if (subseconds) {
-        ifract /= (HPTMODULUS / 1000); // tp milliseconds (assumes HPTMODULUS mulitple of 1000)
+        ifract /= (NSTMODULUS / 1000); // tp milliseconds (assumes NSTMODULUS mulitple of 1000)
         /* Assuming ifract has millisecond precision */
         ret = snprintf(timestr, 24, "%4d.%02d.%02d.%02d.%02d.%02d.%03d",
                 tms.tm_year + 1900, tms.tm_mon + 1, tms.tm_mday,
@@ -498,17 +498,17 @@ static void record_handler (char *record, int reclen, void *handlerdata) {
 int collect_and_write() {
 
     int32_t idata[2000]; // enough space for data of 2 records
-    hptime_t hptime;
-    hptime_t start_hptime_est = 0;
-    hptime_t last_hptime;
+    nstime_t hptime;
+    nstime_t start_hptime_est = 0;
+    nstime_t last_hptime;
     DOUBLE dt, dt_est, sample_rate_est;
     DOUBLE start_hptime_current, record_window_current, record_window_est;
     DOUBLE prev_start_hptime_est = -1;
     int n_start_hptime_est;
 
     // debug
-    hptime_t start_hptime_nominal = 0;
-    hptime_t prev_start_next_hptime_est = 0;
+    nstime_t start_hptime_nominal = 0;
+    nstime_t prev_start_next_hptime_est = 0;
     double diff_end, diff_end_cumul = 0.0;
 
     char seedtimestr[64];
@@ -536,15 +536,21 @@ int collect_and_write() {
     }
 
     int first = 1;
-    MSRecord *pmsrecord = msr_init(NULL);
-    strcpy(pmsrecord->network, station_network);
-    strcpy(pmsrecord->station, station_name);
-    strcpy(pmsrecord->location, "");
-    sprintf(pmsrecord->channel, "%s%s", channel_prefix, component);
+    MS3Record *pmsrecord = msr3_init(NULL);
+    char channel[4];
+    snprintf(channel, 4, "%s%s", channel_prefix, component);
+    if ( ms_nslc2sid(pmsrecord->sid, LM_SIDLEN, 0,
+			station_network, station_name, "", channel) < 0 ) {
+	logprintf(MSG_FLAG, "ERROR: could not create source identifier (%s,%s,%s,%s)\n",
+			station_network, station_name, "", channel);
+	msr3_free(&pmsrecord);
+	return (-1);
+    }
+
+    pmsrecord->formatversion = 2;
     pmsrecord->samprate = 1.0;
     pmsrecord->reclen = SLRECSIZE;
     pmsrecord->encoding = mswrite_data_encoding_type_code;
-    pmsrecord->byteorder = 1;
     pmsrecord->datasamples = idata;
     pmsrecord->numsamples = 0;
     pmsrecord->sampletype = 'i';
@@ -561,17 +567,17 @@ int collect_and_write() {
             if (ivalue == READ_ERROR || ivalue < MIN_DATA || ivalue > MAX_DATA) {
                 logprintf(MSG_FLAG, "READ_ERROR: port=%s, nsamp=%d, ivalue=%ld\n", port_path, nsamp, ivalue);
                 pmsrecord->datasamples = NULL;
-                msr_free(&pmsrecord);
+                msr3_free(&pmsrecord);
                 return (-1);
             }
             if (DEBUG && nsamp == 0) {
                 start_hptime_nominal = hptime;
             }
             idata[pmsrecord->numsamples + nsamp] = (int32_t) ivalue;
-            dt = (DOUBLE) (hptime - last_hptime) / (DOUBLE) HPTMODULUS;
+            dt = (DOUBLE) (hptime - last_hptime) / (DOUBLE) NSTMODULUS;
             last_hptime = hptime;
             if (verbose > 3) {
-                logprintf(MSG_FLAG, "%d %ld %s (dt=%lf)\n", nsamp, ivalue, ms_hptime2seedtimestr(hptime, seedtimestr, 1), (double) dt);
+                logprintf(MSG_FLAG, "%d %ld %s (dt=%lf)\n", nsamp, ivalue, ms_nstime2timestr(hptime, seedtimestr, SEEDORDINAL, 1), (double) dt);
             }
             // estimate start time and dt
             // use only later samples in record since writing previous record may delay reading of first samples of this record
@@ -579,7 +585,7 @@ int collect_and_write() {
                 // 20131107 AJL - use all samples, may give better start time estimate, since buffering should compensate for any delay of first samples
                 //if (1) {
                 // start time estimate is timestamp of current data minus dt_est*nsamp
-                start_hptime_current += (hptime - (hptime_t) ((DOUBLE) 0.5 + dt_est * (DOUBLE) HPTMODULUS * (DOUBLE) nsamp));
+                start_hptime_current += (hptime - (nstime_t) ((DOUBLE) 0.5 + dt_est * (DOUBLE) NSTMODULUS * (DOUBLE) nsamp));
                 n_start_hptime_est++;
                 // accumulate dt_est using low-pass filter
                 //dt_est = dt_est + (DOUBLE) decay_consant * (dt - dt_est);
@@ -588,14 +594,14 @@ int collect_and_write() {
         }
         start_hptime_current /= n_start_hptime_est;
         if (prev_start_hptime_est > 0) {
-            record_window_current = (DOUBLE) (start_hptime_current - prev_start_hptime_est) / (DOUBLE) HPTMODULUS;
+            record_window_current = (DOUBLE) (start_hptime_current - prev_start_hptime_est) / (DOUBLE) NSTMODULUS;
         } else {
             record_window_current = record_window_est;
         }
         // accumulate record_window_est using low-pass filter
         record_window_est = record_window_est + (DOUBLE) decay_consant * (record_window_current - record_window_est);
         if (prev_start_hptime_est > 0) {
-            start_hptime_est = prev_start_hptime_est + (hptime_t) ((DOUBLE) 0.5 + record_window_est * (DOUBLE) HPTMODULUS);
+            start_hptime_est = prev_start_hptime_est + (nstime_t) ((DOUBLE) 0.5 + record_window_est * (DOUBLE) NSTMODULUS);
         } else {
             start_hptime_est = start_hptime_current;
         }
@@ -605,21 +611,21 @@ int collect_and_write() {
         dt_est = record_window_est / (DOUBLE) num_samples_in_record;
         sample_rate_est = (DOUBLE) 1.0 / dt_est;
         if (DEBUG) {
-            diff_end = (double) (start_hptime_est - prev_start_next_hptime_est) / (double) HPTMODULUS;
+            diff_end = (double) (start_hptime_est - prev_start_next_hptime_est) / (double) NSTMODULUS;
             if (!first)
                 diff_end_cumul += diff_end;
             logprintf(MSG_FLAG, "sample_rate_est=%lf (dt=%lfs)\n", (double) sample_rate_est, (double) dt_est);
             logprintf(MSG_FLAG, "start_hptime_est=%lld, start_hptime_nominal=%lld, dt=%lf, dt_end=%lf, dt_end_cumul=%lf)\n", start_hptime_est, start_hptime_nominal,
-                    (double) ((DOUBLE) (start_hptime_est - start_hptime_nominal) / (DOUBLE) HPTMODULUS), diff_end, diff_end_cumul);
-            prev_start_next_hptime_est = start_hptime_est + (hptime_t) ((DOUBLE) 0.5 + dt_est * (DOUBLE) HPTMODULUS * (DOUBLE) nsamp);
+                    (double) ((DOUBLE) (start_hptime_est - start_hptime_nominal) / (DOUBLE) NSTMODULUS), diff_end, diff_end_cumul);
+            prev_start_next_hptime_est = start_hptime_est + (nstime_t) ((DOUBLE) 0.5 + dt_est * (DOUBLE) NSTMODULUS * (DOUBLE) nsamp);
         }
 
-        pmsrecord->starttime = start_hptime_est - (DOUBLE) HPTMODULUS * pmsrecord->numsamples / pmsrecord->samprate;
+        pmsrecord->starttime = start_hptime_est - (DOUBLE) NSTMODULUS * pmsrecord->numsamples / pmsrecord->samprate;
         pmsrecord->samprate = mswrite_header_sample_rate > 0.0 ? mswrite_header_sample_rate : sample_rate_est;
         pmsrecord->numsamples += nsamp;
 
         int64_t npackedsamples = 0;
-        if (msr_pack(pmsrecord, record_handler, NULL, &npackedsamples, 0, verbose) < 0) {
+        if (msr3_pack(pmsrecord, record_handler, NULL, &npackedsamples, 0, verbose) < 0) {
             logprintf(ERROR_FLAG, "Error encoding data!\n");
             exit(1);
         }
