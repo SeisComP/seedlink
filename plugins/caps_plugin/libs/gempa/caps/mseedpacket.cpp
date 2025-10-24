@@ -24,9 +24,10 @@
 #include <cstdio>
 #include <streambuf>
 #include <iostream>
-#include <libmseed.h>
+#include <libmseed/libmseed.h>
+#include <libmseed/mseedformat.h>
+#include <libmseed/unpack.h>
 
-namespace {
 
 #define LOG_SID(FUNC, format,...)\
 do {\
@@ -34,14 +35,16 @@ do {\
 	char s[6];\
 	char c[6];\
 	char l[6];\
-	ms_strncpclean(n, head.network, 2);\
-	ms_strncpclean(s, head.station, 5);\
-	ms_strncpclean(l, head.location, 2);\
-	ms_strncpclean(c, head.channel, 3);\
+	ms_strncpclean(n, pMS2FSDH_NETWORK(head), 2);\
+	ms_strncpclean(s, pMS2FSDH_STATION(head), 5);\
+	ms_strncpclean(l, pMS2FSDH_LOCATION(head), 2);\
+	ms_strncpclean(c, pMS2FSDH_CHANNEL(head), 3);\
 	FUNC("[%s.%s.%s.%s] " format, n, s, l, c, ##__VA_ARGS__);\
 } while(0)
 
-}
+
+#define MS_ISVALIDYEARDAY(Y,D) (Y >= 1900 && Y <= 2100 && D >= 1 && D <= 366)
+
 
 namespace Gempa {
 namespace CAPS {
@@ -59,7 +62,7 @@ void MSEEDDataRecord::readMetaData(std::streambuf &buf, int size,
                                    Time &startTime,
                                    Time &endTime) {
 #if 1 // Set this to 1 to enable no-malloc fast MSeed meta parser
-	fsdh_s head;
+	char head[48];
 
 	if ( size <= 0 ) {
 		CAPS_WARNING("read metadata: invalid size of record: %d", size);
@@ -79,39 +82,43 @@ void MSEEDDataRecord::readMetaData(std::streambuf &buf, int size,
 		return;
 	}
 
-	if ( !MS_ISVALIDHEADER(((char*)&head)) ) {
-		CAPS_WARNING("read metadata: invalid MSEED header");
+	if ( !MS2_ISVALIDHEADER(((char*)&head)) ) {
+		CAPS_WARNING("read metadata: invalid MSEED2 header");
 		return;
 	}
 
-	bool headerswapflag = false;
-	if ( !MS_ISVALIDYEARDAY(head.start_time.year, head.start_time.day) )
-		headerswapflag = true;
-
-	/* Swap byte order? */
-	if ( headerswapflag ) {
-		MS_SWAPBTIME(&head.start_time);
-		ms_gswap2a(&head.numsamples);
-		ms_gswap2a(&head.samprate_fact);
-		ms_gswap2a(&head.samprate_mult);
-		ms_gswap4a(&head.time_correct);
-		ms_gswap2a(&head.data_offset);
-		ms_gswap2a(&head.blockette_offset);
+	int headerswapflag = 0;
+	if ( !MS_ISVALIDYEARDAY(*pMS2FSDH_YEAR(head), *pMS2FSDH_DAY(head)) ) {
+		headerswapflag = 1;
+		ms_gswap2(pMS2FSDH_YEAR(head));
+		ms_gswap2(pMS2FSDH_DAY(head));
+		ms_gswap2(pMS2FSDH_FSEC(head));
+		ms_gswap2(pMS2FSDH_NUMSAMPLES(head));
+		ms_gswap2(pMS2FSDH_SAMPLERATEFACT(head));
+		ms_gswap2(pMS2FSDH_SAMPLERATEMULT(head));
+		ms_gswap4(pMS2FSDH_TIMECORRECT(head));
+		ms_gswap2(pMS2FSDH_DATAOFFSET(head));
+		ms_gswap2(pMS2FSDH_BLOCKETTEOFFSET(head));
 	}
+
+	auto year = *pMS2FSDH_YEAR(head);
+	auto yday = *pMS2FSDH_DAY(head);
+	auto hours = *pMS2FSDH_HOUR(head);
+	auto minutes = *pMS2FSDH_MIN(head);
+	auto seconds = *pMS2FSDH_SEC(head);
+	auto fsec = *pMS2FSDH_FSEC(head) * 100;
 
 	header.dataType = DT_Unknown;
 
-	hptime_t hptime = ms_btime2hptime(&head.start_time);
-	if ( hptime == HPTERROR ) {
-		LOG_SID(CAPS_DEBUG, "read metadata: invalid start time");
-		return;
+	startTime = Time::FromYearDay(year, yday);
+	startTime += TimeSpan(hours * 3600 + minutes * 60 + seconds, fsec);
+
+	if ( *pMS2FSDH_TIMECORRECT(head) != 0 && !(*pMS2FSDH_ACTFLAGS(head) & 0x02) ) {
+		startTime += TimeSpan(0, *pMS2FSDH_TIMECORRECT(head) * 100);
 	}
 
-	if ( head.time_correct != 0 && !(head.act_flags & 0x02) )
-		hptime += (hptime_t)head.time_correct * (HPTMODULUS / 10000);
-
 	// Parse blockettes
-	uint32_t blkt_offset = head.blockette_offset;
+	uint32_t blkt_offset = *pMS2FSDH_BLOCKETTEOFFSET(head);
 	uint32_t blkt_length;
 	uint16_t blkt_type;
 	uint16_t next_blkt;
@@ -127,7 +134,7 @@ void MSEEDDataRecord::readMetaData(std::streambuf &buf, int size,
 	while ( (blkt_offset != 0) && ((int)blkt_offset < size) &&
 	        (blkt_offset < MAXRECLEN) ) {
 		char bhead[6];
-		buf.pubseekoff(blkt_offset-sizeof(head)-coffs, std::ios_base::cur,
+		buf.pubseekoff(blkt_offset - sizeof(head) - coffs, std::ios_base::cur,
 		               std::ios_base::in);
 		if ( buf.sgetn(bhead, 6) != 6 ) {
 			LOG_SID(CAPS_DEBUG, "read metadata: "
@@ -138,16 +145,16 @@ void MSEEDDataRecord::readMetaData(std::streambuf &buf, int size,
 		coffs = 6;
 
 		memcpy(&blkt_type, bhead, 2);
-		memcpy(&next_blkt, bhead+2, 2);
+		memcpy(&next_blkt, bhead + 2, 2);
 
 		if ( headerswapflag ) {
 			ms_gswap2(&blkt_type);
 			ms_gswap2(&next_blkt);
 		}
 
-		blkt_length = ms_blktlen(blkt_type, bhead, headerswapflag);
+		blkt_length = ms2_blktlen(blkt_type, bhead, headerswapflag);
 
-		if ( blkt_length == 0 ) {
+		if ( !blkt_length ) {
 			LOG_SID(CAPS_DEBUG, "read metadata: "
 			        "unknown blockette length for type %d",
 			        blkt_type);
@@ -155,7 +162,7 @@ void MSEEDDataRecord::readMetaData(std::streambuf &buf, int size,
 		}
 
 		/* Make sure blockette is contained within the msrecord buffer */
-		if ( (int)(blkt_offset - 4 + blkt_length) > size ) {
+		if ( static_cast<int>(blkt_offset - 4 + blkt_length) > size ) {
 			LOG_SID(CAPS_DEBUG, "read metadata: blockette "
 			        "%d extends beyond record size, truncated?",
 			        blkt_type);
@@ -163,7 +170,7 @@ void MSEEDDataRecord::readMetaData(std::streambuf &buf, int size,
 		}
 
 		if ( blkt_type == 1000 ) {
-			switch ( (int)bhead[4] ) {
+			switch ( bhead[4] ) {
 				case DE_ASCII:
 					header.dataType = DT_INT8;
 					break;
@@ -195,7 +202,7 @@ void MSEEDDataRecord::readMetaData(std::streambuf &buf, int size,
 		}
 		else if ( blkt_type == 1001 ) {
 			// Add usec correction
-			hptime += ((hptime_t)bhead[5]) * (HPTMODULUS / 1000000);
+			startTime += TimeSpan(0, *reinterpret_cast<int8_t*>(bhead + 5));
 		}
 
 		/* Check that the next blockette offset is beyond the current blockette */
@@ -217,26 +224,27 @@ void MSEEDDataRecord::readMetaData(std::streambuf &buf, int size,
 			blkt_offset = next_blkt;
 	}
 
-	startTime = Time((hptime_t)hptime/HPTMODULUS,(hptime_t)hptime%HPTMODULUS);
 	endTime = startTime;
 
-	if ( head.samprate_fact > 0 ) {
-		header.samplingFrequencyNumerator = head.samprate_fact;
+	if ( *pMS2FSDH_SAMPLERATEFACT(head) > 0 ) {
+		header.samplingFrequencyNumerator = *pMS2FSDH_SAMPLERATEFACT(head);
 		header.samplingFrequencyDenominator = 1;
 	}
 	else {
 		header.samplingFrequencyNumerator = 1;
-		header.samplingFrequencyDenominator = -head.samprate_fact;
+		header.samplingFrequencyDenominator = -*pMS2FSDH_SAMPLERATEFACT(head);
 	}
 
-	if ( head.samprate_mult > 0 )
-		header.samplingFrequencyNumerator *= head.samprate_mult;
-	else
-		header.samplingFrequencyDenominator *= -head.samprate_mult;
+	if ( *pMS2FSDH_SAMPLERATEMULT(head) > 0 ) {
+		header.samplingFrequencyNumerator *= *pMS2FSDH_SAMPLERATEMULT(head);
+	}
+	else {
+		header.samplingFrequencyDenominator *= -*pMS2FSDH_SAMPLERATEMULT(head);
+	}
 
-	if ( header.samplingFrequencyNumerator > 0.0 && head.numsamples > 0 ) {
-		hptime = (hptime_t)head.numsamples * HPTMODULUS * header.samplingFrequencyDenominator / header.samplingFrequencyNumerator;
-		endTime += TimeSpan((hptime_t)hptime/HPTMODULUS,(hptime_t)hptime%HPTMODULUS);
+	if ( header.samplingFrequencyNumerator > 0.0 && *pMS2FSDH_NUMSAMPLES(head) > 0 ) {
+		int64_t dt = static_cast<int64_t>(*pMS2FSDH_NUMSAMPLES(head)) * 1000000 * header.samplingFrequencyDenominator / header.samplingFrequencyNumerator;
+		endTime += TimeSpan(0, dt);
 	}
 
 	timeToTimestamp(_header.samplingTime, startTime);
@@ -406,42 +414,42 @@ void MSEEDDataRecord::setData(const void *data, size_t size) {
 	unpackHeader();
 }
 
+
 void MSEEDDataRecord::unpackHeader(char *data, size_t size) {
 	// Only unpack the header structure
-	MSRecord *ms_rec = NULL;
-	int state = msr_unpack(data, size, &ms_rec, 0, 0);
+	MS3Record *ms_rec = nullptr;
+	int state = msr3_parse(data, size, &ms_rec, 0, 0);
 	if ( state != MS_NOERROR ) {
 		CAPS_WARNING("read metadata: read error: %d", state);
-		if ( ms_rec != NULL )
-			msr_free(&ms_rec);
+		if ( ms_rec ) {
+			msr3_free(&ms_rec);
+		}
 		return;
 	}
 
-	hptime_t hptime = msr_starttime(ms_rec);
-	_startTime = Time((hptime_t)hptime/HPTMODULUS,(hptime_t)hptime%HPTMODULUS);
-	_endTime = _startTime;
+	_startTime = Time(ms_rec->starttime / NSTMODULUS, (ms_rec->starttime % NSTMODULUS) / (NSTMODULUS / 1000000));
 
-	if ( ms_rec->samprate > 0.0 && ms_rec->samplecnt > 0 ) {
-		hptime = (hptime_t)(((double)(ms_rec->samplecnt) / ms_rec->samprate * HPTMODULUS) + 0.5);
-		_endTime += TimeSpan((hptime_t)hptime/HPTMODULUS,(hptime_t)hptime%HPTMODULUS);
-	}
+	auto etime = msr3_endtime(ms_rec);
+	_endTime = Time(etime / NSTMODULUS, (etime % NSTMODULUS) / (NSTMODULUS / 1000000));
 
 	_header.dataType = DT_Unknown;
 	timeToTimestamp(_header.samplingTime, _startTime);
 
-	if ( ms_rec->fsdh->samprate_fact > 0 ) {
-		_header.samplingFrequencyNumerator = ms_rec->fsdh->samprate_fact;
+	if ( *pMS2FSDH_SAMPLERATEFACT(ms_rec->record) > 0 ) {
+		_header.samplingFrequencyNumerator = *pMS2FSDH_SAMPLERATEFACT(ms_rec->record);
 		_header.samplingFrequencyDenominator = 1;
 	}
 	else {
 		_header.samplingFrequencyNumerator = 1;
-		_header.samplingFrequencyDenominator = -ms_rec->fsdh->samprate_fact;
+		_header.samplingFrequencyDenominator = -*pMS2FSDH_SAMPLERATEFACT(ms_rec->record);
 	}
 
-	if ( ms_rec->fsdh->samprate_mult > 0 )
-		_header.samplingFrequencyNumerator *= ms_rec->fsdh->samprate_mult;
-	else
-		_header.samplingFrequencyDenominator *= -ms_rec->fsdh->samprate_mult;
+	if ( *pMS2FSDH_SAMPLERATEMULT(ms_rec->record) > 0 ) {
+		_header.samplingFrequencyNumerator *= *pMS2FSDH_SAMPLERATEMULT(ms_rec->record);
+	}
+	else {
+		_header.samplingFrequencyDenominator *= -*pMS2FSDH_SAMPLERATEMULT(ms_rec->record);
+	}
 
 	switch ( ms_rec->sampletype ) {
 		case 'a':
@@ -461,7 +469,7 @@ void MSEEDDataRecord::unpackHeader(char *data, size_t size) {
 			break;
 	}
 
-	msr_free(&ms_rec);
+	msr3_free(&ms_rec);
 }
 
 
