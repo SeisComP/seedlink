@@ -27,7 +27,7 @@ IF ( NOT MACOSX )
 			sockplugin
 			wave24_plugin
 			win_plugin
-	) 
+	)
 ENDIF ( NOT MACOSX )
 
 IF (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/../../common)

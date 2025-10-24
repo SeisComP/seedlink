@@ -31,16 +31,14 @@
 #include <plugin.h>
 #include <libslink.h>
 
-#include <boost/bind.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/program_options.hpp>
 
 #include <algorithm>
-#include <errno.h>
+#include <cerrno>
 #include <fstream>
 #include <sstream>
-
 
 
 using namespace std;
@@ -170,8 +168,8 @@ struct LogChannel {
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 App::App(int argc, char** argv) : Application(argc, argv) {
 	_exitRequested = false;
-	_sessionTable.setItemAddedFunc(boost::bind(&App::itemAdded, this, _1));
-	_sessionTable.setItemAboutToBeRemovedFunc(boost::bind(&App::itemAboutToBeRemoved, this, _1));
+	_sessionTable.setItemAddedFunc(bind(&App::itemAdded, this, placeholders::_1));
+	_sessionTable.setItemAboutToBeRemovedFunc(bind(&App::itemAboutToBeRemoved, this, placeholders::_1));
 }
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
