@@ -17,18 +17,20 @@
  ***************************************************************************/
 
 
-#ifndef __GEMPA_CAPS_SESSIONTABLE_H__
-#define __GEMPA_CAPS_SESSIONTABLE_H__
+#ifndef GEMPA_CAPS_SESSIONTABLE_H
+#define GEMPA_CAPS_SESSIONTABLE_H
+
 
 #include "packet.h"
 
-#include <boost/function.hpp>
-
+#include <functional>
 #include <map>
 #include <string>
 
+
 namespace Gempa {
 namespace CAPS {
+
 
 struct SessionTableItem {
 	SessionTableItem() : samplingFrequency(0), samplingFrequencyDivider(0),
@@ -58,7 +60,7 @@ class SessionTable : public std::map<int, SessionTableItem> {
 	public:
 		enum Status {Success, Error, EOD};
 
-		typedef boost::function<void (SessionTableItem*)> CallbackFunc;
+		using CallbackFunc = std::function<void (SessionTableItem*)>;
 
 	public:
 		//! Default constructor
@@ -100,6 +102,7 @@ class SessionTable : public std::map<int, SessionTableItem> {
 		CallbackFunc         _itemAddedFunc;
 		CallbackFunc         _itemAboutToBeRemovedFunc;
 };
+
 
 }
 }

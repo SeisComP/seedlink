@@ -17,8 +17,8 @@
  ***************************************************************************/
 
 
-#ifndef __GEMPA_CAPS_SOCKET_H__
-#define __GEMPA_CAPS_SOCKET_H__
+#ifndef GEMPA_CAPS_SOCKET_H
+#define GEMPA_CAPS_SOCKET_H
 
 
 #include <gempa/caps/packet.h>
@@ -26,10 +26,9 @@
 #include <boost/shared_ptr.hpp>
 #include <openssl/ssl.h>
 
-#include <stdint.h>
+#include <cstdint>
 #include <streambuf>
 #include <iostream>
-#include <fstream>
 
 
 namespace Gempa {

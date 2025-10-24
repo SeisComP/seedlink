@@ -17,12 +17,11 @@
  ***************************************************************************/
 
 
-#ifndef __GEMPA_CAPS_RAWPACKET_H__
-#define __GEMPA_CAPS_RAWPACKET_H__
+#ifndef GEMPA_CAPS_RAWPACKET_H
+#define GEMPA_CAPS_RAWPACKET_H
 
 
 #include <gempa/caps/packet.h>
-#include <vector>
 
 
 namespace Gempa {

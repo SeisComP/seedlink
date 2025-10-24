@@ -17,14 +17,13 @@
  ***************************************************************************/
 
 
-#ifndef __CAPS_IO_RIFF_H__
-#define __CAPS_IO_RIFF_H__
+#ifndef CAPS_IO_RIFF_H
+#define CAPS_IO_RIFF_H
 
 
 #include <iostream>
 #include <vector>
 #include <fstream>
-#include <stdint.h>
 
 #include <gempa/caps/packet.h>
 

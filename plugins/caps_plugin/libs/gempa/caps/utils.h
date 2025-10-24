@@ -17,8 +17,9 @@
  ***************************************************************************/
 
 
-#ifndef __GEMPA_CAPS_UTILS_H__
-#define __GEMPA_CAPS_UTILS_H__
+#ifndef GEMPA_CAPS_UTILS_H
+#define GEMPA_CAPS_UTILS_H
+
 
 #include <gempa/caps/packet.h>
 
@@ -33,6 +34,7 @@
 
 namespace  Gempa {
 namespace CAPS {
+
 
 class arraybuf : public std::streambuf {
 	public:
@@ -337,7 +339,9 @@ inline uint8_t dataTypeSize(DataType dt) {
 	return 0;
 }
 
+
 }
 }
+
 
 #endif

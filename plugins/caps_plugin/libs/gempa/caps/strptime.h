@@ -1,5 +1,8 @@
-#ifndef __STRPTIME_H__
-#define __STRPTIME_H__
+#ifndef STRPTIME_H
+#define STRPTIME_H
+
+
+struct tm;
 
 /*
  * Version of "strptime()", for the benefit of OSes that don't have it.

@@ -17,8 +17,8 @@
  ***************************************************************************/
 
 
-#ifndef __GEMPA_CAPS_PACKET_H__
-#define __GEMPA_CAPS_PACKET_H__
+#ifndef GEMPA_CAPS_PACKET_H
+#define GEMPA_CAPS_PACKET_H
 
 
 #include <gempa/caps/endianess.h>

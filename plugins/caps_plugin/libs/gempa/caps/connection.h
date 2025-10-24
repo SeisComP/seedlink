@@ -17,8 +17,8 @@
  ***************************************************************************/
 
 
-#ifndef __GEMPA_CAPS_CONNECTION_H__
-#define __GEMPA_CAPS_CONNECTION_H__
+#ifndef GEMPA_CAPS_CONNECTION_H
+#define GEMPA_CAPS_CONNECTION_H
 
 #include <gempa/caps/datetime.h>
 #include <gempa/caps/sessiontable.h>
@@ -34,7 +34,7 @@
 namespace Gempa {
 namespace CAPS {
 
-class SessionTableItem;
+struct SessionTableItem;
 class Time;
 
 class Connection {

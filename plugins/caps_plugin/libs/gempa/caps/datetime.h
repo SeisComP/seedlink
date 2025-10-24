@@ -17,8 +17,8 @@
  ***************************************************************************/
 
 
-#ifndef __GEMPA_CAPS_DATETIME_H__
-#define __GEMPA_CAPS_DATETIME_H__
+#ifndef GEMPA_CAPS_DATETIME_H
+#define GEMPA_CAPS_DATETIME_H
 
 #ifdef WIN32
 #include <winsock2.h>
@@ -27,6 +27,7 @@
 #endif
 
 #include <string>
+
 
 struct tm;
 

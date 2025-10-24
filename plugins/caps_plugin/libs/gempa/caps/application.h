@@ -17,8 +17,8 @@
  ***************************************************************************/
 
 
-#ifndef __GEMPA_CAPS_APPLICATION_H__
-#define __GEMPA_CAPS_APPLICATION_H__
+#ifndef GEMPA_CAPS_APPLICATION_H
+#define GEMPA_CAPS_APPLICATION_H
 
 
 namespace Gempa {

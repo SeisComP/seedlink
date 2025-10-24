@@ -17,8 +17,8 @@
  ***************************************************************************/
 
 
-#ifndef __GEMPA_CAPS_ENDIANESS_H__
-#define __GEMPA_CAPS_ENDIANESS_H__
+#ifndef GEMPA_CAPS_ENDIANESS_H
+#define GEMPA_CAPS_ENDIANESS_H
 
 #include <iostream>
 #include <stdint.h>
