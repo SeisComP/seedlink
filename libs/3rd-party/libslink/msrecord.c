@@ -461,7 +461,7 @@ sl_msr_print (SLlog *log, SLMSrecord *msr, int details)
   else
   {
     sl_msr_dsamprate (msr, &dsamprate);
-    sl_log_rl (log, 0, 0, "%s, %d samples, %.10g Hz, %s (latency ~%1.1f sec)\n",
+    sl_log_rl (log, 0, 0, "%s, %d samples, %.10g Hz, %s (delay ~%1.3f sec)\n",
                sourcename, msr->fsdh.num_samples, dsamprate, stime, latency);
   }
 
