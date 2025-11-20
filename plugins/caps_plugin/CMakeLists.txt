@@ -28,7 +28,7 @@ INCLUDE_DIRECTORIES(${SC_SYSTEM_LIB_DIR}/3rd-party)
 ADD_EXECUTABLE(caps_plugin ${CAPSPLUGIN_SOURCES})
 
 FIND_PACKAGE(OpenSSL REQUIRED)
-FIND_PACKAGE(Boost REQUIRED COMPONENTS system program_options)
+FIND_PACKAGE(Boost REQUIRED COMPONENTS program_options)
 
 TARGET_LINK_LIBRARIES(
 	caps_plugin
@@ -36,7 +36,6 @@ TARGET_LINK_LIBRARIES(
 		slplugin
 		slutils
 		mseed
-		${Boost_system_LIBRARY}
 		${Boost_program_options_LIBRARY}
 		${CRYPTO}
 		${SSL}
