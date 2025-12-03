@@ -189,7 +189,7 @@ INT16 errors, ntoken, yr, da, hr, mn, sc, ms;
 CHAR *util_dttostr(REAL64 dtime, UINT16 code, CHAR *buf)
 {
 struct tm *tm;
-long  ltime;
+time_t  ltime;
 float ffrac;
 int   ifrac, yr, da, hr, mn, sc, ms;
 

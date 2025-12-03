@@ -51,7 +51,7 @@ extern int                      DEBUG;
 extern Map 			*rootmap;
 extern struct config_struct 	config;
 static int        		s_index[MAXSTREAMS];
-static long int 		time_of_next_expected_sample[MAXSTREAMS];
+static time_t 		time_of_next_expected_sample[MAXSTREAMS];
 static int                      numstreams;
 
 extern int RSIZE;
