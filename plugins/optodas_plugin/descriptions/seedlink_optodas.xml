@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <seiscomp>
 	<binding module="seedlink" name="optodas" category="sources">
-		<description>OptoDAS interrogator via ZeroMQ</description>
+		<description>
+		OptoDAS interrogator via ZeroMQ
+
+		This development was supported by the European Commission under the Horizon
+		Europe programme, through the project SUBMERSE (https://submerse.eu/) (Grant
+		Agreement No. 101095055), funded within the HORIZON-INFRA-2022-TECH-01 call.
+		</description>
 		<configuration>
 			<parameter name="address" type="string" default="tcp://localhost:3333">
 				<description>
