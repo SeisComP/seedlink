@@ -717,10 +717,11 @@ class Module(TemplateModule):
                 "lockfile", e.absolutePath(self.param("lockfile", False)), False
             )
         else:
-            self.setParam("filebase", self.param("filebase", False), False)
-            if not _canCreateDirectory(self.param("filebase", False)):
+            fileBaseDir = self.param("filebase", False)
+            self.setParam("filebase", fileBaseDir, False)
+            if not _canCreateDirectory(fileBaseDir):
                 print(
-                    f"+ directory '{self.param("filebase", False)}': Check the "
+                    f"+ directory '{fileBaseDir}' cannot be created: Check the "
                     "configuration of 'filebase'",
                     file=sys.stderr,
                 )
