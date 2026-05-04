@@ -13,7 +13,7 @@ try:
     import seiscomp.io
 
     dbAvailable = True
-except:
+except ImportError:
     dbAvailable = False
 
 
@@ -29,6 +29,26 @@ prefixed with "seedlink.".
 
 NOTE2: Support a database connection to get station descriptions.
 """
+
+
+def _canCreateDirectory(path):
+    path = os.path.abspath(path)
+
+    # If directory already exists, technically it doesn't need to be created
+    if os.path.isdir(path):
+        return True
+
+    current = path
+
+    # Walk upward until we find an existing directory
+    while not os.path.exists(current):
+        parent = os.path.dirname(current)
+        if parent == current:  # Reached filesystem root
+            return False
+        current = parent
+
+    # Now `current` is the first existing directory
+    return os.path.isdir(current) and os.access(current, os.W_OK | os.X_OK)
 
 
 def _loadDatabase(dbUrl):
@@ -196,9 +216,7 @@ class TemplateModule(seiscomp.kernel.Module):
                     % (name, self.net, self.sta)
                 )
             else:
-                print(
-                    f"warning: parameter '{name}' is not defined at global scope"
-                )
+                print(f"warning: parameter '{name}' is not defined at global scope")
 
         raise KeyError
 
@@ -676,17 +694,29 @@ class Module(TemplateModule):
         # This seedlink version expectes composed station ids: net.sta
         self._set("composed_station_id", "true", False)
 
-        ## Expand the @Variables@
+        # Expand the @Variables@
         if hasSystem:
             e = seiscomp.system.Environment.Instance()
-            self.setParam(
-                "filebase", e.absolutePath(self.param("filebase", False)), False
-            )
+            absPath = e.absolutePath(self.param("filebase", False))
+            self.setParam("filebase", absPath, False)
+            if not _canCreateDirectory(absPath):
+                print(
+                    f"+ directory '{absPath}' "
+                    "cannot be created: Check the configuration of 'filebase'",
+                    file=sys.stderr,
+                )
+
             self.setParam(
                 "lockfile", e.absolutePath(self.param("lockfile", False)), False
             )
         else:
             self.setParam("filebase", self.param("filebase", False), False)
+            if not _canCreateDirectory(self.param("filebase", False)):
+                print(
+                    f"+ directory '{self.param("filebase", False)}': Check the "
+                    "configuration of 'filebase'",
+                    file=sys.stderr,
+                )
             self.setParam("lockfile", self.param("lockfile", False), False)
 
         if self._get("msrtsimul", False).lower() == "true":
@@ -716,13 +746,19 @@ class Module(TemplateModule):
 
         try:
             os.makedirs(self.config_dir)
-        except:
+        except FileExistsError:
             pass
+        except PermissionError as e:
+            print(f"Configuration directory not created: {e}", file=sys.stderr)
+            return 1
 
         try:
             os.makedirs(self.run_dir)
-        except:
+        except FileExistsError:
             pass
+        except PermissionError as e:
+            print(f"Run directory not created: {e}", file=sys.stderr)
+            return 1
 
         self.__load_stations()
 
