@@ -1,11 +1,18 @@
-import os, string, time, re, glob, shutil, sys, importlib.util, resource
-import seiscomp.kernel, seiscomp.config
+import os
+import time
+import re
+import glob
+import sys
+import importlib.util
+import resource
+import seiscomp.kernel
+import seiscomp.config
 
 try:
     import seiscomp.system
 
     hasSystem = True
-except:
+except ImportError:
     hasSystem = False
 
 try:
@@ -64,7 +71,7 @@ def _loadDatabase(dbUrl):
         registry.addPluginName("db" + db["dbDriverName"])
         registry.loadPlugins()
     except Exception as e:
-        raise (e)  ### "Cannot load database driver: %s" % e)
+        raise (e)  # "Cannot load database driver: %s" % e)
     dbDriver = seiscomp.io.DatabaseInterface.Create(db["dbDriverName"])
     if dbDriver is None:
         raise Exception("Cannot find database driver " + db["dbDriverName"])
@@ -101,10 +108,10 @@ def _loadStationDescriptions(inv):
                 sta = s.code()
                 d[net][sta] = s.description()
 
-                try:
-                    end = s.end()
-                except:  # ValueException ???
-                    end = None
+                # try:
+                #     end = s.end()
+                # except:  # ValueException ???
+                #     end = None
                 # print "Found in inventory:", net, sta, end, s.description()
     return d
 
@@ -295,7 +302,7 @@ class Module(TemplateModule):
             path = os.path.join(self.template_dir, source_type, "setup.py")
             try:
                 f = open(path, "r")
-            except:
+            except Exception:
                 return None
 
             modname = "__seiscomp_seedlink_plugins_" + source_type
@@ -405,7 +412,7 @@ class Module(TemplateModule):
                     os.path.join(self.rc_dir, f"station_{self.net}_{self.sta}")
                 )
                 description = rc.getString("description").decode()
-            except Exception as e:
+            except Exception:
                 # Maybe the rc file doesn't exist, maybe there's no readable description.
                 pass
 
@@ -638,7 +645,7 @@ class Module(TemplateModule):
     def _set_default(self, name, value, station_scope=True):
         try:
             self.param(name, station_scope)
-        except:
+        except KeyError:
             self._set(name, value, station_scope)
 
     def supportsAliases(self):
@@ -651,7 +658,7 @@ class Module(TemplateModule):
         # Set default values
         try:
             self._set_default("organization", self.env.getString("organization"), False)
-        except:
+        except Exception:
             pass
 
         self._set_default(
@@ -731,7 +738,7 @@ class Module(TemplateModule):
 
         # Load descriptions from inventory:
         if self.database_str:
-            if dbAvailable == True:
+            if dbAvailable is True:
                 print(
                     f" Loading station descriptions from {self.database_str}",
                     file=sys.stderr,
@@ -835,7 +842,7 @@ class Module(TemplateModule):
             # If no plugins.ini is not used remove it from previous runs
             try:
                 os.remove(os.path.join(self.config_dir, "plugins.ini"))
-            except:
+            except Exception:
                 pass
 
         if self.sproc_used:
@@ -857,11 +864,11 @@ class Module(TemplateModule):
         else:
             try:
                 os.remove(self._get("seedlink.streams", False))
-            except:
+            except Exception:
                 pass
             try:
                 os.remove(self._get("seedlink.filters", False))
-            except:
+            except Exception:
                 pass
 
         for f, s, perm in self.templates:
