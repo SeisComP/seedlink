@@ -735,7 +735,7 @@ class Module(TemplateModule):
         # Load custom stream processor definitions
         custom_procs = self._process_template("streams_custom.tpl", None, True, False)
         if custom_procs:
-            self.sproc[""] = sproc
+            self.sproc[""] = custom_procs
 
         # Load descriptions from inventory:
         if self.database_str:
