@@ -15,7 +15,7 @@
 					</parameter>
 					<parameter name="loadTimeTable" type="boolean" default="true">
 						<description>
-							If enabled load_timetable is used by the chain plugin to request
+							If enabled, load_timetable is used by the chain plugin to request
 							the available time windows of each stream in the Seedlink buffer
 							to discard older records.
 						</description>
@@ -27,9 +27,21 @@
 	<binding module="seedlink" name="chain" category="sources">
 		<description>Seedlink server (TCP/IP)</description>
 		<configuration>
-			<parameter name="address" type="string" default="geofon.gfz.de">
+			<parameter name="address" type="string" default="geofon.gfz.de"
+				values="clv-cge.uevora.pt, eida.bgr.de, eida.orfeus-eu.org,
+				fdsn.potres.hr, geofon.gfz.de, link.geonet.org.nz,
+				rtserve.earthscope.org, rtserve.resif.fr, rtserver.ipgp.fr,
+				seiscomp.surviot.com, seisrequest.iag.usp.br, ws.icgc.cat">
 				<description>
-					Hostname or IP of the Seedlink server.
+					Hostname or IP of the Seedlink server to fetch data from.
+
+					Notes/disclaimer:
+
+					* Addresses may change or become unavailable without notification!
+
+					* You may test servers using slinktool. Test failures may not
+					be diagnostic since the response depends on server
+					configuration.
 				</description>
 			</parameter>
 			<parameter name="port" type="int" default="18000">
@@ -37,7 +49,7 @@
 			</parameter>
 			<parameter name="selectors" type="list:string">
 				<description>
-					List of stream selectors. If left empty all available
+					List of stream selectors. If left empty, all available
 					streams will be requested. See slinktool manpage for
 					more information.
 				</description>
@@ -87,14 +99,14 @@
 				</description>
 			</parameter>
 			<parameter name="batchmode" type="boolean" default="true">
-                                <description>
+				<description>
 					If enabled then the chain plugin tries to subscribe for
 					channels with the BATCH command which is magnitudes faster
 					than the old handshake. Not all SeedLink servers support
 					the BATCH mode so it needs to be turned off in case of
 					problems. 
 				</description>
-                        </parameter>
+			</parameter>
 			<group name="dialup">
 				<parameter name="enable" type="boolean" default="false">
 					<description>
@@ -109,7 +121,7 @@
 				</parameter>
 				<parameter name="schedule" type="string" default="0,30 * * * *">
 					<description>
-						The dialup schedula in cron format.
+						The dialup schedule in cron format.
 					</description>
 				</parameter>
 				<parameter name="ifup" type="string">
