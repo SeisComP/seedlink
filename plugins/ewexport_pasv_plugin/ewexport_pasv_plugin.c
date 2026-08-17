@@ -108,7 +108,7 @@ MSG_LOGO      heartlogo;
 
 int main( int argc, char **argv )
 {
-  int    tmp;
+  int    tmp = 1;    /* optval for SO_REUSEADDR: must be non-zero */
   time_t now;
   int    quit;
 
