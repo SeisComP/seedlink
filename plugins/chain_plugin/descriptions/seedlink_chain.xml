@@ -98,6 +98,36 @@
 					unset unless you know what you are doing.
 				</description>
 			</parameter>
+			<parameter name="netto" type="int" unit="s">
+				<description>
+					Network timeout: if no data is received from the server for
+					this many seconds the connection is considered dead and a
+					reconnect is triggered. A value of 0 disables the timeout.
+					Non-zero values below 10 are rounded up to 10. Leave unset
+					to inherit the chain plugin default (300s). Lower this on
+					a flaky or high-latency link to detect a stalled connection
+					sooner.
+				</description>
+			</parameter>
+			<parameter name="netdly" type="int" unit="s">
+				<description>
+					Network reconnect delay: the time to wait before retrying
+					the connection after it was closed due to a network
+					timeout or error. Leave unset to inherit the chain plugin
+					default (10s).
+				</description>
+			</parameter>
+			<parameter name="keepalive" type="int" unit="s">
+				<description>
+					Keepalive interval: sends a keepalive request to the
+					remote SeedLink server after this many seconds without
+					any data, to keep the connection alive and detect a dead
+					peer even on otherwise idle channels. A value of 0
+					disables keepalive requests. Non-zero values below 10 are
+					rounded up to 10. Leave unset to inherit the chain plugin
+					default (disabled).
+				</description>
+			</parameter>
 			<parameter name="batchmode" type="boolean" default="true">
 				<description>
 					If enabled then the chain plugin tries to subscribe for

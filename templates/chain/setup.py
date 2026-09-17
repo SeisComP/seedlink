@@ -48,6 +48,24 @@ class SeedlinkPluginHandler:
       '         overlap_removal="%s"' % seedlink.param('sources.chain.overlapRemoval')
     except: pass
 
+    # netto/netdly/keepalive are left unset by default so the group inherits
+    # the chain-wide defaults from chain_head(_notimetable).tpl; only emit
+    # them when explicitly configured for this station.
+    try:
+      group_tag += '\n' + \
+      '         netto="%s"' % seedlink.param('sources.chain.netto')
+    except: pass
+
+    try:
+      group_tag += '\n' + \
+      '         netdly="%s"' % seedlink.param('sources.chain.netdly')
+    except: pass
+
+    try:
+      group_tag += '\n' + \
+      '         keepalive="%s"' % seedlink.param('sources.chain.keepalive')
+    except: pass
+
     try:
       if seedlink.param('sources.chain.batchmode').lower() in ("yes", "true", "1"):
         batchmode = "yes"
