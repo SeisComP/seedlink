@@ -9,5 +9,8 @@ ARCHIVE="$archive"
 for rc in `find $$CFGDIR -name "rc_*"`; do
     station=$${rc##*_}
     source $$rc
+    if [ $$ARCH_KEEP -lt 0 ]; then
+        continue
+    fi
     find "$$ARCHIVE"/*/"$$NET/$$STATION" -type f -follow -mtime +$$ARCH_KEEP -exec rm -f '{}' \;
 done
