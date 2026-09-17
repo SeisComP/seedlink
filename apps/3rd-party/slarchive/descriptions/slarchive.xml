@@ -291,10 +291,12 @@
 
 	<binding module="slarchive">
 		<description>
-		Configures what streams of a station should be archived and for
-		how long.
+		Configures the archiving of data streams from a station.
 		</description>
 		<configuration>
+		<description>
+		Configures the archiving of data streams from a station.
+		</description>
 			<parameter name="selectors" type="list:string">
 				<description>
 				List of stream selectors. If left empty all available
@@ -304,8 +306,15 @@
 			</parameter>
 			<parameter name="keep" type="int" default="30" unit="day">
 				<description>
-				Number of days the data is kept in the archive. This
-				requires purge_datafile to be run as cronjob.
+				Number of days to keep data in archive. Older data is removed by the
+				script purge_datafile which is required to be executed, e.g., as
+				cronjob. Run
+
+				seiscomp print crontab
+
+				for an example crontab configuration.
+
+				&lt; 0: Keep the data without limit.
 				</description>
 			</parameter>
 		</configuration>
