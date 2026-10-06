@@ -14,7 +14,7 @@
 						by the alias name.
 						</description>
 					</parameter>
-					<parameter name="noexit" type="boolean" default="false">
+					<parameter name="noexit" type="boolean" default="true">
 						<description>
 							Do not exit plugin if writer closes the fifo.
 						</description>
