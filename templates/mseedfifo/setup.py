@@ -31,10 +31,12 @@ class SeedlinkPluginHandler:
     try:
       noexit = seedlink.param('plugins.mseedfifo.noexit', False).lower() in ("yes", "true", "1")
       if noexit:
-        noexit = ' -n '
+        noexit = ' -n'
       else:
         noexit = ''
-    except: noexit = ''
+    except:
+      # The default is enabled.
+      noexit = ' -n'
     seedlink.setParam('plugins.mseedfifo.noexit_param', noexit, False)
 
   def flush(self, seedlink):
