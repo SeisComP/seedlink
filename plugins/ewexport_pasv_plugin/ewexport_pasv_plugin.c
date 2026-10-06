@@ -30,8 +30,9 @@
  *
  */
 
-#define VERSION "0.93 (2011.137)"
+#define VERSION "0.93.1 (2026.268)"
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -105,6 +106,32 @@ pthread_t TidMsgRcv = 0;        /* thread id */
 
 unsigned char tracebuf_type;
 MSG_LOGO      heartlogo;
+
+
+void strip(char *data) {
+	if ( data == NULL ) {
+		return;
+	}
+
+	size_t len = strlen(data);
+	size_t shift = 0;
+	while ( shift < len &&
+	       (isspace((unsigned char)data[shift])
+	       || data[shift] == '-') ) {
+		++shift;
+	}
+
+	len -= shift;
+	memmove(data, data + shift, len);
+
+	while ( len > 0 &&
+	       (isspace((unsigned char)data[len - 1])
+	       || data[len - 1] == '-') ) {
+		--len;
+	}
+
+	data[len] = '\0';
+}
 
 int main( int argc, char **argv )
 {
@@ -628,9 +655,14 @@ import_filter( char *msg, int msgLen )
 
     /* Send the data to the controlling SeedLink server */
     {
-      char sta_id[11];
-      snprintf(sta_id, 11, "%s.%s", trh2->net, trh2->sta);
-      send_raw_depoch (sta_id, trh2->chan, trh2->starttime, 0, 100, int_samples, trh2->nsamp);
+      /* Replace '--' by empty location code */
+      strip(trh2->loc);
+
+      char sta_id[PLUGIN_SIDLEN + 1];
+      char cha_id[PLUGIN_CIDLEN + 1];
+      snprintf(sta_id, sizeof(sta_id), "%s.%s", trh2->net, trh2->sta);
+      snprintf(cha_id, sizeof(cha_id), "%s%s", trh2->loc, trh2->chan);
+      send_raw_depoch (sta_id, cha_id, trh2->starttime, 0, 100, int_samples, trh2->nsamp);
     }
 
     /* Print samples to STDERR if verbosity is 3 or higher */
